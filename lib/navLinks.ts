@@ -6,6 +6,7 @@ export const navLinks: NavLink[] = [
   { href: "/rates", label: "Rates" },
   { href: "/amenities", label: "Amenities" },
   { href: "/things-to-do", label: "Things to Do" },
+  { href: "/rules", label: "Rules" },
   { href: "/contact", label: "Contact" },
   { href: "/make-a-reservation", label: "Make a Reservation" },
 ];
