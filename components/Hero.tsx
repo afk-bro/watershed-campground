@@ -26,7 +26,7 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
   }, []);
 
   return (
-    <section className="relative h-[55vh] min-h-[400px] w-full overflow-hidden">
+    <section className="relative h-[60vh] min-h-[420px] w-full overflow-hidden">
       <div
         className="absolute inset-0"
         style={{ transform: `translateY(${scrollY * 0.5}px)` }}
@@ -66,7 +66,7 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
               <h1 className="font-heading text-4xl sm:text-5xl md:text-5xl lg:text-6xl text-accent-gold leading-[0.95] tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.45)' }}>{title}</h1>
               {subtitle && (
                 <p
-                  className="mt-4 text-lg sm:text-xl text-accent-beige leading-relaxed font-medium tracking-[0.5px]"
+                  className="mt-2 text-[17px] sm:text-[21px] text-accent-beige leading-relaxed font-medium tracking-[0.5px]"
                   style={{ textShadow: '0 2px 4px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.45)' }}
                 >
                   {subtitle}
