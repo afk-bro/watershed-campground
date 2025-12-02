@@ -1,26 +1,65 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  --font-heading: "Cormorant Garamond", serif;
+  --font-body: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+
+  --color-brand-forest: #06251c;
+  --color-navbar-forest: #042c21;
+  --color-accent-gold: #c8a75a;
+  --color-accent-gold-dark: #d4c08a;
+  --color-accent-gold-muted: #c8b37e;
+  --color-accent-beige: #e9dfc7;
+
+  /* Vertical Rhythm Spacing System */
+  --spacing-section-hero: 8rem;      /* 128px - Hero sections (py-32) */
+  --spacing-section-xlarge: 6rem;    /* 96px - Between major content blocks (py-24) */
+  --spacing-section-large: 5rem;     /* 80px - Standard sections (py-20) */
+  --spacing-section-medium: 4rem;    /* 64px - Compact sections (py-16) */
+  --spacing-section-small: 3rem;     /* 48px - Tight sections (py-12) */
+
+  --spacing-content-xlarge: 4rem;    /* 64px - Large content gaps */
+  --spacing-content-large: 2.5rem;   /* 40px - Between title and content */
+  --spacing-content-medium: 1.5rem;  /* 24px - Between paragraphs */
+  --spacing-content-small: 1rem;     /* 16px - Internal element grouping */
+  --spacing-content-xsmall: 0.75rem; /* 12px - Tight grouping */
 }
 
 @theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-brand-forest: var(--color-brand-forest);
+  --color-navbar-forest: var(--color-navbar-forest);
+  --color-accent-gold: var(--color-accent-gold);
+  --color-accent-gold-dark: var(--color-accent-gold-dark);
+  --color-accent-gold-muted: var(--color-accent-gold-muted);
+  --color-accent-beige: var(--color-accent-beige);
+
+  --font-heading: var(--font-heading);
+  --font-body: var(--font-body);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
+/* Remove automatic dark scheme in favor of brand theme */
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background: var(--color-brand-forest);
+  color: var(--color-accent-beige);
+  font-family: var(--font-body);
+  font-size: 1.0625rem; /* 17px - slightly larger for better readability */
+  line-height: 1.75; /* Improved line-height for easier reading */
+  position: relative;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
+  pointer-events: none;
+  z-index: 9999;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
 }
