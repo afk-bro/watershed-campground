@@ -26,10 +26,13 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
   }, []);
 
   return (
-    <section className="relative h-[60vh] min-h-[420px] w-full overflow-hidden">
+    <section className="relative h-[65vh] min-h-[440px] w-full overflow-hidden">
       <div
-        className="absolute inset-0"
-        style={{ transform: `translateY(${scrollY * 0.5}px)` }}
+        className="absolute inset-0 will-change-transform"
+        style={{
+          transform: `translateY(${scrollY * 0.2}px) scale(${1 + Math.min(scrollY, 200) / 10000})`,
+          transition: 'transform 50ms linear',
+        }}
       >
         <Image src={imageSrc} alt="Hero" fill priority className="object-cover" />
       </div>
@@ -63,20 +66,36 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
         <Container>
           <div className={`flex h-full ${textAlign} justify-center`}>
             <div className="relative max-w-xl z-10">
-              <h1 className="font-heading text-4xl sm:text-5xl md:text-5xl lg:text-6xl text-accent-gold leading-[0.95] tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.45)' }}>{title}</h1>
+                <h1 className="font-heading text-4xl sm:text-5xl md:text-5xl lg:text-6xl text-accent-gold leading-[0.95] tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.45)' }}>{title}</h1>
+                {/* Premium gold accent line (softened and shortened) */}
+                <div className="mt-2 mb-1 h-[2px] w-20 sm:w-24 bg-gradient-to-r from-accent-gold/60 via-accent-gold/50 to-transparent" />
               {subtitle && (
                 <p
-                  className="mt-2 text-[17px] sm:text-[21px] text-accent-beige leading-relaxed font-medium tracking-[0.5px]"
+                    className="mt-1 mb-6 text-[17px] sm:text-[21px] text-accent-beige leading-relaxed font-medium tracking-[0.5px]"
                   style={{ textShadow: '0 2px 4px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.45)' }}
                 >
                   {subtitle}
                 </p>
               )}
-              {cta && <div className="mt-8"><CTAButton label={cta.label} href={cta.href} /></div>}
+                {cta && <div className="mt-10"><CTAButton label={cta.label} href={cta.href} /></div>}
             </div>
           </div>
         </Container>
       </div>
+
+        {/* Minimal scroll indicator */}
+        <div className="absolute bottom-3 left-0 right-0 flex justify-center z-10">
+        <span className="text-accent-gold/85 text-xl sm:text-2xl select-none animate-bounce-slow">↓</span>
+      </div>
+
+        {/* Soft fade at bottom into page background (brand forest) */}
+        <div
+          className="absolute inset-x-0 bottom-0 h-24 sm:h-28 pointer-events-none"
+          style={{
+            background:
+              'linear-gradient(to bottom, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.25) 45%, var(--color-brand-forest) 100%)',
+          }}
+        />
     </section>
   );
 }
