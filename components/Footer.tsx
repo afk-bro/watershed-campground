@@ -1,7 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
 import Container from "./Container";
-import { navLinks } from "../lib/navLinks";
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();

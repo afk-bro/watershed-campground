@@ -1,5 +1,4 @@
 import Container from "../../components/Container";
-import SectionHeader from "../../components/SectionHeader";
 import Hero from "../../components/Hero";
 
 export default function RatesPage() {
@@ -17,8 +16,8 @@ export default function RatesPage() {
           {/* Introduction */}
           <div className="max-w-4xl mx-auto mb-16 text-center">
             <p className="text-accent-beige/90 text-base sm:text-lg leading-relaxed mb-6">
-              Welcome to the ultimate camping destination! Whether you're seeking nightly, weekly, or monthly accommodations,
-              we've got you covered. Our space is perfect for road warriors and those looking to settle in comfortably.
+              Welcome to the ultimate camping destination! Whether you&apos;re seeking nightly, weekly, or monthly accommodations,
+              we&apos;ve got you covered. Our space is perfect for road warriors and those looking to settle in comfortably.
             </p>
             <p className="text-accent-beige/90 text-base sm:text-lg leading-relaxed">
               Our space offers <span className="text-accent-gold-muted font-medium">20 sites</span>, a mix of full hook up,
