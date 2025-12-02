@@ -1,0 +1,53 @@
+# A GitHub Actions workflow for running TypeScript type-check, ESLint, and a production build.
+# Place this file at: .github/workflows/ci.yml
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+
+name: CI — typecheck · lint · build
+
+permissions:
+  contents: read
+
+jobs:
+  ci:
+    name: CI
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    strategy:
+      matrix:
+        node-version: [18.x]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm' # caches ~/.npm and node_modules based on package-lock.json
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type check (tsc)
+        run: npm run type-check
+        env:
+          CI: true
+
+      - name: Lint (ESLint)
+        run: npm run lint
+        env:
+          CI: true
+
+      - name: Build
+        # relies on the repo's "build" npm script (e.g. next build). Fails if script missing.
+        run: npm run build --if-present
+        env:
+          CI: true

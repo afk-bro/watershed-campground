@@ -74,6 +74,7 @@ export default function Footer() {
               <Link href="/amenities" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Amenities</Link>
               <Link href="/gallery" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Gallery</Link>
               <Link href="/things-to-do" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Things to Do</Link>
+                            <Link href="/rules" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Rules</Link>
               <Link href="/contact" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Contact</Link>
             </div>
           </div>
