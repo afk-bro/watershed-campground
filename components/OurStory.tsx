@@ -44,7 +44,7 @@ export default function OurStory() {
               <div className="space-y-5 text-accent-beige/95 text-lg sm:text-xl leading-[1.8]">
               <h3 className="text-accent-gold/80 font-heading text-xl sm:text-2xl mb-3 tracking-wide">A Place to Explore</h3>
               <p>
-                Located in <span className="text-accent-gold-muted font-medium">Balfour, BC</span>, along the shores of <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, with a beautiful beach, it's
+                Located in <span className="text-accent-gold-muted font-medium">Balfour, BC</span>, along the shores of <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, with a beautiful beach, it&apos;s
                 the perfect spot for <span className="text-accent-gold-muted">fishing</span>, <span className="text-accent-gold-muted">swimming</span>, and <span className="text-accent-gold-muted">boating</span> adventures. Immerse yourself in nature
                 as you encounter a variety of <em className="text-accent-gold-muted not-italic">wildlife</em>, including trout, deer, eagles, beavers, ducks, and
                 otters. All great things come to meet at the Watershed!
@@ -60,10 +60,10 @@ export default function OurStory() {
                 <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, the largest natural lake in southern <span className="text-accent-gold-muted font-medium">British Columbia</span>, is divided into four
                 distinct sections: <span className="text-accent-gold-muted">North End, West, Main Lake, and South End</span>. This beautiful body of water
                 is an integral part of a <em className="text-accent-gold-muted not-italic">watershed</em> that crosses the international U.S. border, showcasing
-                the region's stunning natural beauty and ecological significance.
+                the region&apos;s stunning natural beauty and ecological significance.
               </p>
               <p className="text-accent-gold-muted font-medium text-lg">
-                Whether you're exploring its serene shores or enjoying recreational activities, Kootenay
+                Whether you&apos;re exploring its serene shores or enjoying recreational activities, Kootenay
                 Lake offers something for everyone. Come and experience the charm and tranquility of this
                 breathtaking destination.
               </p>

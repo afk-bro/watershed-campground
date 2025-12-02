@@ -76,12 +76,12 @@ export default function ThingsToDoPage() {
             </h2>
             <p className="text-accent-beige/90 text-base sm:text-lg leading-relaxed">
               Discover the stunning Kootenays, where adventure awaits at every turn! With pristine, glacier-fed{" "}
-              <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, you'll find some of the best{" "}
+              <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, you&apos;ll find some of the best{" "}
               <span className="text-accent-gold-muted">fishing</span>, <span className="text-accent-gold-muted">hiking</span>,{" "}
               <span className="text-accent-gold-muted">golfing</span>, and <span className="text-accent-gold-muted">swimming</span> spots around.
               Experience world-class mountain biking and soak in breathtaking views, all while exploring charming small towns filled with
               vibrant culture and unbeatable vibes. Come and create unforgettable memories in what we like to call{" "}
-              <span className="text-accent-gold-muted font-medium italic">outdoor enthusiasts paradise!</span>
+              <span className="text-accent-gold-muted font-medium italic">outdoor enthusiasts&apos; paradise!</span>
             </p>
           </div>
 
@@ -136,10 +136,10 @@ export default function ThingsToDoPage() {
             <div className="bg-gradient-to-b from-brand-forest/40 to-brand-forest/60 border border-accent-gold/25 rounded-xl shadow-2xl p-8 sm:p-10">
               <div className="text-center mb-8">
                 <h2 className="font-heading text-3xl sm:text-4xl text-accent-gold-dark mb-4">
-                  Fisherman's Language
+                  Fisherman&apos;s Language
                 </h2>
                 <p className="text-accent-beige/80 text-sm sm:text-base leading-relaxed max-w-3xl mx-auto">
-                  Fisherman's language is a specialized vocabulary and jargon that is used by fishermen to describe certain techniques,
+                  Fisherman&apos;s language is a specialized vocabulary and jargon that is used by fishermen to describe certain techniques,
                   equipment, conditions of the weather and types of fish. It is often specific to a certain type of region or fishing style.
                   It can also include non-verbal communication like hand gestures.{" "}
                   <span className="text-accent-gold-muted font-medium">How many can you make out?</span>
