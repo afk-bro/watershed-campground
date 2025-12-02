@@ -8,7 +8,7 @@ type Props = {
   size?: "sm" | "md" | "lg";
 };
 
-const base = "relative inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 hover:-translate-y-1 overflow-hidden shadow-lg shadow-black/30 hover:shadow-2xl";
+const base = "relative inline-flex items-center justify-center rounded-lg font-medium transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 hover:-translate-y-1 overflow-hidden shadow-lg shadow-black/30 hover:shadow-2xl hover:[filter:brightness(1.03)]";
 const sizes = {
   sm: "px-5 py-3 text-sm",
   md: "px-7 py-3.5 text-base",
