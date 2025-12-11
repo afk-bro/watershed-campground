@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { reservationFormSchema } from "@/lib/schemas";
+import { supabase } from "@/lib/supabase";
 import { escapeHtml } from "@/lib/htmlEscape";
 
 // Initialize Resend inside the handler to avoid build-time errors if key is missing
@@ -21,6 +22,41 @@ export async function POST(request: Request) {
 
         const formData = result.data;
         const name = `${formData.firstName} ${formData.lastName}`;
+
+        // Save to Supabase
+        const { error: dbError } = await supabase
+            .from('reservations')
+            .insert([
+                {
+                    first_name: formData.firstName,
+                    last_name: formData.lastName,
+                    email: formData.email,
+                    phone: formData.phone,
+                    address1: formData.address1,
+                    address2: formData.address2,
+                    city: formData.city,
+                    postal_code: formData.postalCode,
+                    check_in: formData.checkIn,
+                    check_out: formData.checkOut,
+                    adults: formData.adults,
+                    children: formData.children,
+                    rv_length: formData.rvLength,
+                    rv_year: formData.rvYear,
+                    camping_unit: formData.campingUnit,
+                    hear_about: formData.hearAbout,
+                    contact_method: formData.contactMethod,
+                    comments: formData.comments,
+                    status: 'pending'
+                }
+            ]);
+
+        if (dbError) {
+            console.error("Supabase error:", dbError);
+            return NextResponse.json(
+                { error: "Failed to save reservation" },
+                { status: 500 }
+            );
+        }
 
         // Check for API key
         if (!process.env.RESEND_API_KEY) {
