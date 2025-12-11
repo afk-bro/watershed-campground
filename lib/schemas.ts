@@ -1,9 +1,24 @@
 import { z } from "zod";
 
+// Regex to block control characters that could be used for email header injection:
+// - \r\n: Carriage return and newline (primary header injection vectors)
+// - \x00-\x1F: ASCII control characters (0-31)
+// - \x7F: DEL character
+// - \x80-\x9F: C1 control characters (128-159)
+const CONTROL_CHARS_REGEX = /[\r\n\x00-\x1F\x7F-\x9F]/;
+
+// Email validation that prevents header injection attacks
+const emailWithSecurityValidation = z.string()
+    .email("Invalid email address")
+    .refine(
+        (email: string) => !CONTROL_CHARS_REGEX.test(email),
+        "Email address cannot contain control characters"
+    );
+
 export const contactFormSchema = z.object({
     firstName: z.string().min(1, "First name is required"),
     lastName: z.string().min(1, "Last name is required"),
-    email: z.string().email("Invalid email address"),
+    email: emailWithSecurityValidation,
     message: z.string().min(1, "Message is required"),
 });
 
@@ -14,7 +29,7 @@ export const reservationFormSchema = z.object({
     address2: z.string().optional(),
     city: z.string().min(1, "City is required"),
     postalCode: z.string().min(1, "Postal/Zip code is required"),
-    email: z.string().email("Invalid email address"),
+    email: emailWithSecurityValidation,
     phone: z.string()
         .min(10, "Phone number is required")
         .regex(/^\+?[0-9\s\-()]+$/, "Invalid phone number format"),
