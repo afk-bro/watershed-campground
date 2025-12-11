@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useSyncExternalStore } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Container from "./Container";
 import CTAButton from "./CTAButton";
@@ -17,14 +17,34 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
   const textAlign = align === "center" ? "items-center text-center" : "items-start text-left";
   const [scrollY, setScrollY] = useState(0);
   
-  // Use useSyncExternalStore to avoid synchronous setState warnings in useEffect
+  // Store the MediaQueryList in a ref to avoid recreating it on every render
+  const mediaQueryRef = useRef<MediaQueryList | null>(null);
+
+  // Initialize the ref on the client
+  useEffect(() => {
+    if (typeof window !== "undefined" && !mediaQueryRef.current) {
+      mediaQueryRef.current = window.matchMedia("(prefers-reduced-motion: reduce)");
+    }
+  }, []);
+
   const prefersReducedMotion = useSyncExternalStore(
     (callback: () => void) => {
-      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-      mediaQuery.addEventListener("change", callback);
-      return () => mediaQuery.removeEventListener("change", callback);
+      if (!mediaQueryRef.current && typeof window !== "undefined") {
+        mediaQueryRef.current = window.matchMedia("(prefers-reduced-motion: reduce)");
+      }
+      const mediaQuery = mediaQueryRef.current;
+      if (mediaQuery) {
+        mediaQuery.addEventListener("change", callback);
+        return () => mediaQuery.removeEventListener("change", callback);
+      }
+      return () => {};
     },
-    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => {
+      if (!mediaQueryRef.current && typeof window !== "undefined") {
+        mediaQueryRef.current = window.matchMedia("(prefers-reduced-motion: reduce)");
+      }
+      return mediaQueryRef.current ? mediaQueryRef.current.matches : false;
+    },
     () => false // server snapshot
   );
 
