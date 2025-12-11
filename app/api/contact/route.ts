@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import { contactFormSchema } from "../../lib/schemas";
+import { contactFormSchema } from "@/lib/schemas";
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
