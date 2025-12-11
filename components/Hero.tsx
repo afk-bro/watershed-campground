@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Container from "./Container";
 import CTAButton from "./CTAButton";
@@ -16,18 +16,37 @@ type Props = {
 export default function Hero({ title, subtitle, imageSrc, cta, align = "center" }: Props) {
   const textAlign = align === "center" ? "items-center text-center" : "items-start text-left";
   const [scrollY, setScrollY] = useState(0);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
+  
+  // Store the MediaQueryList in a ref to avoid recreating it on every render
+  const mediaQueryRef = useRef<MediaQueryList | null>(null);
 
+  // Initialize the ref on the client
   useEffect(() => {
-    // Check for reduced motion preference
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => mediaQuery.removeEventListener("change", handleChange);
+    if (typeof window !== "undefined" && !mediaQueryRef.current) {
+      mediaQueryRef.current = window.matchMedia("(prefers-reduced-motion: reduce)");
+    }
   }, []);
+
+  const prefersReducedMotion = useSyncExternalStore(
+    (callback: () => void) => {
+      if (!mediaQueryRef.current && typeof window !== "undefined") {
+        mediaQueryRef.current = window.matchMedia("(prefers-reduced-motion: reduce)");
+      }
+      const mediaQuery = mediaQueryRef.current;
+      if (mediaQuery) {
+        mediaQuery.addEventListener("change", callback);
+        return () => mediaQuery.removeEventListener("change", callback);
+      }
+      return () => {};
+    },
+    () => {
+      if (!mediaQueryRef.current && typeof window !== "undefined") {
+        mediaQueryRef.current = window.matchMedia("(prefers-reduced-motion: reduce)");
+      }
+      return mediaQueryRef.current ? mediaQueryRef.current.matches : false;
+    },
+    () => false // server snapshot
+  );
 
   useEffect(() => {
     if (prefersReducedMotion) return;
