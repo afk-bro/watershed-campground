@@ -52,9 +52,9 @@ export async function POST(request: Request) {
           <p><strong>Camping Unit:</strong> ${escapeHtml(formData.campingUnit)} (${escapeHtml(formData.rvLength)}${formData.rvYear ? `, ${escapeHtml(formData.rvYear)}` : ""})</p>
           
           <h2>Additional Info</h2>
-          <p><strong>Heard About:</strong> ${escapeHtml(formData.hearAbout) || "N/A"}</p>
+          <p><strong>Heard About:</strong> ${escapeHtml(formData.hearAbout || "N/A")}</p>
           <p><strong>Preferred Contact:</strong> ${escapeHtml(formData.contactMethod)}</p>
-          <p><strong>Comments:</strong> ${escapeHtml(formData.comments) || "None"}</p>
+          <p><strong>Comments:</strong> ${escapeHtml(formData.comments || "None")}</p>
         `,
             });
 
