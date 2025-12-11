@@ -21,10 +21,10 @@ export default function NotFound() {
           {/* Message */}
           <div className="space-y-4 max-w-md mx-auto">
             <p className="text-accent-beige/90 text-lg leading-relaxed">
-              Looks like you've wandered off the trail. The page you're looking for doesn't exist.
+              Looks like you&apos;ve wandered off the trail. The page you&apos;re looking for doesn&apos;t exist.
             </p>
             <p className="text-accent-beige/70 text-base">
-              Let's get you back to familiar territory.
+              Let&apos;s get you back to familiar territory.
             </p>
           </div>
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 import Image from "next/image";
 import Container from "./Container";
 import CTAButton from "./CTAButton";
@@ -16,18 +16,17 @@ type Props = {
 export default function Hero({ title, subtitle, imageSrc, cta, align = "center" }: Props) {
   const textAlign = align === "center" ? "items-center text-center" : "items-start text-left";
   const [scrollY, setScrollY] = useState(0);
-  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
-
-  useEffect(() => {
-    // Check for reduced motion preference
-    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setPrefersReducedMotion(mediaQuery.matches);
-
-    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
-    mediaQuery.addEventListener("change", handleChange);
-
-    return () => mediaQuery.removeEventListener("change", handleChange);
-  }, []);
+  
+  // Use useSyncExternalStore to avoid synchronous setState warnings in useEffect
+  const prefersReducedMotion = useSyncExternalStore(
+    (callback: () => void) => {
+      const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+      mediaQuery.addEventListener("change", callback);
+      return () => mediaQuery.removeEventListener("change", callback);
+    },
+    () => window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+    () => false // server snapshot
+  );
 
   useEffect(() => {
     if (prefersReducedMotion) return;

@@ -251,7 +251,7 @@ export default function ContactPage() {
 
                 {status === "success" && (
                   <div className="p-4 bg-green-500/20 border border-green-500/50 rounded-lg text-green-100 text-sm">
-                    Thank you! We've received your message and will get back to you soon.
+                    Thank you! We&apos;ve received your message and will get back to you soon.
                   </div>
                 )}
 
