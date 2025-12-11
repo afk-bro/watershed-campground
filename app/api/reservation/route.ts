@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { reservationFormSchema } from "@/lib/schemas";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Initialize Resend inside the handler to avoid build-time errors if key is missing
+// const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(request: Request) {
     try {
@@ -25,6 +26,8 @@ export async function POST(request: Request) {
             console.log("Mock Reservation Email (RESEND_API_KEY missing):", formData);
             return NextResponse.json({ success: true, message: "Mock email sent" });
         }
+
+        const resend = new Resend(process.env.RESEND_API_KEY);
 
         try {
             // Send email to admin
