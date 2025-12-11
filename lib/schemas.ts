@@ -4,7 +4,7 @@ import { z } from "zod";
 const emailWithSecurityValidation = z.string()
     .email("Invalid email address")
     .refine(
-        (email: string) => !/[\r\n\x00-\x1F\x7F]/.test(email),
+        (email: string) => !/[\r\n\x00-\x1F\x7F-\x9F]/.test(email),
         "Email address cannot contain control characters"
     );
 
