@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { contactFormSchema } from "@/lib/schemas";
+import { escapeHtml } from "@/lib/htmlEscape";
 
 // Initialize Resend inside the handler to avoid build-time errors if key is missing
 // const resend = new Resend(process.env.RESEND_API_KEY);
@@ -39,13 +40,13 @@ export async function POST(request: Request) {
                 from: "The Watershed Campground <onboarding@resend.dev>",
                 to: ["info@thewatershedcampground.com"], // Replace with actual admin email
                 replyTo: email,
-                subject: `New Contact Inquiry from ${name}`,
+                subject: `New Contact Inquiry from ${escapeHtml(name)}`,
                 html: `
           <h1>New Contact Inquiry</h1>
-          <p><strong>Name:</strong> ${name}</p>
-          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+          <p><strong>Email:</strong> ${escapeHtml(email)}</p>
           <p><strong>Message:</strong></p>
-          <p>${message.replace(/\n/g, "<br>")}</p>
+          <p>${escapeHtml(message).replace(/\n/g, "<br>")}</p>
         `,
             });
 
