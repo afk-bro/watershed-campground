@@ -39,6 +39,10 @@
 
 /* Remove automatic dark scheme in favor of brand theme */
 
+html {
+  scroll-behavior: smooth;
+}
+
 body {
   background: var(--color-brand-forest);
   color: var(--color-accent-beige);
@@ -46,6 +50,8 @@ body {
   font-size: 1.0625rem; /* 17px - slightly larger for better readability */
   line-height: 1.75; /* Improved line-height for easier reading */
   position: relative;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body::before {

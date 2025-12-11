@@ -16,21 +16,37 @@ type Props = {
 export default function Hero({ title, subtitle, imageSrc, cta, align = "center" }: Props) {
   const textAlign = align === "center" ? "items-center text-center" : "items-start text-left";
   const [scrollY, setScrollY] = useState(0);
+  const [prefersReducedMotion, setPrefersReducedMotion] = useState(false);
 
   useEffect(() => {
+    // Check for reduced motion preference
+    const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mediaQuery.matches);
+
+    const handleChange = () => setPrefersReducedMotion(mediaQuery.matches);
+    mediaQuery.addEventListener("change", handleChange);
+
+    return () => mediaQuery.removeEventListener("change", handleChange);
+  }, []);
+
+  useEffect(() => {
+    if (prefersReducedMotion) return;
+
     const handleScroll = () => {
       setScrollY(window.scrollY);
     };
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
-  }, []);
+  }, [prefersReducedMotion]);
 
   return (
     <section className="relative h-[65vh] min-h-[440px] w-full overflow-hidden">
       <div
         className="absolute inset-0 will-change-transform"
         style={{
-          transform: `translateY(${scrollY * 0.2}px) scale(${1 + Math.min(scrollY, 200) / 10000})`,
+          transform: prefersReducedMotion 
+            ? "none" 
+            : `translateY(${scrollY * 0.2}px) scale(${1 + Math.min(scrollY, 200) / 10000})`,
           transition: 'transform 50ms linear',
         }}
       >
@@ -83,19 +99,27 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
         </Container>
       </div>
 
-        {/* Minimal scroll indicator */}
-        <div className="absolute bottom-3 left-0 right-0 flex justify-center z-10">
+      <button
+        onClick={() => {
+          window.scrollTo({
+            top: window.innerHeight * 0.65, // Matches the 65vh height
+            behavior: "smooth",
+          });
+        }}
+        className="absolute bottom-3 left-0 right-0 flex justify-center z-20 cursor-pointer hover:text-accent-gold transition-colors duration-300 pb-4 pt-2"
+        aria-label="Scroll to content"
+      >
         <span className="text-accent-gold/85 text-xl sm:text-2xl select-none animate-bounce-slow">↓</span>
-      </div>
+      </button>
 
-        {/* Soft fade at bottom into page background (brand forest) */}
-        <div
-          className="absolute inset-x-0 bottom-0 h-24 sm:h-28 pointer-events-none"
-          style={{
-            background:
-              'linear-gradient(to bottom, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.25) 45%, var(--color-brand-forest) 100%)',
-          }}
-        />
+      {/* Soft fade at bottom into page background (brand forest) */}
+      <div
+        className="absolute inset-x-0 bottom-0 h-24 sm:h-28 pointer-events-none"
+        style={{
+          background:
+            'linear-gradient(to bottom, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.25) 45%, var(--color-brand-forest) 100%)',
+        }}
+      />
     </section>
   );
 }
