@@ -15,7 +15,9 @@ export const reservationFormSchema = z.object({
     city: z.string().min(1, "City is required"),
     postalCode: z.string().min(1, "Postal/Zip code is required"),
     email: z.string().email("Invalid email address"),
-    phone: z.string().min(10, "Phone number is required"),
+    phone: z.string()
+        .min(10, "Phone number is required")
+        .regex(/^\+?[0-9\s\-()]+$/, "Invalid phone number format"),
     checkIn: z.string().min(1, "Check-in date is required"),
     checkOut: z.string().min(1, "Check-out date is required"),
     rvLength: z.string().min(1, "RV length is required"),
