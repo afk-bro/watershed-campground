@@ -5,7 +5,10 @@ export async function GET() {
     try {
         const { data, error } = await supabaseAdmin
             .from('reservations')
-            .select('*')
+            .select(`
+                *,
+                campsite:campsites(code, name, type)
+            `)
             .order('created_at', { ascending: false });
 
         if (error) {

@@ -4,6 +4,7 @@ import crypto from "crypto";
 import { reservationFormSchema } from "@/lib/schemas";
 import { supabase } from "@/lib/supabase";
 import { escapeHtml } from "@/lib/htmlEscape";
+import { checkAvailability } from "@/lib/availability";
 
 function generateToken(): string {
     return crypto.randomBytes(32).toString('hex'); // 64-char random string
@@ -31,6 +32,28 @@ export async function POST(request: Request) {
 
         const formData = result.data;
         const name = `${formData.firstName} ${formData.lastName}`;
+
+        // CRITICAL: Check availability before creating reservation
+        console.log("DEBUG: Checking availability...");
+        const totalGuests = formData.adults + formData.children;
+        const availabilityResult = await checkAvailability({
+            checkIn: formData.checkIn,
+            checkOut: formData.checkOut,
+            guestCount: totalGuests,
+        });
+
+        if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
+            console.log("DEBUG: No campsites available");
+            return NextResponse.json(
+                {
+                    error: "No availability",
+                    message: availabilityResult.message || "No campsites available for the selected dates. Please try different dates or contact us directly.",
+                },
+                { status: 400 }
+            );
+        }
+
+        console.log("DEBUG: Campsite available, assigned:", availabilityResult.recommendedSiteId);
 
         // Generate magic link token
         const rawToken = generateToken();
@@ -62,6 +85,7 @@ export async function POST(request: Request) {
                     comments: formData.comments,
                     status: 'pending',
                     public_edit_token_hash: tokenHash,
+                    campsite_id: availabilityResult.recommendedSiteId, // Auto-assigned campsite
                 }
             ])
             .select()

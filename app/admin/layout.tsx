@@ -53,6 +53,12 @@ export default function AdminLayout({
                                     Reservations
                                 </a>
                                 <a
+                                    href="/admin/campsites"
+                                    className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
+                                >
+                                    Campsites
+                                </a>
+                                <a
                                     href="/admin/settings"
                                     className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
                                 >
