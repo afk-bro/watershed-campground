@@ -61,7 +61,7 @@ export type Reservation = {
     status: ReservationStatus;
     campsite_id?: string;
     // Joined data from campsites table (when queried with join)
-    campsite?: {
+    campsites?: {
         code: string;
         name: string;
         type: CampsiteType;

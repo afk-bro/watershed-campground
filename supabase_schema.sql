@@ -36,9 +36,58 @@ CREATE TABLE public.reservations (
   contact_method text NOT NULL,
   comments text,
   status reservation_status NOT NULL DEFAULT 'pending'::reservation_status,
+  campsite_id uuid REFERENCES public.campsites(id),
   CONSTRAINT reservations_pkey PRIMARY KEY (id),
   CONSTRAINT check_out_after_check_in CHECK (check_out > check_in)
 );
+
+-- ============================================
+-- Campsites Table
+-- ============================================
+
+CREATE TABLE public.campsites (
+  id uuid NOT NULL DEFAULT gen_random_uuid(),
+  created_at timestamp with time zone NOT NULL DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  name text NOT NULL,
+  code text NOT NULL UNIQUE,
+  type text NOT NULL, -- 'rv', 'tent', 'cabin'
+  max_guests integer NOT NULL DEFAULT 6,
+  base_rate decimal(10, 2) NOT NULL DEFAULT 0.00,
+  is_active boolean NOT NULL DEFAULT true,
+  notes text,
+  sort_order integer DEFAULT 0,
+  CONSTRAINT campsites_pkey PRIMARY KEY (id)
+);
+
+-- Trigger to update updated_at for campsites
+CREATE TRIGGER update_campsites_updated_at
+  BEFORE UPDATE ON public.campsites
+  FOR EACH ROW
+  EXECUTE FUNCTION update_updated_at_column();
+
+-- RLS for Campsites
+ALTER TABLE public.campsites ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public read of active campsites"
+  ON public.campsites
+  FOR SELECT
+  TO anon
+  USING (is_active = true);
+
+CREATE POLICY "Allow authenticated users to read all campsites"
+  ON public.campsites
+  FOR SELECT
+  TO authenticated
+  USING (true);
+
+CREATE POLICY "Allow authenticated users to insert/update campsites"
+  ON public.campsites
+  FOR ALL
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
 
 -- ============================================
 -- Indexes for Performance
