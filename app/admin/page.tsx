@@ -150,6 +150,9 @@ export default function AdminPage() {
                                         Unit
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                        Campsite
+                                    </th>
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
                                         Status
                                     </th>
                                     <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
@@ -160,7 +163,7 @@ export default function AdminPage() {
                             <tbody className="divide-y divide-slate-200">
                                 {filteredReservations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-8 text-center text-slate-500">
+                                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
                                             No reservations found
                                         </td>
                                     </tr>
@@ -194,6 +197,22 @@ export default function AdminPage() {
                                             </td>
                                             <td className="px-4 py-3 text-sm text-slate-700">
                                                 {reservation.camping_unit}
+                                            </td>
+                                            <td className="px-4 py-3">
+                                                {reservation.campsite ? (
+                                                    <div>
+                                                        <div className="font-medium text-sm text-slate-900">
+                                                            {reservation.campsite.code}
+                                                        </div>
+                                                        <div className="text-xs text-slate-500">
+                                                            {reservation.campsite.name}
+                                                        </div>
+                                                    </div>
+                                                ) : (
+                                                    <span className="text-xs text-slate-400 italic">
+                                                        Unassigned
+                                                    </span>
+                                                )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <StatusPill status={reservation.status} />

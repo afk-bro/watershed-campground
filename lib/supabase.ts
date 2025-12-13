@@ -20,6 +20,22 @@ export type ReservationStatus =
     | 'checked_out'
     | 'no_show';
 
+export type CampsiteType = 'rv' | 'tent' | 'cabin';
+
+export type Campsite = {
+    id: string;
+    created_at: string;
+    updated_at: string;
+    name: string;
+    code: string;
+    type: CampsiteType;
+    max_guests: number;
+    base_rate: number;
+    is_active: boolean;
+    notes?: string;
+    sort_order: number;
+};
+
 export type Reservation = {
     id?: string;
     created_at?: string;
@@ -43,4 +59,11 @@ export type Reservation = {
     contact_method: string;
     comments?: string;
     status: ReservationStatus;
+    campsite_id?: string;
+    // Joined data from campsites table (when queried with join)
+    campsite?: {
+        code: string;
+        name: string;
+        type: CampsiteType;
+    };
 };
