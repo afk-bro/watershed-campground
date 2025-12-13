@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { supabase, type Reservation, type ReservationStatus } from "@/lib/supabase";
 import StatusPill from "@/components/admin/StatusPill";
 import RowActions from "@/components/admin/RowActions";
@@ -89,13 +90,20 @@ export default function AdminPage() {
     return (
         <div className="py-12">
             <Container>
-                <div className="mb-8">
-                    <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
-                        Reservation Management
-                    </h1>
-                    <p className="text-slate-600">
-                        View and manage all campground reservations
-                    </p>
+                <div className="flex items-center justify-between mb-8">
+                    <div>
+                        <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
+                            Reservation Management
+                        </h1>
+                        <p className="text-slate-600">
+                            View and manage all campground reservations
+                        </p>
+                    </div>
+                    <Link href="/admin/calendar">
+                        <button className="bg-accent-gold text-brand-forest px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-all">
+                            📅 View Calendar
+                        </button>
+                    </Link>
                 </div>
 
                 {/* Filter Buttons */}
