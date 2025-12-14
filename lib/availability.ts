@@ -9,6 +9,7 @@ export type AvailabilityRequest = {
   checkIn: string;  // ISO date string (YYYY-MM-DD)
   checkOut: string; // ISO date string (YYYY-MM-DD)
   guestCount: number;
+  campsiteId?: string;
 };
 
 export type AvailabilityResult = {
@@ -127,22 +128,61 @@ export async function checkAvailability(
       .filter((id): id is string => id !== null)
   );
 
+  // Step 2.5: Check for Blackout Dates
+  // Logic: Block sites if they overlap with a blackout period
+  // If blackout.campsite_id is NULL, it blocks ALL sites.
+  // If blackout.campsite_id is set, it blocks ONLY that site.
+
+  const { data: blackoutDates, error: blackoutError } = await supabaseAdmin
+    .from('blackout_dates')
+    .select('campsite_id')
+    .or(`and(end_date.gte.${checkIn},start_date.lte.${checkOut})`);
+
+  if (blackoutError) {
+    console.error("Error fetching blackout dates:", blackoutError);
+    throw new Error("Failed to check availability (Blackout check failed)");
+  }
+
+  const globalBlackout = blackoutDates?.some(b => b.campsite_id === null);
+
+  // If there is a global blackout, return immediately
+  if (globalBlackout) {
+    return {
+      available: false,
+      availableSites: [],
+      recommendedSiteId: null,
+      message: "Dates are unavailable due to a campground closure.",
+    };
+  }
+
+  const blackedOutSiteIds = new Set(
+    blackoutDates
+      ?.map(b => b.campsite_id)
+      .filter((id): id is string => id !== null)
+  );
+
   // Step 3: Get all active campsites that can accommodate the guest count
-  const { data: allCampsites, error: campsitesError } = await supabaseAdmin
+  let query = supabaseAdmin
     .from("campsites")
     .select("*")
     .eq("is_active", true)
     .gte("max_guests", guestCount)
     .order("sort_order", { ascending: true });
 
+  if (params.campsiteId) {
+    query = query.eq("id", params.campsiteId);
+  }
+
+  const { data: allCampsites, error: campsitesError } = await query;
+
   if (campsitesError) {
     console.error("Error fetching campsites:", campsitesError);
     throw new Error("Failed to fetch campsites");
   }
 
-  // Step 4: Filter out booked campsites
+  // Step 4: Filter out booked AND blacked-out campsites
   const availableSites = allCampsites.filter(
-    (site) => !bookedCampsiteIds.has(site.id)
+    (site) => !bookedCampsiteIds.has(site.id) && !blackedOutSiteIds.has(site.id)
   );
 
   // Step 5: Determine if any sites are available
