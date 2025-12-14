@@ -102,7 +102,7 @@ export default function CampsitesPage() {
                         <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
                             Campsite Management
                         </h1>
-                        <p className="text-slate-600">
+                        <p className="text-[var(--color-text-muted)]">
                             Manage campground sites and availability
                         </p>
                     </div>
@@ -118,50 +118,50 @@ export default function CampsitesPage() {
                 <div className="mb-6 flex flex-wrap gap-2 items-center">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
                             filter === 'all'
                                 ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
+                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
                         }`}
                     >
                         All ({campsites.length})
                     </button>
                     <button
                         onClick={() => setFilter('active')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
                             filter === 'active'
                                 ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
+                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
                         }`}
                     >
                         Active ({activeCampsites})
                     </button>
                     <button
                         onClick={() => setFilter('inactive')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
                             filter === 'inactive'
                                 ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
+                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
                         }`}
                     >
                         Inactive ({inactiveCampsites})
                     </button>
-                    <div className="h-6 w-px bg-slate-300 mx-2"></div>
+                    <div className="h-6 w-px bg-[var(--color-border-strong)] mx-2"></div>
                     {(['rv', 'tent', 'cabin'] as CampsiteType[]).map(type => (
                         <button
                             key={type}
                             onClick={() => setFilter(type)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors capitalize ${
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface capitalize ${
                                 filter === type
                                     ? 'bg-brand-forest text-accent-beige'
-                                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                                    : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
                             }`}
                         >
                             {type} ({typeCounts[type] || 0})
                         </button>
                     ))}
-                    <div className="h-6 w-px bg-slate-300 mx-2"></div>
-                    <label className="flex items-center gap-2 text-sm text-slate-700 cursor-pointer">
+                    <div className="h-6 w-px bg-[var(--color-border-strong)] mx-2"></div>
+                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-primary)] cursor-pointer">
                         <input
                             type="checkbox"
                             checked={showInactive}
@@ -173,70 +173,70 @@ export default function CampsitesPage() {
                 </div>
 
                 {/* Campsites Table */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="admin-table">
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-100 border-b border-slate-200">
+                            <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)]">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Code
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Name
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Type
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Max Guests
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Base Rate
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200">
+                            <tbody className="divide-y divide-[var(--color-border-subtle)]">
                                 {filteredCampsites.length === 0 ? (
                                     <tr>
-                                        <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                                        <td colSpan={7} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
                                             No campsites found
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredCampsites.map((campsite) => (
-                                        <tr key={campsite.id} className="hover:bg-slate-50">
+                                        <tr key={campsite.id} className="hover:bg-[var(--color-surface-elevated)] transition-surface">
                                             <td className="px-4 py-3">
-                                                <div className="font-medium text-slate-900">
+                                                <div className="font-medium text-[var(--color-text-inverse)]">
                                                     {campsite.code}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 {campsite.name}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-slate-100 text-slate-800">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-[var(--color-surface-elevated)] text-[var(--color-text-inverse)]">
                                                     {campsite.type}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 {campsite.max_guests}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 ${campsite.base_rate.toFixed(2)}
                                             </td>
                                             <td className="px-4 py-3">
                                                 {campsite.is_active ? (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-status-confirmed-bg)] text-[var(--color-status-confirmed)]">
                                                         Active
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
+                                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-[var(--color-status-neutral)]/20 text-[var(--color-status-neutral)]">
                                                         Inactive
                                                     </span>
                                                 )}
@@ -245,13 +245,13 @@ export default function CampsitesPage() {
                                                 <div className="flex items-center gap-2">
                                                     <Link
                                                         href={`/admin/campsites/${campsite.id}/edit`}
-                                                        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+                                                        className="text-sm text-[var(--color-status-active)] hover:opacity-80 font-medium transition-opacity"
                                                     >
                                                         Edit
                                                     </Link>
                                                     <button
                                                         onClick={() => toggleActive(campsite.id, campsite.is_active)}
-                                                        className="text-sm text-slate-600 hover:text-slate-800 font-medium"
+                                                        className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] font-medium transition-colors"
                                                     >
                                                         {campsite.is_active ? 'Deactivate' : 'Activate'}
                                                     </button>
