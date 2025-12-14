@@ -48,10 +48,10 @@ export default function RescheduleConfirmDialog({
   const datesChanged = oldStartDate !== newStartDate || oldEndDate !== newEndDate;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-[60] flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div className="fixed inset-0 bg-[var(--color-surface-overlay)] z-[60] flex items-center justify-center p-4">
+      <div className="admin-card max-w-2xl w-full max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 bg-brand-forest">
+        <div className="flex items-center justify-between p-6 border-b border-[var(--color-border-default)] bg-brand-forest">
           <h2 className="text-xl font-heading font-bold text-accent-beige">
             Confirm Reschedule
           </h2>
@@ -67,64 +67,64 @@ export default function RescheduleConfirmDialog({
         {/* Content */}
         <div className="p-6">
           {/* Guest Info */}
-          <div className="mb-6 p-4 bg-slate-50 rounded-lg">
-            <div className="font-medium text-slate-900">
+          <div className="mb-6 p-4 bg-[var(--color-surface-elevated)] rounded-lg">
+            <div className="font-medium text-[var(--color-text-inverse)]">
               {reservation.first_name} {reservation.last_name}
             </div>
-            <div className="text-sm text-slate-600">{reservation.email}</div>
+            <div className="text-sm text-[var(--color-text-muted)]">{reservation.email}</div>
           </div>
 
           {/* Changes Table */}
           <div className="mb-6">
-            <h3 className="text-sm font-medium text-slate-700 mb-3">Reservation Changes</h3>
+            <h3 className="text-sm font-medium text-[var(--color-text-primary)] mb-3">Reservation Changes</h3>
             <table className="w-full border-collapse">
               <thead>
-                <tr className="bg-slate-50">
-                  <th className="text-left p-3 border-b-2 border-slate-200"></th>
-                  <th className="text-left p-3 border-b-2 border-slate-200 text-slate-600">
+                <tr className="bg-[var(--color-surface-elevated)]">
+                  <th className="text-left p-3 border-b-2 border-[var(--color-border-default)]"></th>
+                  <th className="text-left p-3 border-b-2 border-[var(--color-border-default)] text-[var(--color-text-muted)]">
                     Current
                   </th>
-                  <th className="text-left p-3 border-b-2 border-slate-200 text-accent-gold">
+                  <th className="text-left p-3 border-b-2 border-[var(--color-border-default)] text-accent-gold">
                     New
                   </th>
                 </tr>
               </thead>
               <tbody>
-                <tr className={campsiteChanged ? "bg-amber-50" : ""}>
-                  <td className="p-3 font-medium text-slate-700 border-b border-slate-100">
+                <tr className={campsiteChanged ? "bg-[var(--color-status-pending-bg)]" : ""}>
+                  <td className="p-3 font-medium text-[var(--color-text-primary)] border-b border-[var(--color-border-subtle)]">
                     Campsite
                   </td>
-                  <td className="p-3 border-b border-slate-100">{oldCampsiteName}</td>
-                  <td className={`p-3 border-b border-slate-100 ${
+                  <td className="p-3 border-b border-[var(--color-border-subtle)]">{oldCampsiteName}</td>
+                  <td className={`p-3 border-b border-[var(--color-border-subtle)] ${
                     campsiteChanged ? "text-accent-gold font-bold" : ""
                   }`}>
                     {newCampsiteName}
                   </td>
                 </tr>
-                <tr className={datesChanged ? "bg-amber-50" : ""}>
-                  <td className="p-3 font-medium text-slate-700 border-b border-slate-100">
+                <tr className={datesChanged ? "bg-[var(--color-status-pending-bg)]" : ""}>
+                  <td className="p-3 font-medium text-[var(--color-text-primary)] border-b border-[var(--color-border-subtle)]">
                     Check-in
                   </td>
-                  <td className="p-3 border-b border-slate-100">{formatDate(oldStartDate)}</td>
-                  <td className={`p-3 border-b border-slate-100 ${
+                  <td className="p-3 border-b border-[var(--color-border-subtle)]">{formatDate(oldStartDate)}</td>
+                  <td className={`p-3 border-b border-[var(--color-border-subtle)] ${
                     oldStartDate !== newStartDate ? "text-accent-gold font-bold" : ""
                   }`}>
                     {formatDate(newStartDate)}
                   </td>
                 </tr>
-                <tr className={datesChanged ? "bg-amber-50" : ""}>
-                  <td className="p-3 font-medium text-slate-700 border-b border-slate-100">
+                <tr className={datesChanged ? "bg-[var(--color-status-pending-bg)]" : ""}>
+                  <td className="p-3 font-medium text-[var(--color-text-primary)] border-b border-[var(--color-border-subtle)]">
                     Check-out
                   </td>
-                  <td className="p-3 border-b border-slate-100">{formatDate(oldEndDate)}</td>
-                  <td className={`p-3 border-b border-slate-100 ${
+                  <td className="p-3 border-b border-[var(--color-border-subtle)]">{formatDate(oldEndDate)}</td>
+                  <td className={`p-3 border-b border-[var(--color-border-subtle)] ${
                     oldEndDate !== newEndDate ? "text-accent-gold font-bold" : ""
                   }`}>
                     {formatDate(newEndDate)}
                   </td>
                 </tr>
-                <tr className={oldNights !== newNights ? "bg-amber-50" : ""}>
-                  <td className="p-3 font-medium text-slate-700">Nights</td>
+                <tr className={oldNights !== newNights ? "bg-[var(--color-status-pending-bg)]" : ""}>
+                  <td className="p-3 font-medium text-[var(--color-text-primary)]">Nights</td>
                   <td className="p-3">
                     {oldNights} {oldNights === 1 ? "night" : "nights"}
                   </td>
@@ -140,13 +140,13 @@ export default function RescheduleConfirmDialog({
 
           {/* Validation Error */}
           {validationError && (
-            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-800 text-sm">
+            <div className="error-message mb-4">
               <strong>Error:</strong> {validationError}
             </div>
           )}
 
           {/* Warning */}
-          <div className="mb-6 p-4 bg-blue-50 border border-blue-200 rounded-lg text-blue-800 text-sm">
+          <div className="mb-6 p-4 bg-[var(--color-status-active)]/10 border border-[var(--color-status-active)]/30 rounded-lg text-[var(--color-text-inverse)] text-sm">
             <strong>⚠️ Guest will receive email notification</strong>
             <br />
             An automated email will be sent to {reservation.email} with the updated reservation details.
@@ -157,7 +157,7 @@ export default function RescheduleConfirmDialog({
             <button
               onClick={onCancel}
               disabled={isSubmitting}
-              className="px-6 py-2 rounded-lg text-sm font-medium text-slate-700 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-6 py-2 rounded-lg text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-elevated)]/80 transition-surface disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Cancel
             </button>
