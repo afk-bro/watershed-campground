@@ -1,6 +1,34 @@
 @import "tailwindcss";
 
 /* ============================================================================
+   DESIGN SYSTEM STABILITY - FROZEN
+   ============================================================================
+
+   STATUS: STABLE & FROZEN as of 2025-01-14
+
+   This design system is now locked for production use.
+
+   RULES FOR CHANGES:
+
+   1. NO NEW TOKENS unless a clear category emerges
+      - Don't add one-off colors for specific components
+      - If you need a new color 3+ times, propose a semantic token
+
+   2. PREFER COMPOSITION over expansion
+      - Use existing tokens in new combinations
+      - Example: bg-[var(--color-surface-card)] + border-[var(--color-border-strong)]
+      - Don't create new tokens for every UI variant
+
+   3. CHANGES REQUIRE REVIEW
+      - Discuss token additions in design system docs
+      - Update docs/design-system.md with rationale
+      - Run ESLint to verify no violations introduced
+
+   This prevents "token bloat" and maintains system integrity.
+
+   ============================================================================ */
+
+/* ============================================================================
    DESIGN TOKENS
    ============================================================================ */
 
@@ -541,6 +569,26 @@ select:focus-visible {
 }
 
 .btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  padding: 0.5rem 1rem;
+  background: var(--color-error);
+  color: var(--color-text-inverse);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-danger:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }

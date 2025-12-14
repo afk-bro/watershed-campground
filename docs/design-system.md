@@ -2,6 +2,34 @@
 
 > Production-ready design tokens, utilities, and component recipes for consistent UI development.
 
+---
+
+## 🔒 System Status: STABLE & FROZEN
+
+**Status:** Production-ready and locked as of **2025-01-14**
+
+**This design system is now frozen.** No new tokens should be added without team review.
+
+### Rules for Changes
+
+1. **NO NEW TOKENS** unless a clear category emerges
+   - Don't add one-off colors for specific components
+   - If you need a new color/token 3+ times, propose it as a semantic token
+
+2. **PREFER COMPOSITION** over expansion
+   - Combine existing tokens in new ways
+   - Example: `bg-[var(--color-surface-card)] border-[var(--color-border-strong)]`
+   - Don't create new tokens for every UI variant
+
+3. **CHANGES REQUIRE REVIEW**
+   - Discuss additions in team meetings
+   - Update this documentation with clear rationale
+   - Run `npm run lint` to verify no violations
+
+**Why freeze?** Token bloat is the #1 failure mode of design systems. A small, well-composed system is better than a sprawling one.
+
+---
+
 ## Table of Contents
 - [Core Principles](#core-principles)
 - [Design Tokens](#design-tokens)
@@ -110,22 +138,42 @@
 
 ### Buttons
 
-#### Primary Button
+**Use utility classes for consistency.** These 4 button types cover 90% of use cases.
+
+#### Primary Button (Main Actions)
 ```tsx
+// ✅ Preferred - use utility class
+<button className="btn-primary">Save Changes</button>
+
+// Also valid - manual composition
 <button className="px-4 py-2 bg-[var(--color-accent-gold)] text-[var(--color-text-inverse)] rounded-lg font-medium hover:opacity-90 transition-opacity">
   Primary Action
 </button>
 ```
 
-#### Secondary Button
+#### Secondary Button (Alternative Actions)
 ```tsx
+// ✅ Preferred - use utility class
+<button className="btn-secondary">Cancel</button>
+
+// Also valid - manual composition
 <button className="px-4 py-2 bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border border-[var(--color-border-default)] rounded-lg font-medium hover:bg-[var(--color-surface-elevated)] transition-surface">
   Secondary Action
 </button>
 ```
 
-#### Ghost Button
+#### Danger Button (Destructive Actions)
 ```tsx
+// ✅ Preferred - use utility class
+<button className="btn-danger">Delete Reservation</button>
+```
+
+#### Ghost Button (Tertiary Actions)
+```tsx
+// ✅ Preferred - use utility class
+<button className="btn-ghost">View Details</button>
+
+// Also valid - manual composition
 <button className="px-4 py-2 text-[var(--color-accent-gold)] hover:bg-[var(--color-surface-elevated)] rounded-lg transition-surface">
   Tertiary Action
 </button>
@@ -133,37 +181,99 @@
 
 ### Form Inputs
 
-#### Text Input
+**Use utility classes for all form inputs.** This ensures consistent styling and focus states.
+
+#### Complete Form Example
 ```tsx
-<input
-  type="text"
-  className="w-full px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)]/20"
-/>
+<div>
+  <label className="label">Email Address</label>
+  <input type="email" className="input" placeholder="you@example.com" />
+  <p className="help-text">We'll never share your email</p>
+</div>
+
+<div>
+  <label className="label-required">Password</label>
+  <input type="password" className="input" />
+  {error && <p className="error-text">{error}</p>}
+</div>
+
+<div>
+  <label className="label">Country</label>
+  <select className="select">
+    <option>United States</option>
+    <option>Canada</option>
+  </select>
+</div>
+
+<div>
+  <label className="label">Message</label>
+  <textarea rows={4} className="textarea"></textarea>
+</div>
 ```
 
-#### Text Input with Error
+#### Individual Components
+
+**Text Input**
 ```tsx
-<input
-  type="email"
-  className="error-input"
-/>
-{error && <p className="error-text">{error}</p>}
+// ✅ Preferred - use utility class
+<input type="text" className="input" />
 ```
 
-#### Select Dropdown
+**Select Dropdown**
 ```tsx
-<select className="w-full px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)]">
+// ✅ Preferred - use utility class
+<select className="select">
   <option>Option 1</option>
 </select>
 ```
 
-#### Textarea
+**Textarea**
 ```tsx
-<textarea
-  rows={4}
-  className="w-full px-3 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] resize-y"
-/>
+// ✅ Preferred - use utility class
+<textarea rows={4} className="textarea"></textarea>
 ```
+
+**Labels & Helpers**
+```tsx
+// Standard label
+<label className="label">Field Name</label>
+
+// Required field label (adds red asterisk)
+<label className="label-required">Email</label>
+
+// Help text (muted, small)
+<p className="help-text">Additional context</p>
+
+// Error text (red, small)
+<p className="error-text">This field is required</p>
+```
+
+---
+
+### 🔒 Locked Form Primitives
+
+**These 11 classes cover 90% of admin UI needs. They are frozen and should NOT be expanded.**
+
+**Buttons (4):**
+- `.btn-primary` - Main actions (Save, Submit, Create)
+- `.btn-secondary` - Alternative actions (Cancel, Back)
+- `.btn-danger` - Destructive actions (Delete, Remove)
+- `.btn-ghost` - Tertiary actions (View, Edit, Details)
+
+**Form Inputs (3):**
+- `.input` - Text fields, email, password, date, etc.
+- `.select` - Dropdown selectors
+- `.textarea` - Multi-line text input
+
+**Labels & Helpers (4):**
+- `.label` - Standard form label
+- `.label-required` - Label with red asterisk
+- `.help-text` - Muted helper text
+- `.error-text` - Error message text
+
+**Once these exist, 90% of admin UI work becomes mechanical.** Use composition for variants.
+
+---
 
 ### Cards & Surfaces
 
