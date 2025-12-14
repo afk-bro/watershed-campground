@@ -40,7 +40,7 @@ export default function AdminLoginPage() {
             <Container>
                 <div className="max-w-md mx-auto admin-card p-8">
                     <div className="mb-8 text-center">
-                        <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
+                        <h1 className="text-3xl font-heading font-bold text-accent-gold mb-2">
                             Admin Login
                         </h1>
                         <p className="text-[var(--color-text-muted)]">

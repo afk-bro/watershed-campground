@@ -113,7 +113,7 @@ function ReservationForm() {
         <div className="py-12">
             <Container>
                  <div className="mb-8 flex justify-between items-center">
-                    <h1 className="text-3xl font-heading font-bold text-brand-forest">New Manual Reservation</h1>
+                    <h1 className="text-3xl font-heading font-bold text-accent-gold">New Manual Reservation</h1>
                     <Link href="/admin"><button className="text-[var(--color-text-muted)] hover:underline">Cancel</button></Link>
                  </div>
 
@@ -174,7 +174,7 @@ function ReservationForm() {
                      <div className="bg-[var(--color-warning)]/10 p-4 rounded border border-[var(--color-warning)]/30">
                          <label className="flex items-center gap-2">
                              <input type="checkbox" checked={formData.isOffline} onChange={e => setFormData({...formData, isOffline: e.target.checked})} />
-                             <span className="font-bold text-[var(--color-text-inverse)]">Mark as Paid (Offline / Cash / E-Transfer)</span>
+                             <span className="font-bold text-[var(--color-text-primary)]">Mark as Paid (Offline / Cash / E-Transfer)</span>
                          </label>
                          <p className="text-sm text-[var(--color-text-muted)] ml-6">By checking this, you bypass Stripe payment. The reservation will be confirmed immediately.</p>
                      </div>

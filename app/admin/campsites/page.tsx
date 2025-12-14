@@ -99,7 +99,7 @@ export default function CampsitesPage() {
             <Container>
                 <div className="mb-8 flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
+                        <h1 className="text-3xl font-heading font-bold text-accent-gold mb-2">
                             Campsite Management
                         </h1>
                         <p className="text-[var(--color-text-muted)]">
@@ -212,7 +212,7 @@ export default function CampsitesPage() {
                                     filteredCampsites.map((campsite) => (
                                         <tr key={campsite.id} className="hover:bg-[var(--color-surface-elevated)] transition-surface">
                                             <td className="px-4 py-3">
-                                                <div className="font-medium text-[var(--color-text-inverse)]">
+                                                <div className="font-medium text-[var(--color-text-primary)]">
                                                     {campsite.code}
                                                 </div>
                                             </td>
@@ -220,7 +220,7 @@ export default function CampsitesPage() {
                                                 {campsite.name}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-[var(--color-surface-elevated)] text-[var(--color-text-inverse)]">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)]">
                                                     {campsite.type}
                                                 </span>
                                             </td>

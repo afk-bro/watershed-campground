@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef } from "react";
 import { Campsite, Reservation } from "@/lib/supabase";
 import { format, eachDayOfInterval, isSameMonth, isToday, isWeekend, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from "date-fns";
 import ReservationBlock from "./ReservationBlock";
@@ -26,6 +26,12 @@ export default function CalendarGrid({
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
+
+  // Refs for auto-scroll
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const autoScrollIntervalRef = useRef<number | null>(null);
+  const scrollDirectionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const scrollAnimationFrameRef = useRef<number | null>(null);
 
   // Drag-and-drop state
   const [isDragging, setIsDragging] = useState(false);
@@ -59,6 +65,79 @@ export default function CalendarGrid({
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+
+  // Constants for auto-scroll
+  const SCROLL_ZONE_PX = 60;
+  const SCROLL_SPEED = 12;
+
+  // Smooth auto-scroll using requestAnimationFrame
+  const startAutoScroll = useCallback(() => {
+    const tick = () => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      const { x, y } = scrollDirectionRef.current;
+
+      if (x !== 0 || y !== 0) {
+        container.scrollBy({
+          left: x * SCROLL_SPEED,
+          top: y * SCROLL_SPEED,
+          behavior: 'auto'
+        });
+        scrollAnimationFrameRef.current = requestAnimationFrame(tick);
+      } else {
+        scrollAnimationFrameRef.current = null;
+      }
+    };
+
+    if (!scrollAnimationFrameRef.current) {
+      scrollAnimationFrameRef.current = requestAnimationFrame(tick);
+    }
+  }, []);
+
+  const stopAutoScroll = useCallback(() => {
+    scrollDirectionRef.current = { x: 0, y: 0 };
+    if (scrollAnimationFrameRef.current) {
+      cancelAnimationFrame(scrollAnimationFrameRef.current);
+      scrollAnimationFrameRef.current = null;
+    }
+  }, []);
+
+  const updateScrollDirection = useCallback((clientX: number, clientY: number) => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    const rect = container.getBoundingClientRect();
+
+    let x = 0;
+    let y = 0;
+
+    // Horizontal scrolling
+    if (clientX < rect.left + SCROLL_ZONE_PX) {
+      x = -1; // Scroll left
+    } else if (clientX > rect.right - SCROLL_ZONE_PX) {
+      x = 1; // Scroll right
+    }
+
+    // Vertical scrolling
+    if (clientY < rect.top + SCROLL_ZONE_PX) {
+      y = -1; // Scroll up
+    } else if (clientY > rect.bottom - SCROLL_ZONE_PX) {
+      y = 1; // Scroll down
+    }
+
+    const directionChanged =
+      scrollDirectionRef.current.x !== x ||
+      scrollDirectionRef.current.y !== y;
+
+    scrollDirectionRef.current = { x, y };
+
+    if ((x !== 0 || y !== 0) && directionChanged) {
+      startAutoScroll();
+    } else if (x === 0 && y === 0) {
+      stopAutoScroll();
+    }
+  }, [startAutoScroll, stopAutoScroll]);
 
   const handleReservationClick = (res: Reservation) => {
     setSelectedReservation(res);
@@ -201,7 +280,82 @@ export default function CalendarGrid({
     setDraggedReservation(null);
     setDragPreview(null);
     setValidationError(null);
+
+    // Stop auto-scroll
+    if (autoScrollIntervalRef.current) {
+      window.clearInterval(autoScrollIntervalRef.current);
+      autoScrollIntervalRef.current = null;
+    }
   };
+
+  // Auto-scroll when dragging near edges
+  useEffect(() => {
+    if (!isDragging) return;
+
+    const handleDragMove = (e: DragEvent) => {
+      const container = scrollContainerRef.current;
+      if (!container) return;
+
+      const rect = container.getBoundingClientRect();
+      const scrollThreshold = 80; // Distance from edge to trigger scroll
+      const scrollSpeed = 15; // Pixels to scroll per interval
+
+      // Calculate distance from edges
+      const distanceFromLeft = e.clientX - rect.left;
+      const distanceFromRight = rect.right - e.clientX;
+      const distanceFromTop = e.clientY - rect.top;
+      const distanceFromBottom = rect.bottom - e.clientY;
+
+      // Clear existing interval
+      if (autoScrollIntervalRef.current) {
+        window.clearInterval(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+
+      // Determine scroll direction
+      let scrollX = 0;
+      let scrollY = 0;
+
+      // Horizontal scrolling (most important for calendar)
+      if (distanceFromLeft < scrollThreshold && distanceFromLeft > 0) {
+        scrollX = -scrollSpeed;
+      } else if (distanceFromRight < scrollThreshold && distanceFromRight > 0) {
+        scrollX = scrollSpeed;
+      }
+
+      // Vertical scrolling
+      if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
+        scrollY = -scrollSpeed;
+      } else if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
+        scrollY = scrollSpeed;
+      }
+
+      // Start auto-scroll if needed
+      if (scrollX !== 0 || scrollY !== 0) {
+        autoScrollIntervalRef.current = window.setInterval(() => {
+          if (container) {
+            container.scrollBy({
+              left: scrollX,
+              top: scrollY,
+              behavior: 'auto' // Smooth but immediate
+            });
+          }
+        }, 16); // ~60fps
+      }
+    };
+
+    // Add event listener
+    document.addEventListener('dragover', handleDragMove);
+
+    // Cleanup
+    return () => {
+      document.removeEventListener('dragover', handleDragMove);
+      if (autoScrollIntervalRef.current) {
+        window.clearInterval(autoScrollIntervalRef.current);
+        autoScrollIntervalRef.current = null;
+      }
+    };
+  }, [isDragging]);
 
   // Resize event handlers (pointer events)
   const handleResizeStart = (reservation: Reservation, side: ResizeSide) => {
@@ -228,6 +382,9 @@ export default function CalendarGrid({
 
   const handleResizeMove = useCallback((e: PointerEvent) => {
     if (!resizeState) return;
+
+    // Update auto-scroll direction based on pointer position
+    updateScrollDirection(e.clientX, e.clientY);
 
     const hoveredDate = getDateFromPointer(e.clientX, e.clientY);
     if (!hoveredDate) return;
@@ -270,9 +427,12 @@ export default function CalendarGrid({
     );
 
     setValidationError(validation.valid ? null : validation.error);
-  }, [resizeState]);
+  }, [resizeState, updateScrollDirection]);
 
   const handleResizeEnd = useCallback(() => {
+    // Stop auto-scroll
+    stopAutoScroll();
+
     if (!resizeState) return;
 
     // Check for validation errors
@@ -303,7 +463,7 @@ export default function CalendarGrid({
     });
     setShowConfirmDialog(true);
     setResizeState(null);
-  }, [resizeState, validationError, showToast, setPendingMove, setShowConfirmDialog]);
+  }, [resizeState, validationError, showToast, setPendingMove, setShowConfirmDialog, stopAutoScroll]);
 
   // Add/remove window pointer listeners for resize
   useEffect(() => {
@@ -369,7 +529,7 @@ export default function CalendarGrid({
       {/* Header Controls */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)]">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-heading font-bold text-[var(--color-text-inverse)]">
+          <h2 className="text-lg font-heading font-bold text-[var(--color-text-primary)]">
             {format(date, "MMMM yyyy")}
           </h2>
           <div className="flex items-center rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-card)] shadow-sm">
@@ -407,12 +567,12 @@ export default function CalendarGrid({
       </div>
 
       {/* Grid Container - Scrollable */}
-      <div className="flex-1 overflow-auto relative">
+      <div ref={scrollContainerRef} className="flex-1 overflow-auto relative">
         <div className="inline-block min-w-full">
           {/* Header Row (Dates) */}
           <div className="flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)]">
             {/* Corner Sticky */}
-            <div className="sticky left-0 w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] p-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40">
+            <div className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] p-2 lg:p-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40 text-xs lg:text-sm">
               Campsite
             </div>
             {/* Days */}
@@ -420,12 +580,12 @@ export default function CalendarGrid({
               {days.map((day) => (
                 <div
                   key={day.toString()}
-                  className={`w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] p-2 text-xs
+                  className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] p-1 lg:p-2 text-xs
                     ${isWeekend(day) ? "bg-[var(--color-surface-elevated)]/50" : ""}
                     ${isToday(day) ? "bg-[var(--color-status-active)]/10" : ""}`}
                 >
-                  <div className="font-semibold text-[var(--color-text-primary)]">{format(day, "d")}</div>
-                  <div className="text-[var(--color-text-muted)] uppercase text-[10px]">{format(day, "EEEEE")}</div>
+                  <div className="font-semibold text-[var(--color-text-primary)] text-[10px] lg:text-xs">{format(day, "d")}</div>
+                  <div className="text-[var(--color-text-muted)] uppercase text-[8px] lg:text-[10px] hidden sm:block">{format(day, "EEEEE")}</div>
                 </div>
               ))}
             </div>
@@ -444,14 +604,14 @@ export default function CalendarGrid({
               return (
                 <div key="unassigned" className="flex border-b border-[var(--color-border-default)] bg-[var(--color-status-pending-bg)] hover:bg-[var(--color-status-pending-bg)]/70 transition-surface group relative">
                   {/* Sticky Column */}
-                  <div className="sticky left-0 w-64 bg-[var(--color-status-pending-bg)] group-hover:bg-[var(--color-status-pending-bg)]/70 transition-surface border-r border-[var(--color-border-default)] p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20">
-                    <div>
-                      <div className="font-medium text-[var(--color-text-inverse)]">Unassigned</div>
-                      <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
+                  <div className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-status-pending-bg)] group-hover:bg-[var(--color-status-pending-bg)]/70 transition-surface border-r border-[var(--color-border-default)] p-2 lg:p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-[var(--color-text-primary)] text-xs lg:text-sm truncate">Unassigned</div>
+                      <div className="text-[10px] lg:text-xs text-[var(--color-text-muted)] flex items-center gap-1">
                         {unassignedReservations.length} reservation{unassignedReservations.length !== 1 ? 's' : ''}
                       </div>
                     </div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--color-status-pending)]" title="Needs Assignment" />
+                    <div className="w-2 h-2 rounded-full bg-[var(--color-status-pending)] flex-shrink-0" title="Needs Assignment" />
                   </div>
 
                   {/* Day Cells */}
@@ -464,7 +624,7 @@ export default function CalendarGrid({
                         <div
                           key={day.toString()}
                           data-date={dayStr}
-                          className={`w-12 h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface bg-[var(--color-status-pending-bg)]/50 ${
+                          className={`w-8 lg:w-10 xl:w-12 h-12 lg:h-14 xl:h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface bg-[var(--color-status-pending-bg)]/50 ${
                             isDragging && isHovered
                               ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
                               : ''
@@ -548,14 +708,14 @@ export default function CalendarGrid({
               return (
                 <div key={campsite.id} className={`flex border-b border-[var(--color-border-subtle)] ${rowHoverClass} ${rowBgClass} transition-surface group relative ${isInactive ? 'border-[var(--color-error)]/30' : ''}`}>
                   {/* Sticky Column */}
-                  <div className={`sticky left-0 w-64 ${stickyBgClass} transition-surface border-r border-[var(--color-border-default)] p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20 ${isInactive ? 'border-r-[var(--color-error)]/30' : ''}`}>
-                    <div>
-                      <div className="font-medium text-[var(--color-text-inverse)]">{campsite.name}</div>
-                      <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
+                  <div className={`sticky left-0 w-32 sm:w-48 lg:w-64 ${stickyBgClass} transition-surface border-r border-[var(--color-border-default)] p-2 lg:p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20 ${isInactive ? 'border-r-[var(--color-error)]/30' : ''}`}>
+                    <div className="min-w-0 flex-1">
+                      <div className="font-medium text-[var(--color-text-primary)] text-xs lg:text-sm truncate">{campsite.name}</div>
+                      <div className="text-[10px] lg:text-xs text-[var(--color-text-muted)] flex items-center gap-1">
                         <span className="uppercase">{campsite.type}</span> • {campsite.max_guests} Guests
                       </div>
                     </div>
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: campsite.is_active ? 'var(--color-success)' : 'var(--color-status-neutral)' }} title={campsite.is_active ? 'Active' : 'Inactive'} />
+                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: campsite.is_active ? 'var(--color-success)' : 'var(--color-status-neutral)' }} title={campsite.is_active ? 'Active' : 'Inactive'} />
                   </div>
 
                   {/* Day Cells */}
@@ -585,7 +745,7 @@ export default function CalendarGrid({
                         <div
                           key={day.toString()}
                           data-date={dayStr}
-                          className={`w-12 h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${
+                          className={`w-8 lg:w-10 xl:w-12 h-12 lg:h-14 xl:h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${
                             isDragging && isHovered
                               ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
                               : ''

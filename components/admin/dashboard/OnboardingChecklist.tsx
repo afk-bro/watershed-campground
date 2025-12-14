@@ -107,7 +107,7 @@ export default function OnboardingChecklist() {
     <div className="admin-card mb-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-bold text-[var(--color-text-inverse)]">Getting Started</h2>
+          <h2 className="text-lg font-bold text-[var(--color-text-primary)]">Getting Started</h2>
           <p className="text-[var(--color-text-muted)] text-sm">Complete these steps to get your campground ready for guests.</p>
         </div>
         <div className="text-right">
@@ -126,7 +126,7 @@ export default function OnboardingChecklist() {
               {step.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
             </div>
             <div className="flex-1">
-              <h3 className={`font-medium ${step.done ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text-inverse)]'}`}>
+              <h3 className={`font-medium ${step.done ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text-primary)]'}`}>
                 {step.label}
               </h3>
               <p className="text-xs text-[var(--color-text-muted)] mb-2">{step.desc}</p>
