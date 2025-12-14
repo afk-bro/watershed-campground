@@ -191,7 +191,7 @@ export default function AmenitiesPage() {
               </form>
 
               {/* Social Media Links */}
-              <div className="mt-8 pt-8 border-t border-accent-gold/20">
+              <div className="mt-6 pt-6 border-t border-accent-gold/20">
                 <p className="text-center text-sm text-accent-beige/70 mb-4">Or connect with us on social media</p>
                 <div className="flex justify-center gap-4">
                   <a

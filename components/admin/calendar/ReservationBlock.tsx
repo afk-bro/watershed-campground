@@ -52,7 +52,7 @@ export default function ReservationBlock({
     pending: "bg-[var(--color-status-pending)] text-[var(--color-text-inverse)] border-[var(--color-status-pending)]",
     checked_in: "bg-[var(--color-status-confirmed)] text-white border-[var(--color-status-confirmed)]",
     checked_out: "bg-[var(--color-status-neutral)] text-white border-[var(--color-status-neutral)]",
-    cancelled: "bg-[var(--color-status-cancelled)]/30 text-[var(--color-text-inverse)] border-[var(--color-status-cancelled)] opacity-50",
+    cancelled: "bg-[var(--color-status-cancelled)]/30 text-[var(--color-text-primary)] border-[var(--color-status-cancelled)] opacity-50",
     no_show: "bg-[var(--color-status-cancelled)] text-white border-[var(--color-status-cancelled)]",
   };
 

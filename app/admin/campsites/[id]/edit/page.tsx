@@ -134,7 +134,7 @@ export default function EditCampsitePage() {
         <div className="py-12">
             <Container>
                 <div className="max-w-2xl">
-                    <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
+                    <h1 className="text-3xl font-heading font-bold text-accent-gold mb-2">
                         Edit Campsite
                     </h1>
                     <p className="text-[var(--color-text-muted)] mb-8">

@@ -61,7 +61,7 @@ export default function ReservationDrawer({
                   <Calendar size={16} />
                   <span className="text-xs font-semibold uppercase tracking-wider">Dates</span>
                 </div>
-                <div className="font-medium text-[var(--color-text-inverse)]">
+                <div className="font-medium text-[var(--color-text-primary)]">
                   {format(parseISO(reservation.check_in), "MMM d")} - {format(parseISO(reservation.check_out), "MMM d, yyyy")}
                 </div>
                 <div className="text-sm text-[var(--color-text-muted)] mt-1">
@@ -74,7 +74,7 @@ export default function ReservationDrawer({
                   <Tent size={16} />
                   <span className="text-xs font-semibold uppercase tracking-wider">Campsite</span>
                 </div>
-                <div className="font-medium text-[var(--color-text-inverse)]">
+                <div className="font-medium text-[var(--color-text-primary)]">
                   {reservation.campsites?.name || "Unassigned"}
                 </div>
                 <div className="text-sm text-[var(--color-text-muted)] mt-1">
@@ -85,14 +85,14 @@ export default function ReservationDrawer({
 
             {/* Guest Details */}
             <div>
-              <h3 className="text-sm font-semibold text-[var(--color-text-inverse)] uppercase tracking-wider mb-4 border-b pb-2">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider mb-4 border-b pb-2">
                 Guest Details
               </h3>
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Mail className="mt-0.5 text-[var(--color-text-muted)]" size={18} />
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text-inverse)]">Email</div>
+                    <div className="text-sm font-medium text-[var(--color-text-primary)]">Email</div>
                     <a href={`mailto:${reservation.email}`} className="text-[var(--color-status-active)] hover:underline">
                       {reservation.email}
                     </a>
@@ -101,7 +101,7 @@ export default function ReservationDrawer({
                 <div className="flex items-start gap-3">
                   <Phone className="mt-0.5 text-[var(--color-text-muted)]" size={18} />
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text-inverse)]">Phone</div>
+                    <div className="text-sm font-medium text-[var(--color-text-primary)]">Phone</div>
                     <a href={`tel:${reservation.phone}`} className="text-[var(--color-status-active)] hover:underline">
                       {reservation.phone}
                     </a>
@@ -110,7 +110,7 @@ export default function ReservationDrawer({
                 <div className="flex items-start gap-3">
                   <MapPin className="mt-0.5 text-[var(--color-text-muted)]" size={18} />
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text-inverse)]">Address</div>
+                    <div className="text-sm font-medium text-[var(--color-text-primary)]">Address</div>
                     <div className="text-[var(--color-text-muted)]">
                       {reservation.address1}
                       {reservation.address2 && <>, {reservation.address2}</>}
@@ -122,7 +122,7 @@ export default function ReservationDrawer({
                 <div className="flex items-start gap-3">
                   <User className="mt-0.5 text-[var(--color-text-muted)]" size={18} />
                   <div>
-                    <div className="text-sm font-medium text-[var(--color-text-inverse)]">Party Size</div>
+                    <div className="text-sm font-medium text-[var(--color-text-primary)]">Party Size</div>
                     <div className="text-[var(--color-text-muted)]">
                       {reservation.adults} Adults, {reservation.children} Children
                     </div>
@@ -133,7 +133,7 @@ export default function ReservationDrawer({
 
             {/* Equipment */}
             <div>
-              <h3 className="text-sm font-semibold text-[var(--color-text-inverse)] uppercase tracking-wider mb-4 border-b pb-2">
+              <h3 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider mb-4 border-b pb-2">
                 Equipment
               </h3>
               <div className="grid grid-cols-2 gap-4">

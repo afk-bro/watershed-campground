@@ -49,7 +49,7 @@ export default function AdminSettingsPage() {
             <Container>
                 <div className="max-w-2xl mx-auto">
                     <div className="admin-card p-8">
-                        <h1 className="text-3xl font-heading font-bold text-brand-forest mb-6">
+                        <h1 className="text-3xl font-heading font-bold text-accent-gold mb-6">
                             Admin Settings
                         </h1>
 

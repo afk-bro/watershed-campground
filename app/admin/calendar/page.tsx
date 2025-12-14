@@ -69,7 +69,7 @@ export default function CalendarPage() {
     <div className="h-[calc(100vh-4rem)] flex flex-col bg-[var(--color-surface-elevated)]">
       <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-hidden flex flex-col">
         <div className="mb-6">
-          <h1 className="text-3xl font-heading font-bold text-brand-forest">
+          <h1 className="text-3xl font-heading font-bold text-accent-gold">
             Availability Calendar
           </h1>
           <p className="text-[var(--color-text-muted)]">

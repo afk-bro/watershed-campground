@@ -44,7 +44,7 @@ export default function ReportsPage() {
             <Container>
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
+                        <h1 className="text-3xl font-heading font-bold text-accent-gold mb-2">
                             Campground Reports
                         </h1>
                         <p className="text-[var(--color-text-muted)]">
@@ -76,7 +76,7 @@ export default function ReportsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <div className="admin-card p-6">
                             <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Total Revenue</h3>
-                            <div className="text-3xl font-bold text-brand-forest mt-2">
+                            <div className="text-3xl font-bold text-accent-gold mt-2">
                                 ${data.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
                             <p className="text-xs text-[var(--color-text-muted)] mt-1">For check-ins in {month}</p>
@@ -84,7 +84,7 @@ export default function ReportsPage() {
 
                         <div className="admin-card p-6">
                             <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Occupancy Rate</h3>
-                            <div className="text-3xl font-bold text-brand-forest mt-2">
+                            <div className="text-3xl font-bold text-accent-gold mt-2">
                                 {data.occupancy}%
                             </div>
                             <p className="text-xs text-[var(--color-text-muted)] mt-1">
@@ -94,7 +94,7 @@ export default function ReportsPage() {
 
                         <div className="admin-card p-6">
                             <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Total Reservations</h3>
-                            <div className="text-3xl font-bold text-brand-forest mt-2">
+                            <div className="text-3xl font-bold text-accent-gold mt-2">
                                 {data.totalReservations}
                             </div>
                             <p className="text-xs text-[var(--color-text-muted)] mt-1">Active bookings ({month})</p>

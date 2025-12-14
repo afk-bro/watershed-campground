@@ -109,7 +109,7 @@ export default function AdminPage() {
             <Container>
                 <div className="flex items-center justify-between mb-8">
                     <div>
-                        <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
+                        <h1 className="text-3xl font-heading font-bold text-accent-gold mb-2">
                             Reservation Management
                         </h1>
                         <p className="text-[var(--color-text-muted)]">
@@ -198,7 +198,7 @@ export default function AdminPage() {
                                     filteredReservations.map((reservation) => (
                                         <tr key={reservation.id} className="hover:bg-[var(--color-surface-elevated)] transition-surface">
                                             <td className="px-4 py-3">
-                                                <div className="font-medium text-[var(--color-text-inverse)]">
+                                                <div className="font-medium text-[var(--color-text-primary)]">
                                                     {reservation.first_name} {reservation.last_name}
                                                 </div>
                                                 <div className="text-xs text-[var(--color-text-muted)]">
@@ -228,7 +228,7 @@ export default function AdminPage() {
                                             <td className="px-4 py-3">
                                                 {reservation.campsites ? (
                                                     <div>
-                                                        <div className="font-medium text-sm text-[var(--color-text-inverse)]">
+                                                        <div className="font-medium text-sm text-[var(--color-text-primary)]">
                                                             {reservation.campsites.code}
                                                         </div>
                                                         <div className="text-xs text-[var(--color-text-muted)]">
