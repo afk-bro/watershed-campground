@@ -4,13 +4,14 @@
 import { useEffect, useState } from "react";
 import Container from "@/components/Container";
 import CalendarGrid from "@/components/admin/calendar/CalendarGrid";
-import { Campsite, Reservation } from "@/lib/supabase";
+import { Campsite, Reservation, BlackoutDate } from "@/lib/supabase";
 import { format } from "date-fns";
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
   const [reservations, setReservations] = useState<Reservation[]>([]);
   const [campsites, setCampsites] = useState<Campsite[]>([]);
+  const [blackoutDates, setBlackoutDates] = useState<BlackoutDate[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,9 +29,10 @@ export default function CalendarPage() {
         throw new Error("Failed to fetch calendar data");
       }
 
-      const { reservations, campsites } = await response.json();
+      const { reservations, campsites, blackoutDates } = await response.json();
       setReservations(reservations);
       setCampsites(campsites);
+      setBlackoutDates(blackoutDates || []);
     } catch (err) {
       console.error(err);
       setError("Failed to load calendar data");
@@ -81,6 +83,7 @@ export default function CalendarPage() {
             reservations={reservations}
             date={currentDate}
             onDateChange={setCurrentDate}
+            blackoutDates={blackoutDates}
           />
         </div>
       </div>

@@ -8,7 +8,7 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 type UpdateReservationBody = {
     status?: ReservationStatus;
-    campsite_id?: string;
+    campsite_id?: string | null;
     check_in?: string;
     check_out?: string;
 };
@@ -117,6 +117,26 @@ export async function PATCH(
 
             // Only check conflicts if assigned to a campsite
             if (targetCampsiteId !== null) {
+                // Check for blackout dates
+                const { data: blackoutConflicts, error: blackoutError } = await supabaseAdmin
+                    .from('blackout_dates')
+                    .select('reason')
+                    .or(`campsite_id.is.null,campsite_id.eq.${targetCampsiteId}`)
+                    .lt('start_date', targetCheckOut)
+                    .gte('end_date', targetCheckIn);
+
+                if (blackoutError) {
+                    console.error("Error checking blackout conflicts:", blackoutError);
+                }
+
+                if (blackoutConflicts && blackoutConflicts.length > 0) {
+                    const reason = blackoutConflicts[0].reason || "Dates are blacked out";
+                    return NextResponse.json(
+                        { error: `Conflict with blackout date: ${reason}` },
+                        { status: 409 }
+                    );
+                }
+
                 const { data: conflicts, error: conflictError } = await supabaseAdmin
                     .from('reservations')
                     .select('id, first_name, last_name')
@@ -159,6 +179,7 @@ export async function PATCH(
         }
 
         // Send email if dates or campsite changed (best-effort)
+        // OR if status changed to cancelled
         let emailSent = false;
         let emailError = null;
 
@@ -166,36 +187,52 @@ export async function PATCH(
             (check_in && check_in !== oldReservation.check_in) ||
             (check_out && check_out !== oldReservation.check_out);
         const campsiteChanged = campsite_id && campsite_id !== oldReservation.campsite_id;
+        const isCancelled = status === 'cancelled' && oldReservation.status !== 'cancelled';
 
-        if (datesChanged || campsiteChanged) {
+        if (datesChanged || campsiteChanged || isCancelled) {
             try {
                 const oldCampsiteName = oldReservation.campsites?.name || "Unassigned";
                 const newCampsiteName = updatedReservation.campsites?.name || "Unassigned";
 
                 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-                const manageUrl = `${baseUrl}/manage-reservation?rid=${updatedReservation.id}`;
 
-                const emailData = generateRescheduleEmail({
-                    guestFirstName: updatedReservation.first_name,
-                    oldCampsiteName,
-                    newCampsiteName,
-                    oldCheckIn: oldReservation.check_in,
-                    oldCheckOut: oldReservation.check_out,
-                    newCheckIn: updatedReservation.check_in,
-                    newCheckOut: updatedReservation.check_out,
-                    manageUrl,
-                });
+                let emailData;
 
-                await resend.emails.send({
-                    from: "The Watershed Campground <onboarding@resend.dev>",
-                    to: [updatedReservation.email],
-                    subject: emailData.subject,
-                    html: emailData.html,
-                });
+                if (isCancelled) {
+                    const { generateCancellationEmail } = await import("@/lib/emails/cancellationConfirmation");
+                    emailData = generateCancellationEmail({
+                        guestFirstName: updatedReservation.first_name,
+                        campsiteName: oldCampsiteName,
+                        checkIn: oldReservation.check_in,
+                        checkOut: oldReservation.check_out,
+                        refundAmount: 0 // Logic for refund amount not fully tracked yet, default 0
+                    });
+                } else {
+                    // Reschedule
+                    const manageUrl = `${baseUrl}/manage-reservation?rid=${updatedReservation.id}`;
+                    emailData = generateRescheduleEmail({
+                        guestFirstName: updatedReservation.first_name,
+                        oldCampsiteName,
+                        newCampsiteName,
+                        oldCheckIn: oldReservation.check_in,
+                        oldCheckOut: oldReservation.check_out,
+                        newCheckIn: updatedReservation.check_in,
+                        newCheckOut: updatedReservation.check_out,
+                        manageUrl,
+                    });
+                }
 
-                emailSent = true;
+                if (emailData) {
+                    await resend.emails.send({
+                        from: "The Watershed Campground <onboarding@resend.dev>",
+                        to: [updatedReservation.email],
+                        subject: emailData.subject,
+                        html: emailData.html,
+                    });
+                    emailSent = true;
+                }
             } catch (error: any) {
-                console.error("Error sending reschedule email:", error);
+                console.error("Error sending notification email:", error);
                 emailError = error.message || "Email sending failed";
                 // Don't fail the request - email is best-effort
             }

@@ -38,9 +38,19 @@ export async function GET(request: Request) {
             throw campError;
         }
 
+        // Fetch blackout dates
+        const { data: blackouts, error: bErr } = await supabaseAdmin
+            .from('blackout_dates')
+            .select('*')
+            .lte('start_date', endDate)
+            .gte('end_date', startDate);
+
+        if (bErr) throw bErr;
+
         return NextResponse.json({
             reservations: reservations || [],
             campsites: campsites || [],
+            blackoutDates: blackouts || [],
             meta: {
                 startDate,
                 endDate
