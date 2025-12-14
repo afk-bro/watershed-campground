@@ -12,6 +12,12 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Additional project-specific ignores:
+    ".venv/**",
+    "node_modules/**",
+    "docs/backend/**",
+    "*.sql",
+    "*.py",
   ]),
   // Design system guardrails
   {

@@ -114,7 +114,7 @@ function ReservationForm() {
             <Container>
                  <div className="mb-8 flex justify-between items-center">
                     <h1 className="text-3xl font-heading font-bold text-brand-forest">New Manual Reservation</h1>
-                    <Link href="/admin"><button className="text-slate-600 hover:underline">Cancel</button></Link>
+                    <Link href="/admin"><button className="text-[var(--color-text-muted)] hover:underline">Cancel</button></Link>
                  </div>
 
                  <form onSubmit={handleSubmit} className="max-w-2xl admin-card p-8 space-y-6">

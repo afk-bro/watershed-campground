@@ -46,7 +46,7 @@ export default function ReservationDrawer({
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-full transition-surface"
+              className="p-2 hover:bg-[var(--color-surface-elevated)] rounded-full transition-surface"
             >
               <X size={20} />
             </button>

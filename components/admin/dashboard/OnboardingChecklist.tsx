@@ -121,7 +121,7 @@ export default function OnboardingChecklist() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {steps.map((step) => (
-          <div key={step.id} className={`flex items-start gap-3 p-3 rounded-md border transition-surface ${step.done ? 'bg-[var(--color-status-confirmed-bg)] border-[var(--color-status-confirmed)]/20' : 'bg-white border-[var(--color-border-default)]'}`}>
+          <div key={step.id} className={`flex items-start gap-3 p-3 rounded-md border transition-surface ${step.done ? 'bg-[var(--color-status-confirmed-bg)] border-[var(--color-status-confirmed)]/20' : 'bg-[var(--color-surface-card)] border-[var(--color-border-default)]'}`}>
             <div className={`mt-0.5 ${step.done ? 'text-[var(--color-status-confirmed)]' : 'text-[var(--color-text-muted)]'}`}>
               {step.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
             </div>
