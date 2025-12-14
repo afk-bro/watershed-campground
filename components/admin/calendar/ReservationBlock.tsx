@@ -48,12 +48,12 @@ export default function ReservationBlock({
 
   // Status colors
   const statusColors = {
-    confirmed: "bg-blue-500 text-white border-blue-600",
-    pending: "bg-amber-400 text-amber-900 border-amber-500",
-    checked_in: "bg-green-500 text-white border-green-600",
-    checked_out: "bg-slate-500 text-white border-slate-600",
-    cancelled: "bg-red-200 text-red-800 border-red-300 opacity-50",
-    no_show: "bg-red-500 text-white border-red-600",
+    confirmed: "bg-[var(--color-status-active)] text-white border-[var(--color-status-active)]",
+    pending: "bg-[var(--color-status-pending)] text-[var(--color-text-inverse)] border-[var(--color-status-pending)]",
+    checked_in: "bg-[var(--color-status-confirmed)] text-white border-[var(--color-status-confirmed)]",
+    checked_out: "bg-[var(--color-status-neutral)] text-white border-[var(--color-status-neutral)]",
+    cancelled: "bg-[var(--color-status-cancelled)]/30 text-[var(--color-text-inverse)] border-[var(--color-status-cancelled)] opacity-50",
+    no_show: "bg-[var(--color-status-cancelled)] text-white border-[var(--color-status-cancelled)]",
   };
 
   const colorClass = statusColors[reservation.status] || "bg-gray-400 text-white";
@@ -108,7 +108,7 @@ export default function ReservationBlock({
       {/* Left Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
         <div
-          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 bg-white/80 border border-slate-300 rounded-full cursor-ew-resize hover:bg-white hover:border-slate-400 transition-all z-20"
+          className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 bg-[var(--color-surface-card)]/80 border border-[var(--color-border-strong)] rounded-full cursor-ew-resize hover:bg-[var(--color-surface-card)] hover:border-[var(--color-border-strong)] transition-surface z-20"
           onPointerDown={handleLeftResizeStart}
           style={{ touchAction: 'none' }}
         />
@@ -123,7 +123,7 @@ export default function ReservationBlock({
       {/* Right Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
         <div
-          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2 h-8 bg-white/80 border border-slate-300 rounded-full cursor-ew-resize hover:bg-white hover:border-slate-400 transition-all z-20"
+          className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2 h-8 bg-[var(--color-surface-card)]/80 border border-[var(--color-border-strong)] rounded-full cursor-ew-resize hover:bg-[var(--color-surface-card)] hover:border-[var(--color-border-strong)] transition-surface z-20"
           onPointerDown={handleRightResizeStart}
           style={{ touchAction: 'none' }}
         />

@@ -365,23 +365,23 @@ export default function CalendarGrid({
   };
 
   return (
-    <div className="flex flex-col h-full bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
+    <div className="flex flex-col h-full admin-card overflow-hidden">
       {/* Header Controls */}
-      <div className="flex items-center justify-between p-4 border-b border-slate-200 bg-white">
+      <div className="flex items-center justify-between p-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)]">
         <div className="flex items-center gap-4">
-          <h2 className="text-lg font-heading font-bold text-slate-800">
+          <h2 className="text-lg font-heading font-bold text-[var(--color-text-inverse)]">
             {format(date, "MMMM yyyy")}
           </h2>
-          <div className="flex items-center rounded-md border border-slate-300 bg-white shadow-sm">
+          <div className="flex items-center rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-card)] shadow-sm">
             <button
               onClick={handlePrevMonth}
-              className="p-1.5 hover:bg-slate-50 text-slate-600 border-r border-slate-300 transition-colors"
+              className="p-1.5 hover:bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] border-r border-[var(--color-border-strong)] transition-surface"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={handleNextMonth}
-              className="p-1.5 hover:bg-slate-50 text-slate-600 transition-colors"
+              className="p-1.5 hover:bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] transition-surface"
             >
               <ChevronRight size={20} />
             </button>
@@ -389,19 +389,19 @@ export default function CalendarGrid({
         </div>
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-blue-500"></span> Confirmed
+            <span className="w-3 h-3 rounded-full bg-[var(--color-status-active)]"></span> Confirmed
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-amber-400"></span> Pending
+            <span className="w-3 h-3 rounded-full bg-[var(--color-status-pending)]"></span> Pending
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none">
-            <input 
-              type="checkbox" 
+            <input
+              type="checkbox"
               checked={showAvailability}
               onChange={(e) => setShowAvailability(e.target.checked)}
               className="rounded text-brand-forest focus:ring-brand-forest"
             />
-            <span className="font-medium text-slate-700">Show Availability</span>
+            <span className="font-medium text-[var(--color-text-primary)]">Show Availability</span>
           </label>
         </div>
       </div>
@@ -410,9 +410,9 @@ export default function CalendarGrid({
       <div className="flex-1 overflow-auto relative">
         <div className="inline-block min-w-full">
           {/* Header Row (Dates) */}
-          <div className="flex sticky top-0 z-30 bg-slate-50 border-b border-slate-200">
+          <div className="flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)]">
             {/* Corner Sticky */}
-            <div className="sticky left-0 w-64 bg-slate-50 border-r border-slate-200 p-3 font-semibold text-slate-600 shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40">
+            <div className="sticky left-0 w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] p-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40">
               Campsite
             </div>
             {/* Days */}
@@ -420,12 +420,12 @@ export default function CalendarGrid({
               {days.map((day) => (
                 <div
                   key={day.toString()}
-                  className={`w-12 flex-shrink-0 text-center border-r border-slate-200 p-2 text-xs 
-                    ${isWeekend(day) ? "bg-slate-100/50" : ""} 
-                    ${isToday(day) ? "bg-blue-50" : ""}`}
+                  className={`w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] p-2 text-xs
+                    ${isWeekend(day) ? "bg-[var(--color-surface-elevated)]/50" : ""}
+                    ${isToday(day) ? "bg-[var(--color-status-active)]/10" : ""}`}
                 >
-                  <div className="font-semibold text-slate-700">{format(day, "d")}</div>
-                  <div className="text-slate-500 uppercase text-[10px]">{format(day, "EEEEE")}</div>
+                  <div className="font-semibold text-[var(--color-text-primary)]">{format(day, "d")}</div>
+                  <div className="text-[var(--color-text-muted)] uppercase text-[10px]">{format(day, "EEEEE")}</div>
                 </div>
               ))}
             </div>
@@ -442,16 +442,16 @@ export default function CalendarGrid({
               if (unassignedReservations.length === 0) return null;
 
               return (
-                <div key="unassigned" className="flex border-b border-slate-200 bg-amber-50/30 hover:bg-amber-50/50 transition-colors group relative">
+                <div key="unassigned" className="flex border-b border-[var(--color-border-default)] bg-[var(--color-status-pending-bg)] hover:bg-[var(--color-status-pending-bg)]/70 transition-surface group relative">
                   {/* Sticky Column */}
-                  <div className="sticky left-0 w-64 bg-amber-50/30 group-hover:bg-amber-50/50 transition-colors border-r border-slate-200 p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20">
+                  <div className="sticky left-0 w-64 bg-[var(--color-status-pending-bg)] group-hover:bg-[var(--color-status-pending-bg)]/70 transition-surface border-r border-[var(--color-border-default)] p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20">
                     <div>
-                      <div className="font-medium text-amber-900">Unassigned</div>
-                      <div className="text-xs text-amber-700 flex items-center gap-1">
+                      <div className="font-medium text-[var(--color-text-inverse)]">Unassigned</div>
+                      <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
                         {unassignedReservations.length} reservation{unassignedReservations.length !== 1 ? 's' : ''}
                       </div>
                     </div>
-                    <div className="w-2 h-2 rounded-full bg-amber-500" title="Needs Assignment" />
+                    <div className="w-2 h-2 rounded-full bg-[var(--color-status-pending)]" title="Needs Assignment" />
                   </div>
 
                   {/* Day Cells */}
@@ -464,9 +464,9 @@ export default function CalendarGrid({
                         <div
                           key={day.toString()}
                           data-date={dayStr}
-                          className={`w-12 h-16 flex-shrink-0 border-r border-slate-100 transition-colors bg-amber-50/20 ${
+                          className={`w-12 h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface bg-[var(--color-status-pending-bg)]/50 ${
                             isDragging && isHovered
-                              ? validationError ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                              ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
                               : ''
                           }`}
                           onDragOver={(e) => {
@@ -498,7 +498,7 @@ export default function CalendarGrid({
                     {dragPreview && dragPreview.campsiteId === 'UNASSIGNED' && (
                       <div
                         className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-red-100 border-red-400' : 'bg-green-100 border-green-400'
+                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-success)]/20 border-[var(--color-success)]'
                         } opacity-50 z-50 pointer-events-none`}
                         style={{
                           left: `${(differenceInDays(parseISO(dragPreview.startDate), monthStart) / days.length) * 100}%`,
@@ -515,7 +515,7 @@ export default function CalendarGrid({
                     {resizeState && (resizeState.reservation.campsite_id === null || resizeState.reservation.campsite_id === undefined) && (
                       <div
                         className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-red-100 border-red-400' : 'bg-blue-100 border-blue-400'
+                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-status-active)]/20 border-[var(--color-status-active)]'
                         } opacity-50 z-50 pointer-events-none`}
                         style={{
                           left: `${(differenceInDays(parseISO(resizeState.newCheckIn), monthStart) / days.length) * 100}%`,
@@ -541,21 +541,21 @@ export default function CalendarGrid({
 
               // Styling for inactive campsites
               const isInactive = !campsite.is_active;
-              const rowBgClass = isInactive ? 'bg-red-50/20' : '';
-              const rowHoverClass = isInactive ? 'hover:bg-red-50/30' : 'hover:bg-slate-50/50';
-              const stickyBgClass = isInactive ? 'bg-red-50/20 group-hover:bg-red-50/30' : 'bg-white group-hover:bg-slate-50';
+              const rowBgClass = isInactive ? 'bg-[var(--color-error)]/10' : '';
+              const rowHoverClass = isInactive ? 'hover:bg-[var(--color-error)]/15' : 'hover:bg-[var(--color-surface-elevated)]/50';
+              const stickyBgClass = isInactive ? 'bg-[var(--color-error)]/10 group-hover:bg-[var(--color-error)]/15' : 'bg-[var(--color-surface-card)] group-hover:bg-[var(--color-surface-elevated)]';
 
               return (
-                <div key={campsite.id} className={`flex border-b border-slate-100 ${rowHoverClass} ${rowBgClass} transition-colors group relative ${isInactive ? 'border-red-200' : ''}`}>
+                <div key={campsite.id} className={`flex border-b border-[var(--color-border-subtle)] ${rowHoverClass} ${rowBgClass} transition-surface group relative ${isInactive ? 'border-[var(--color-error)]/30' : ''}`}>
                   {/* Sticky Column */}
-                  <div className={`sticky left-0 w-64 ${stickyBgClass} transition-colors border-r border-slate-200 p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20 ${isInactive ? 'border-r-red-200' : ''}`}>
+                  <div className={`sticky left-0 w-64 ${stickyBgClass} transition-surface border-r border-[var(--color-border-default)] p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20 ${isInactive ? 'border-r-[var(--color-error)]/30' : ''}`}>
                     <div>
-                      <div className="font-medium text-slate-900">{campsite.name}</div>
-                      <div className="text-xs text-slate-500 flex items-center gap-1">
+                      <div className="font-medium text-[var(--color-text-inverse)]">{campsite.name}</div>
+                      <div className="text-xs text-[var(--color-text-muted)] flex items-center gap-1">
                         <span className="uppercase">{campsite.type}</span> • {campsite.max_guests} Guests
                       </div>
                     </div>
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: campsite.is_active ? '#10B981' : '#9CA3AF' }} title={campsite.is_active ? 'Active' : 'Inactive'} />
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: campsite.is_active ? 'var(--color-success)' : 'var(--color-status-neutral)' }} title={campsite.is_active ? 'Active' : 'Inactive'} />
                   </div>
 
                   {/* Day Cells */}
@@ -570,13 +570,13 @@ export default function CalendarGrid({
                       let bgClass = "";
                       if (showAvailability) {
                          if (!isOccupied) {
-                           bgClass = "bg-emerald-50/50";
+                           bgClass = "bg-[var(--color-success)]/10";
                          } else {
                            // Occupied
                          }
                       } else {
-                         if (isWeekend(day)) bgClass = "bg-slate-50/30";
-                         if (isToday(day)) bgClass = "bg-blue-50/20";
+                         if (isWeekend(day)) bgClass = "bg-[var(--color-surface-elevated)]/30";
+                         if (isToday(day)) bgClass = "bg-[var(--color-status-active)]/10";
                       }
 
                       const isHovered = dragPreview?.campsiteId === campsite.id && dragPreview?.startDate === dayStr;
@@ -585,9 +585,9 @@ export default function CalendarGrid({
                         <div
                           key={day.toString()}
                           data-date={dayStr}
-                          className={`w-12 h-16 flex-shrink-0 border-r border-slate-100 transition-colors ${bgClass} ${
+                          className={`w-12 h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${
                             isDragging && isHovered
-                              ? validationError ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+                              ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
                               : ''
                           }`}
                           onDragOver={(e) => {
@@ -619,7 +619,7 @@ export default function CalendarGrid({
                     {dragPreview && dragPreview.campsiteId === campsite.id && (
                       <div
                         className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-red-100 border-red-400' : 'bg-green-100 border-green-400'
+                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-success)]/20 border-[var(--color-success)]'
                         } opacity-50 z-50 pointer-events-none`}
                         style={{
                           left: `${(differenceInDays(parseISO(dragPreview.startDate), monthStart) / days.length) * 100}%`,
@@ -636,7 +636,7 @@ export default function CalendarGrid({
                     {resizeState && resizeState.reservation.campsite_id === campsite.id && (
                       <div
                         className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-red-100 border-red-400' : 'bg-blue-100 border-blue-400'
+                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-status-active)]/20 border-[var(--color-status-active)]'
                         } opacity-50 z-50 pointer-events-none`}
                         style={{
                           left: `${(differenceInDays(parseISO(resizeState.newCheckIn), monthStart) / days.length) * 100}%`,
