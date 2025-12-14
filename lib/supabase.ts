@@ -60,10 +60,18 @@ export type Reservation = {
     comments?: string;
     status: ReservationStatus;
     campsite_id?: string;
-    // Joined data from campsites table (when queried with join)
     campsites?: {
         code: string;
         name: string;
         type: CampsiteType;
     };
+};
+
+export type BlackoutDate = {
+    id: string;
+    start_date: string;
+    end_date: string;
+    reason?: string;
+    campsite_id?: string | null; // null means all sites
+    created_at?: string;
 };
