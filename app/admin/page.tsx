@@ -72,7 +72,15 @@ export default function AdminPage() {
         return (
             <div className="py-12">
                 <Container>
-                    <div className="text-center">Loading reservations...</div>
+                    <div className="animate-fade-in">
+                        <div className="skeleton-title mb-6" />
+                        <div className="skeleton-text mb-3" />
+                        <div className="skeleton-text mb-3 w-4/5" />
+                        <div className="skeleton-text w-3/5" />
+                        <div className="mt-8">
+                            <div className="skeleton h-64 w-full" />
+                        </div>
+                    </div>
                 </Container>
             </div>
         );
@@ -82,7 +90,15 @@ export default function AdminPage() {
         return (
             <div className="py-12">
                 <Container>
-                    <div className="text-center text-red-600">{error}</div>
+                    <div className="error-message animate-fade-in">
+                        <strong>Error:</strong> {error}
+                    </div>
+                    <button
+                        onClick={() => fetchReservations()}
+                        className="mt-4 px-4 py-2 bg-[var(--color-accent-gold)] text-[var(--color-text-inverse)] rounded-lg hover:opacity-90 transition-opacity"
+                    >
+                        Retry
+                    </button>
                 </Container>
             </div>
         );

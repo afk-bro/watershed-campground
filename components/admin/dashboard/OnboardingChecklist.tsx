@@ -60,7 +60,12 @@ export default function OnboardingChecklist() {
   }, []);
 
   if (dismissed) return null;
-  if (loading) return <div className="animate-pulse h-32 bg-slate-100 rounded-lg mb-8"></div>;
+  if (loading) return (
+    <div className="mb-8">
+      <div className="skeleton-title mb-3" />
+      <div className="skeleton h-32 w-full" />
+    </div>
+  );
 
   const steps = [
     {
@@ -99,34 +104,34 @@ export default function OnboardingChecklist() {
   if (completedCount === steps.length) return null; // Hide when done
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-6 mb-8 shadow-sm">
+    <div className="admin-card mb-8 animate-fade-in">
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-bold text-slate-900">Getting Started</h2>
-          <p className="text-slate-500 text-sm">Complete these steps to get your campground ready for guests.</p>
+          <h2 className="text-lg font-bold text-[var(--color-text-inverse)]">Getting Started</h2>
+          <p className="text-[var(--color-text-muted)] text-sm">Complete these steps to get your campground ready for guests.</p>
         </div>
         <div className="text-right">
-           <span className="text-sm font-medium text-brand-forest">{Math.round(progress)}% Complete</span>
+           <span className="text-sm font-medium text-[var(--color-accent-gold)]">{Math.round(progress)}% Complete</span>
         </div>
       </div>
 
-      <div className="w-full bg-slate-100 rounded-full h-2 mb-6">
-        <div className="bg-brand-forest h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
+      <div className="w-full bg-[var(--color-surface-secondary)] rounded-full h-2 mb-6">
+        <div className="bg-[var(--color-accent-gold)] h-2 rounded-full transition-all duration-500" style={{ width: `${progress}%` }}></div>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {steps.map((step) => (
-          <div key={step.id} className={`flex items-start gap-3 p-3 rounded-md border ${step.done ? 'bg-slate-50 border-slate-100' : 'bg-white border-slate-200'}`}>
-            <div className={`mt-0.5 ${step.done ? 'text-green-500' : 'text-slate-300'}`}>
+          <div key={step.id} className={`flex items-start gap-3 p-3 rounded-md border transition-surface ${step.done ? 'bg-[var(--color-status-confirmed-bg)] border-[var(--color-status-confirmed)]/20' : 'bg-white border-[var(--color-border-default)]'}`}>
+            <div className={`mt-0.5 ${step.done ? 'text-[var(--color-status-confirmed)]' : 'text-[var(--color-text-muted)]'}`}>
               {step.done ? <CheckCircle2 size={20} /> : <Circle size={20} />}
             </div>
             <div className="flex-1">
-              <h3 className={`font-medium ${step.done ? 'text-slate-700 line-through' : 'text-slate-900'}`}>
+              <h3 className={`font-medium ${step.done ? 'text-[var(--color-text-muted)] line-through' : 'text-[var(--color-text-inverse)]'}`}>
                 {step.label}
               </h3>
-              <p className="text-xs text-slate-500 mb-2">{step.desc}</p>
+              <p className="text-xs text-[var(--color-text-muted)] mb-2">{step.desc}</p>
               {!step.done && (
-                  <Link href={step.link} className="text-xs font-semibold text-brand-forest hover:underline flex items-center gap-1">
+                  <Link href={step.link} className="text-xs font-semibold text-[var(--color-accent-gold)] hover:underline flex items-center gap-1">
                     Do this now <ArrowRight size={12} />
                   </Link>
               )}
