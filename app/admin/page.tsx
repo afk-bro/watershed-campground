@@ -6,6 +6,7 @@ import { supabase, type Reservation, type ReservationStatus } from "@/lib/supaba
 import StatusPill from "@/components/admin/StatusPill";
 import RowActions from "@/components/admin/RowActions";
 import Container from "@/components/Container";
+import OnboardingChecklist from "@/components/admin/dashboard/OnboardingChecklist";
 
 export default function AdminPage() {
     const [reservations, setReservations] = useState<Reservation[]>([]);
@@ -105,6 +106,8 @@ export default function AdminPage() {
                         </button>
                     </Link>
                 </div>
+                
+                <OnboardingChecklist />
 
                 {/* Filter Buttons */}
                 <div className="mb-6 flex flex-wrap gap-2">
@@ -207,13 +210,13 @@ export default function AdminPage() {
                                                 {reservation.camping_unit}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {reservation.campsite ? (
+                                                {reservation.campsites ? (
                                                     <div>
                                                         <div className="font-medium text-sm text-slate-900">
-                                                            {reservation.campsite.code}
+                                                            {reservation.campsites.code}
                                                         </div>
                                                         <div className="text-xs text-slate-500">
-                                                            {reservation.campsite.name}
+                                                            {reservation.campsites.name}
                                                         </div>
                                                     </div>
                                                 ) : (
