@@ -48,7 +48,7 @@ export default function AdminSettingsPage() {
         <div className="py-12">
             <Container>
                 <div className="max-w-2xl mx-auto">
-                    <div className="bg-white rounded-lg shadow-lg p-8">
+                    <div className="admin-card p-8">
                         <h1 className="text-3xl font-heading font-bold text-brand-forest mb-6">
                             Admin Settings
                         </h1>
@@ -60,10 +60,10 @@ export default function AdminSettingsPage() {
                                 </h2>
 
                                 {message && (
-                                    <div className={`mb-4 p-4 rounded-lg ${
+                                    <div className={`mb-4 p-4 rounded-lg border ${
                                         message.type === 'success'
-                                            ? 'bg-emerald-50 border border-emerald-200 text-emerald-700'
-                                            : 'bg-red-50 border border-red-200 text-red-700'
+                                            ? 'success-message'
+                                            : 'error-message'
                                     }`}>
                                         {message.text}
                                     </div>
@@ -71,7 +71,7 @@ export default function AdminSettingsPage() {
 
                                 <div className="space-y-4">
                                     <div>
-                                        <label htmlFor="newPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                                        <label htmlFor="newPassword" className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
                                             New Password
                                         </label>
                                         <input
@@ -81,13 +81,13 @@ export default function AdminSettingsPage() {
                                             onChange={(e) => setNewPassword(e.target.value)}
                                             required
                                             minLength={8}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                                            className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
                                             placeholder="Enter new password"
                                         />
                                     </div>
 
                                     <div>
-                                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-slate-700 mb-2">
+                                        <label htmlFor="confirmPassword" className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
                                             Confirm Password
                                         </label>
                                         <input
@@ -97,7 +97,7 @@ export default function AdminSettingsPage() {
                                             onChange={(e) => setConfirmPassword(e.target.value)}
                                             required
                                             minLength={8}
-                                            className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-accent-gold focus:border-transparent"
+                                            className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
                                             placeholder="Confirm new password"
                                         />
                                     </div>

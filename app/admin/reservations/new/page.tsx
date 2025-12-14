@@ -117,66 +117,66 @@ function ReservationForm() {
                     <Link href="/admin"><button className="text-slate-600 hover:underline">Cancel</button></Link>
                  </div>
 
-                 <form onSubmit={handleSubmit} className="max-w-2xl bg-white p-8 rounded-lg shadow space-y-6">
+                 <form onSubmit={handleSubmit} className="max-w-2xl admin-card p-8 space-y-6">
                     {/* Dates & Site */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-slate-700">Check In</label>
-                            <input type="date" required className="w-full border p-2 rounded" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} />
+                            <label className="block text-sm font-medium text-[var(--color-text-primary)]">Check In</label>
+                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-slate-700">Check Out</label>
-                            <input type="date" required className="w-full border p-2 rounded" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} />
+                             <label className="block text-sm font-medium text-[var(--color-text-primary)]">Check Out</label>
+                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-slate-700">Campsite</label>
-                        <select required className="w-full border p-2 rounded" value={formData.campsiteId} onChange={e => setFormData({...formData, campsiteId: e.target.value})}>
+                        <label className="block text-sm font-medium text-[var(--color-text-primary)]">Campsite</label>
+                        <select required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.campsiteId} onChange={e => setFormData({...formData, campsiteId: e.target.value})}>
                             <option value="">Select a Site...</option>
                             {campsites.map(c => (
                                 <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
                             ))}
                         </select>
-                        <p className="text-xs text-slate-500 mt-1">Note: Does not auto-check availability. Using "Force" logic in API if ID provided? No, API still checks. Please check calendar first.</p>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">Note: Does not auto-check availability. Using "Force" logic in API if ID provided? No, API still checks. Please check calendar first.</p>
                     </div>
 
                     {/* Guests */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
-                             <label className="block text-sm font-medium text-slate-700">Adults</label>
-                            <input type="number" min="1" required className="w-full border p-2 rounded" value={formData.adults} onChange={e => setFormData({...formData, adults: parseInt(e.target.value)})} />
+                             <label className="block text-sm font-medium text-[var(--color-text-primary)]">Adults</label>
+                            <input type="number" min="1" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.adults} onChange={e => setFormData({...formData, adults: parseInt(e.target.value)})} />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-slate-700">Children</label>
-                             <input type="number" min="0" className="w-full border p-2 rounded" value={formData.children} onChange={e => setFormData({...formData, children: parseInt(e.target.value)})} />
+                             <label className="block text-sm font-medium text-[var(--color-text-primary)]">Children</label>
+                             <input type="number" min="0" className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.children} onChange={e => setFormData({...formData, children: parseInt(e.target.value)})} />
                         </div>
                     </div>
 
                     {/* Contact */}
-                     <div className="space-y-4 border-t pt-4">
-                        <h3 className="font-bold text-slate-700">Guest Details</h3>
+                     <div className="space-y-4 border-t border-[var(--color-border-default)] pt-4">
+                        <h3 className="font-bold text-[var(--color-text-primary)]">Guest Details</h3>
                         <div className="grid grid-cols-2 gap-4">
-                             <input type="text" placeholder="First Name" required className="w-full border p-2 rounded" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
-                             <input type="text" placeholder="Last Name" required className="w-full border p-2 rounded" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
+                             <input type="text" placeholder="First Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
+                             <input type="text" placeholder="Last Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
                         </div>
-                        <input type="email" placeholder="Email" required className="w-full border p-2 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                        <input type="tel" placeholder="Phone" required className="w-full border p-2 rounded" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                        <input type="text" placeholder="Address" required className="w-full border p-2 rounded" value={formData.address1} onChange={e => setFormData({...formData, address1: e.target.value})} />
-                        
+                        <input type="email" placeholder="Email" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                        <input type="tel" placeholder="Phone" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                        <input type="text" placeholder="Address" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.address1} onChange={e => setFormData({...formData, address1: e.target.value})} />
+
                         <div className="grid grid-cols-2 gap-4">
-                             <input type="text" placeholder="City" required className="w-full border p-2 rounded" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
-                             <input type="text" placeholder="Postal Code" required className="w-full border p-2 rounded" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} />
+                             <input type="text" placeholder="City" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                             <input type="text" placeholder="Postal Code" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} />
                         </div>
                      </div>
 
                      {/* Payment Override */}
-                     <div className="bg-yellow-50 p-4 rounded border border-yellow-200">
+                     <div className="bg-[var(--color-warning)]/10 p-4 rounded border border-[var(--color-warning)]/30">
                          <label className="flex items-center gap-2">
                              <input type="checkbox" checked={formData.isOffline} onChange={e => setFormData({...formData, isOffline: e.target.checked})} />
-                             <span className="font-bold text-slate-800">Mark as Paid (Offline / Cash / E-Transfer)</span>
+                             <span className="font-bold text-[var(--color-text-inverse)]">Mark as Paid (Offline / Cash / E-Transfer)</span>
                          </label>
-                         <p className="text-sm text-slate-600 ml-6">By checking this, you bypass Stripe payment. The reservation will be confirmed immediately.</p>
+                         <p className="text-sm text-[var(--color-text-muted)] ml-6">By checking this, you bypass Stripe payment. The reservation will be confirmed immediately.</p>
                      </div>
 
                      <button disabled={loading} type="submit" className="w-full bg-brand-forest text-white py-3 rounded font-bold hover:bg-opacity-90 transition-all">

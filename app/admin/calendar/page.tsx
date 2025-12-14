@@ -43,7 +43,7 @@ export default function CalendarPage() {
 
   if (loading && campsites.length === 0) {
     return (
-      <div className="min-h-screen bg-slate-50 pt-8 pb-12">
+      <div className="min-h-screen bg-[var(--color-surface-elevated)] pt-8 pb-12">
         <Container>
           <div className="flex items-center justify-center h-64">
             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-brand-forest"></div>
@@ -55,9 +55,9 @@ export default function CalendarPage() {
 
   if (error) {
     return (
-      <div className="min-h-screen bg-slate-50 pt-8 pb-12">
+      <div className="min-h-screen bg-[var(--color-surface-elevated)] pt-8 pb-12">
         <Container>
-          <div className="bg-red-50 border border-red-200 text-red-700 p-4 rounded-lg">
+          <div className="error-message">
             {error}
           </div>
         </Container>
@@ -66,13 +66,13 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-slate-50">
+    <div className="h-[calc(100vh-4rem)] flex flex-col bg-[var(--color-surface-elevated)]">
       <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-hidden flex flex-col">
         <div className="mb-6">
           <h1 className="text-3xl font-heading font-bold text-brand-forest">
             Availability Calendar
           </h1>
-          <p className="text-slate-600">
+          <p className="text-[var(--color-text-muted)]">
             Manage your campsite bookings at a glance
           </p>
         </div>

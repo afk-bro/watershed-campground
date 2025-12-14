@@ -40,14 +40,14 @@ export default function ReportsPage() {
     };
 
     return (
-        <div className="py-12 bg-slate-50 min-h-screen">
+        <div className="py-12 bg-[var(--color-surface-elevated)] min-h-screen">
             <Container>
                 <div className="flex items-center justify-between mb-8">
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
                             Campground Reports
                         </h1>
-                        <p className="text-slate-600">
+                        <p className="text-[var(--color-text-muted)]">
                             Key performance metrics at a glance.
                         </p>
                     </div>
@@ -58,46 +58,46 @@ export default function ReportsPage() {
                     </Link>
                 </div>
 
-                <div className="bg-white p-6 rounded-lg shadow mb-8">
-                    <label className="block text-sm font-bold text-slate-700 mb-2">Select Month</label>
-                    <input 
-                        type="month" 
-                        value={month} 
+                <div className="admin-card p-6 mb-8">
+                    <label className="block text-sm font-bold text-[var(--color-text-primary)] mb-2">Select Month</label>
+                    <input
+                        type="month"
+                        value={month}
                         onChange={(e) => setMonth(e.target.value)}
-                        className="border border-slate-300 rounded px-4 py-2"
+                        className="border border-[var(--color-border-default)] rounded px-4 py-2 bg-[var(--color-surface-card)] text-[var(--color-text-primary)]"
                     />
                 </div>
 
                 {loading ? (
-                    <div className="text-center py-12 text-slate-500">Loading data...</div>
+                    <div className="text-center py-12 text-[var(--color-text-muted)]">Loading data...</div>
                 ) : error ? (
-                    <div className="text-center py-12 text-red-500">{error}</div>
+                    <div className="text-center py-12 text-[var(--color-error)]">{error}</div>
                 ) : data ? (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
-                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Total Revenue</h3>
+                        <div className="admin-card p-6">
+                            <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Total Revenue</h3>
                             <div className="text-3xl font-bold text-brand-forest mt-2">
                                 ${data.revenue.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                             </div>
-                            <p className="text-xs text-slate-400 mt-1">For check-ins in {month}</p>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1">For check-ins in {month}</p>
                         </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
-                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Occupancy Rate</h3>
+                        <div className="admin-card p-6">
+                            <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Occupancy Rate</h3>
                             <div className="text-3xl font-bold text-brand-forest mt-2">
                                 {data.occupancy}%
                             </div>
-                            <p className="text-xs text-slate-400 mt-1">
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1">
                                 {data.bookedNights} / {data.totalPossibleNights} nights
                             </p>
                         </div>
 
-                        <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-100">
-                            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">Total Reservations</h3>
+                        <div className="admin-card p-6">
+                            <h3 className="text-sm font-bold text-[var(--color-text-muted)] uppercase tracking-wide">Total Reservations</h3>
                             <div className="text-3xl font-bold text-brand-forest mt-2">
                                 {data.totalReservations}
                             </div>
-                            <p className="text-xs text-slate-400 mt-1">Active bookings ({month})</p>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-1">Active bookings ({month})</p>
                         </div>
                     </div>
                 ) : null}
