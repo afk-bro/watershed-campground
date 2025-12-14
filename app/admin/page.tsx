@@ -112,27 +112,27 @@ export default function AdminPage() {
                         <h1 className="text-3xl font-heading font-bold text-brand-forest mb-2">
                             Reservation Management
                         </h1>
-                        <p className="text-slate-600">
+                        <p className="text-[var(--color-text-muted)]">
                             View and manage all campground reservations
                         </p>
                     </div>
                     <Link href="/admin/calendar">
-                        <button className="bg-accent-gold text-brand-forest px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-all">
+                        <button className="bg-[var(--color-accent-gold)] text-[var(--color-text-inverse)] px-6 py-3 rounded-lg font-medium hover:opacity-90 transition-opacity">
                             📅 View Calendar
                         </button>
                     </Link>
                 </div>
-                
+
                 <OnboardingChecklist />
 
                 {/* Filter Buttons */}
                 <div className="mb-6 flex flex-wrap gap-2">
                     <button
                         onClick={() => setFilter('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
                             filter === 'all'
-                                ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-white text-slate-700 hover:bg-slate-100'
+                                ? 'bg-[var(--color-accent-gold)] text-[var(--color-text-inverse)]'
+                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)]'
                         }`}
                     >
                         All ({reservations.length})
@@ -141,10 +141,10 @@ export default function AdminPage() {
                         <button
                             key={status}
                             onClick={() => setFilter(status)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
                                 filter === status
-                                    ? 'bg-brand-forest text-accent-beige'
-                                    : 'bg-white text-slate-700 hover:bg-slate-100'
+                                    ? 'bg-[var(--color-accent-gold)] text-[var(--color-text-inverse)]'
+                                    : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)]'
                             }`}
                         >
                             <StatusPill status={status} /> ({statusCounts[status] || 0})
@@ -153,90 +153,90 @@ export default function AdminPage() {
                 </div>
 
                 {/* Reservations Table */}
-                <div className="bg-white rounded-lg shadow overflow-hidden">
+                <div className="admin-table">
                     <div className="overflow-x-auto">
                         <table className="w-full">
-                            <thead className="bg-slate-100 border-b border-slate-200">
+                            <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)]">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Guest
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Contact
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Check-in
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Check-out
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Party
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Unit
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Campsite
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-700 uppercase">
+                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
                                         Actions
                                     </th>
                                 </tr>
                             </thead>
-                            <tbody className="divide-y divide-slate-200">
+                            <tbody className="divide-y divide-[var(--color-border-subtle)]">
                                 {filteredReservations.length === 0 ? (
                                     <tr>
-                                        <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
+                                        <td colSpan={9} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
                                             No reservations found
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredReservations.map((reservation) => (
-                                        <tr key={reservation.id} className="hover:bg-slate-50">
+                                        <tr key={reservation.id} className="hover:bg-[var(--color-surface-elevated)] transition-surface">
                                             <td className="px-4 py-3">
-                                                <div className="font-medium text-slate-900">
+                                                <div className="font-medium text-[var(--color-text-inverse)]">
                                                     {reservation.first_name} {reservation.last_name}
                                                 </div>
-                                                <div className="text-xs text-slate-500">
+                                                <div className="text-xs text-[var(--color-text-muted)]">
                                                     {reservation.city}
                                                 </div>
                                             </td>
                                             <td className="px-4 py-3">
-                                                <div className="text-sm text-slate-700">
+                                                <div className="text-sm text-[var(--color-text-primary)]">
                                                     {reservation.email}
                                                 </div>
-                                                <div className="text-xs text-slate-500">
+                                                <div className="text-xs text-[var(--color-text-muted)]">
                                                     {reservation.phone}
                                                 </div>
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 {new Date(reservation.check_in).toLocaleDateString()}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 {new Date(reservation.check_out).toLocaleDateString()}
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 {reservation.adults}A, {reservation.children}C
                                             </td>
-                                            <td className="px-4 py-3 text-sm text-slate-700">
+                                            <td className="px-4 py-3 text-sm text-[var(--color-text-primary)]">
                                                 {reservation.camping_unit}
                                             </td>
                                             <td className="px-4 py-3">
                                                 {reservation.campsites ? (
                                                     <div>
-                                                        <div className="font-medium text-sm text-slate-900">
+                                                        <div className="font-medium text-sm text-[var(--color-text-inverse)]">
                                                             {reservation.campsites.code}
                                                         </div>
-                                                        <div className="text-xs text-slate-500">
+                                                        <div className="text-xs text-[var(--color-text-muted)]">
                                                             {reservation.campsites.name}
                                                         </div>
                                                     </div>
                                                 ) : (
-                                                    <span className="text-xs text-slate-400 italic">
+                                                    <span className="text-xs text-[var(--color-text-muted)] italic">
                                                         Unassigned
                                                     </span>
                                                 )}
