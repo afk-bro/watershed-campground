@@ -15,12 +15,12 @@ export default function StatusPill({ status }: Props) {
     };
 
     const colorClasses: Record<ReservationStatus, string> = {
-        pending: 'bg-amber-100 text-amber-800',
-        confirmed: 'bg-emerald-100 text-emerald-800',
-        cancelled: 'bg-rose-100 text-rose-800',
-        checked_in: 'bg-blue-100 text-blue-800',
-        checked_out: 'bg-slate-200 text-slate-700',
-        no_show: 'bg-zinc-200 text-zinc-800',
+        pending: 'bg-[var(--color-status-pending-bg)] text-[var(--color-status-pending)] border border-[var(--color-status-pending)]/20',
+        confirmed: 'bg-[var(--color-status-confirmed-bg)] text-[var(--color-status-confirmed)] border border-[var(--color-status-confirmed)]/20',
+        cancelled: 'bg-[var(--color-status-cancelled-bg)] text-[var(--color-status-cancelled)] border border-[var(--color-status-cancelled)]/20',
+        checked_in: 'bg-[var(--color-status-active-bg)] text-[var(--color-status-active)] border border-[var(--color-status-active)]/20',
+        checked_out: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border border-[var(--color-status-neutral)]/20',
+        no_show: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border border-[var(--color-status-neutral)]/30 opacity-80',
     };
 
     return (
