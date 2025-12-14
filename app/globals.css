@@ -311,15 +311,45 @@ select:focus-visible {
 }
 
 .skeleton-text {
-  @apply skeleton h-4 w-full;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+  height: 1rem;
+  width: 100%;
 }
 
 .skeleton-title {
-  @apply skeleton h-6 w-3/4;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+  height: 1.5rem;
+  width: 75%;
 }
 
 .skeleton-button {
-  @apply skeleton h-10 w-32;
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+  height: 2.5rem;
+  width: 8rem;
 }
 
 /* Error States */
