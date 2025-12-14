@@ -13,6 +13,19 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
   ]),
+  // Design system guardrails
+  {
+    files: ["app/admin/**/*.{ts,tsx}", "components/admin/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-syntax": [
+        "warn",
+        {
+          selector: "Literal[value=/bg-white|bg-slate-|text-slate-|border-slate-|bg-emerald-|bg-amber-|bg-rose-|text-rose-|bg-blue-|text-blue-|bg-zinc-/]",
+          message: "⚠️ Use semantic design tokens instead of raw Tailwind colors. See docs/design-system.md"
+        }
+      ]
+    }
+  }
 ]);
 
 export default eslintConfig;
