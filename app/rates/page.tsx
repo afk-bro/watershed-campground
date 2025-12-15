@@ -1,17 +1,15 @@
 import Container from "../../components/Container";
-import Hero from "../../components/Hero";
+import TaskHero from "../../components/TaskHero";
 
 export default function RatesPage() {
   return (
     <main>
-      <Hero
+      <TaskHero
         title="Rates"
         subtitle="Flexible options for every camping style"
-        imageSrc="/gallery/banner.avif"
-        align="center"
       />
 
-      <div className="py-16">
+      <div className="py-12 -mt-4">
         <Container size="xl">
           {/* Introduction */}
           <div className="max-w-4xl mx-auto mb-16 text-center">
