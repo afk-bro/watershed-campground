@@ -100,6 +100,38 @@ export const HELP_CATEGORIES: HelpCategory[] = [
         ]
     },
     {
+        id: "daily-management",
+        title: "Daily Management",
+        icon: "📋",
+        articles: [
+            {
+                slug: "managing-reservations-list",
+                title: "Managing Reservations & Bulk Actions",
+                summary: "Learn how to view details, assign sites, and check-in multiple guests at once.",
+                whenToUse: [
+                    "Daily check-ins/check-outs",
+                    "Assigning campsites to unassigned bookings",
+                    "Cancelling multiple reservations"
+                ],
+                steps: [
+                    "**View Details:** Click any row to open the Side Drawer with full reservation info and logs.",
+                    "**Inline Assign:** Click the yellow 'Assign' button on a row to pick an available campsite.",
+                    "**Bulk Actions:** Select multiple rows using the checkboxes on the left.",
+                    "Use the **Floating Bar** at the bottom to Check In, Check Out, Cancel, or Auto-Assign all selected items."
+                ],
+                whatHappensNext: [
+                    "Status updates apply immediately",
+                    "Auto-Assign searches for the first valid spot for each guest",
+                    "Errors (like conflicts) will leave the failed items selected so you can review them"
+                ],
+                tips: [
+                    "Use the 'Select All' checkbox in the header to select everything on the page",
+                    "Auto-Assign is great for handling a batch of 'Any Site' bookings efficiently"
+                ]
+            }
+        ]
+    },
+    {
         id: "payments",
         title: "Payments & Policies",
         icon: "💳",
