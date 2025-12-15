@@ -25,7 +25,7 @@ export default function StatusPill({ status }: Props) {
     };
 
     return (
-        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium border ${colorClasses[status]}`}>
+        <span className={`inline-flex items-center justify-center rounded-full px-2.5 text-xs font-medium border h-7 ${colorClasses[status]}`}>
             {labelMap[status]}
         </span>
     );
