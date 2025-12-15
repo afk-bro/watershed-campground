@@ -78,6 +78,7 @@ export default function ReservationPage() {
   // Form Status
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
+  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
 
   useEffect(() => {
       // Fetch Add-ons on mount
@@ -117,11 +118,42 @@ export default function ReservationPage() {
       }));
   };
 
+  // Toast helper
+  const showToast = (message: string) => {
+    setToast({ message, visible: true });
+    setTimeout(() => setToast({ message: "", visible: false }), 4000);
+  };
+
   // Step 1: Form -> Step 2: Add-ons
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+
+    // Check HTML5 validation
+    if (!form.checkValidity()) {
+      showToast("Please fill out all required information before proceeding.");
+      form.reportValidity(); // Show browser validation messages
+      return;
+    }
+
     setStep(2);
     window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  // Skip add-ons and go directly to checkout
+  const skipToCheckout = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const form = e.currentTarget as HTMLFormElement;
+
+    // Check HTML5 validation
+    if (!form.checkValidity()) {
+      showToast("Please fill out all required information before proceeding.");
+      form.reportValidity();
+      return;
+    }
+
+    // Go directly to step 3 (payment/review)
+    await handleAddonsSubmit();
   };
 
   // Step 2: Add-ons -> Step 3: Review & Pay
@@ -244,6 +276,15 @@ export default function ReservationPage() {
       <div className="py-12 -mt-4">
         <Container>
 
+           {/* Toast Notification */}
+           {toast.visible && (
+              <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
+                <div className="bg-[var(--color-accent-gold)] text-[var(--color-brand-forest)] px-6 py-4 rounded-lg shadow-2xl border-2 border-[var(--color-accent-gold-dark)] font-medium max-w-md">
+                  {toast.message}
+                </div>
+              </div>
+           )}
+
            {errorMessage && (
               <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-100 text-sm text-center">
                 {errorMessage}
@@ -305,9 +346,22 @@ export default function ReservationPage() {
                        <input type="hidden" name="unit" value={formData.campingUnit} />
                    </div>
 
-                  <button type="submit" className="w-full bg-accent-gold hover:bg-accent-gold-dark text-brand-forest font-bold py-4 rounded-xl transition-all">
-                      Continue to Add-ons
-                  </button>
+                  {/* Action Buttons */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                      <button
+                          type="button"
+                          onClick={(e) => skipToCheckout(e as any)}
+                          className="flex-1 bg-brand-forest/60 hover:bg-brand-forest/80 text-accent-beige border border-accent-gold/30 hover:border-accent-gold/50 font-medium py-4 rounded-xl transition-all"
+                      >
+                          Skip to Checkout
+                      </button>
+                      <button
+                          type="submit"
+                          className="flex-1 bg-accent-gold hover:bg-accent-gold-dark text-brand-forest font-bold py-4 rounded-xl transition-all"
+                      >
+                          Continue to Add-ons
+                      </button>
+                  </div>
                 </div>
               </form>
           )}
