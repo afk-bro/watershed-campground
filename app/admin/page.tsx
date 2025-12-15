@@ -334,18 +334,23 @@ export default function AdminPage() {
                                         // Row-level styling based on status
                                         const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
                                         const isCheckedIn = reservation.status === 'checked_in';
-                                        
-                                        const rowClass = `group transition-colors cursor-pointer ${
-                                            isCancelled 
-                                                ? 'opacity-60 grayscale bg-gray-50/50 dark:bg-gray-900/20' 
-                                                : isCheckedIn 
+                                        const isSelected = selectedIds.has(reservation.id!);
+
+                                        const rowClass = `group transition-colors cursor-pointer border-l-2 ${
+                                            isSelected
+                                                ? 'border-l-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/5'
+                                                : 'border-l-transparent'
+                                        } ${
+                                            isCancelled
+                                                ? 'opacity-60 grayscale bg-gray-50/50 dark:bg-gray-900/20'
+                                                : isCheckedIn
                                                     ? 'bg-green-50/30 hover:bg-green-50/60 dark:bg-green-900/10 dark:hover:bg-green-900/20'
                                                     : 'hover:bg-[var(--color-surface-elevated)]'
                                         }`;
 
                                         return (
-                                            <tr 
-                                                key={reservation.id} 
+                                            <tr
+                                                key={reservation.id}
                                                 className={rowClass}
                                                 onClick={() => setSelectedReservation(reservation)}
                                             >
@@ -405,8 +410,8 @@ export default function AdminPage() {
                                                             </span>
                                                         </div>
                                                     ) : (
-                                                        <button 
-                                                            className="flex items-center gap-1.5 text-amber-600 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2 py-1 rounded w-fit transition-colors group/unassigned"
+                                                        <button
+                                                            className="flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded font-medium text-xs w-fit transition-colors group/unassigned border border-amber-200/50 dark:border-amber-800/50"
                                                             onClick={(e) => {
                                                                 e.stopPropagation();
                                                                 setAssigningReservation(reservation);

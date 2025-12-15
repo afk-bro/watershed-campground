@@ -36,7 +36,7 @@ export default function RowActions({ reservation, updateStatus }: Props) {
 
     if (status === 'pending') {
         return (
-            <div className="flex gap-1 justify-end">
+            <div className="flex gap-2 justify-end">
                 <ActionButton
                     onClick={() => updateStatus(id, 'confirmed')}
                     icon={Check}
@@ -55,7 +55,7 @@ export default function RowActions({ reservation, updateStatus }: Props) {
 
     if (status === 'confirmed') {
         return (
-            <div className="flex gap-1 justify-end">
+            <div className="flex gap-2 justify-end">
                 <ActionButton
                     onClick={() => updateStatus(id, 'checked_in')}
                     icon={LogIn}
@@ -74,7 +74,7 @@ export default function RowActions({ reservation, updateStatus }: Props) {
 
     if (status === 'checked_in') {
         return (
-            <div className="flex gap-1 justify-end">
+            <div className="flex gap-2 justify-end">
                  <ActionButton
                     onClick={() => updateStatus(id, 'checked_out')}
                     icon={LogOut}
