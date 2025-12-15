@@ -42,6 +42,9 @@ export default function ReservationDrawer({
               </h2>
               <p className="text-brand-beige text-sm opacity-90">
                 Res #{reservation.id?.slice(0, 8)} • <span className="uppercase">{reservation.status}</span>
+                <a href="/admin/help?article=refunds-cancellations" target="_blank" className="ml-3 underline text-xs opacity-70 hover:opacity-100">
+                    Refund Policy
+                </a>
               </p>
             </div>
             <button

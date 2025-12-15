@@ -1,17 +1,22 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect, useRef } from "react";
-import { Campsite, Reservation } from "@/lib/supabase";
+import { Campsite, Reservation, BlackoutDate } from "@/lib/supabase";
 import { format, eachDayOfInterval, isSameMonth, isToday, isWeekend, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from "date-fns";
 import ReservationBlock from "./ReservationBlock";
 import ReservationDrawer from "./ReservationDrawer";
 import RescheduleConfirmDialog from "./RescheduleConfirmDialog";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import InstructionalOverlay from "./InstructionalOverlay";
+import EmptyStateHelper from "./EmptyStateHelper";
+import CreationDialog from "./CreationDialog";
+import { useRouter } from "next/navigation";
 
 interface CalendarGridProps {
   campsites: Campsite[];
   reservations: Reservation[];
+  blackoutDates: BlackoutDate[];
   date: Date; // The month we are viewing
   onDateChange: (date: Date) => void;
 }
@@ -19,9 +24,11 @@ interface CalendarGridProps {
 export default function CalendarGrid({
   campsites,
   reservations,
+  blackoutDates = [],
   date,
   onDateChange,
 }: CalendarGridProps) {
+  const router = useRouter();
   const { showToast } = useToast();
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
@@ -33,7 +40,7 @@ export default function CalendarGrid({
   const scrollDirectionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
   const scrollAnimationFrameRef = useRef<number | null>(null);
 
-  // Drag-and-drop state
+  // Drag-and-drop state (Move)
   const [isDragging, setIsDragging] = useState(false);
   const [draggedReservation, setDraggedReservation] = useState<Reservation | null>(null);
   const [dragPreview, setDragPreview] = useState<{
@@ -50,6 +57,12 @@ export default function CalendarGrid({
     newEndDate: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Creation State
+  const [isCreating, setIsCreating] = useState(false);
+  const [creationStart, setCreationStart] = useState<{ campsiteId: string; date: string } | null>(null);
+  const [creationEnd, setCreationEnd] = useState<{ campsiteId: string; date: string } | null>(null);
+  const [showCreationDialog, setShowCreationDialog] = useState(false);
 
   // Resize state (using pointer events, not HTML5 DnD)
   type ResizeSide = "left" | "right";
@@ -524,8 +537,98 @@ export default function CalendarGrid({
     }
   };
 
+  // Creation Handlers
+  const handleCellMouseDown = (campsiteId: string, dateStr: string) => {
+    // Only start if not dragging an existing reservation
+    if (isDragging || resizeState) return;
+    
+    setIsCreating(true);
+    setCreationStart({ campsiteId, date: dateStr });
+    setCreationEnd({ campsiteId, date: dateStr });
+  };
+
+  const handleCellMouseEnter = (campsiteId: string, dateStr: string) => {
+    if (!isCreating || !creationStart) return;
+    
+    // Only allow selection within the same campsite
+    if (campsiteId !== creationStart.campsiteId) return;
+
+    setCreationEnd({ campsiteId, date: dateStr });
+  };
+
+  const handleCellMouseUp = () => {
+    if (!isCreating || !creationStart || !creationEnd) return;
+
+    setIsCreating(false);
+    setShowCreationDialog(true);
+  };
+
+  const handleCreateBlackout = async (reason: string) => {
+    if (!creationStart || !creationEnd) return;
+
+    // Ensure start is before end
+    let start = creationStart.date;
+    let end = creationEnd.date;
+    if (start > end) {
+      [start, end] = [end, start];
+    }
+    // Add 1 day to end for inclusive logic if needed, but blackout usually inclusive [start, end]
+    // DB usually expects inclusive range.
+
+    try {
+      const response = await fetch('/api/admin/blackout-dates', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          start_date: start,
+          end_date: end,
+          campsite_id: creationStart.campsiteId,
+          reason
+        }),
+      });
+
+      if (!response.ok) throw new Error('Failed to create blackout');
+
+      showToast('Blackout dates added', 'success');
+      // Refresh
+      setTimeout(() => window.location.reload(), 500);
+    } catch (error) {
+      console.error(error);
+      showToast('Failed to create blackout', 'error');
+    }
+  };
+
+  const getSelectionRange = () => {
+    if (!creationStart || !creationEnd) return null;
+    let start = creationStart.date;
+    let end = creationEnd.date;
+    if (start > end) [start, end] = [end, start];
+    return { start, end, campsiteId: creationStart.campsiteId };
+  };
+
+  const selection = getSelectionRange();
+
   return (
-    <div className="flex flex-col h-full admin-card overflow-hidden">
+    <div className="flex flex-col h-full admin-card overflow-hidden relative select-none">
+      <InstructionalOverlay />
+      {blackoutDates.length === 0 && reservations.length === 0 && <EmptyStateHelper />}
+      
+      {selection && showCreationDialog && (
+        <CreationDialog
+          isOpen={showCreationDialog}
+          onClose={() => {
+            setShowCreationDialog(false);
+            setCreationStart(null);
+            setCreationEnd(null);
+          }}
+          startDate={selection.start}
+          endDate={selection.end}
+          campsiteId={selection.campsiteId}
+          campsiteCode={campsites.find(c => c.id === selection.campsiteId)?.code}
+          onCreateBlackout={handleCreateBlackout}
+          onCreateReservation={() => router.push(`/admin/reservations/new?start=${selection.start}&end=${selection.end}&campsite=${selection.campsiteId}`)}
+        />
+      )}
       {/* Header Controls */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)]">
         <div className="flex items-center gap-4">
@@ -547,14 +650,20 @@ export default function CalendarGrid({
             </button>
           </div>
         </div>
-        <div className="flex items-center gap-6 text-sm">
+        <div className="flex items-center gap-6 text-xs opacity-75">
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[var(--color-status-active)]"></span> Confirmed
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-status-active)]"></span> Confirmed
           </div>
           <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-[var(--color-status-pending)]"></span> Pending
+            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-status-pending)]"></span> Pending
           </div>
-          <label className="flex items-center gap-2 cursor-pointer select-none">
+          <div className="hidden xl:block text-[var(--color-text-muted)] italic">
+            Tip: Drag to create a reservation or blackout
+            <a href="/admin/help?article=add-blackout-dates" target="_blank" className="ml-2 text-brand-forest hover:underline not-italic font-medium text-xs">
+                 Need help?
+            </a>
+          </div>
+          <label className="flex items-center gap-2 cursor-pointer select-none opacity-100">
             <input
               type="checkbox"
               checked={showAvailability}
@@ -567,12 +676,23 @@ export default function CalendarGrid({
       </div>
 
       {/* Grid Container - Scrollable */}
-      <div ref={scrollContainerRef} className="flex-1 overflow-auto relative">
+      <div 
+        ref={scrollContainerRef} 
+        className="flex-1 overflow-auto relative"
+        onMouseUp={handleCellMouseUp} 
+        onMouseLeave={() => {
+           if (isCreating) {
+             setIsCreating(false);
+             setCreationStart(null);
+             setCreationEnd(null);
+           }
+        }}
+      >
         <div className="inline-block min-w-full">
           {/* Header Row (Dates) */}
-          <div className="flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)]">
+          <div className="flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b-2 border-[var(--color-border-strong)]">
             {/* Corner Sticky */}
-            <div className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] p-2 lg:p-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40 text-xs lg:text-sm">
+            <div className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] py-3 px-2 lg:px-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40 text-xs lg:text-sm">
               Campsite
             </div>
             {/* Days */}
@@ -580,9 +700,9 @@ export default function CalendarGrid({
               {days.map((day) => (
                 <div
                   key={day.toString()}
-                  className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] p-1 lg:p-2 text-xs
+                  className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] py-2 px-1 lg:py-3 lg:px-2 text-xs
                     ${isWeekend(day) ? "bg-[var(--color-surface-elevated)]/50" : ""}
-                    ${isToday(day) ? "bg-[var(--color-status-active)]/10" : ""}`}
+                    ${isToday(day) ? "bg-[var(--color-status-active)]/15 border-t-2 border-t-[var(--color-status-active)]" : ""}`}
                 >
                   <div className="font-semibold text-[var(--color-text-primary)] text-[10px] lg:text-xs">{format(day, "d")}</div>
                   <div className="text-[var(--color-text-muted)] uppercase text-[8px] lg:text-[10px] hidden sm:block">{format(day, "EEEEE")}</div>
@@ -624,16 +744,22 @@ export default function CalendarGrid({
                         <div
                           key={day.toString()}
                           data-date={dayStr}
-                          className={`w-8 lg:w-10 xl:w-12 h-12 lg:h-14 xl:h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface bg-[var(--color-status-pending-bg)]/50 ${
+                          className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface bg-[var(--color-status-pending-bg)]/50 ${
                             isDragging && isHovered
                               ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
                               : ''
+                          } ${
+                            isCreating && selection?.campsiteId === 'UNASSIGNED' && dayStr >= selection.start && dayStr <= selection.end
+                            ? 'bg-[var(--color-accent-gold)]/20'
+                            : ''
                           }`}
                           onDragOver={(e) => {
                             e.preventDefault();
                             handleDragOverCell('UNASSIGNED', dayStr);
                           }}
                           onDrop={handleDrop}
+                          onMouseDown={() => handleCellMouseDown('UNASSIGNED', dayStr)}
+                          onMouseEnter={() => handleCellMouseEnter('UNASSIGNED', dayStr)}
                         />
                       );
                     })}
@@ -698,6 +824,10 @@ export default function CalendarGrid({
               const siteReservations = reservations.filter(
                 (r) => r.campsite_id === campsite.id || (r.campsites && r.campsites.code === campsite.code)
               );
+              
+              const siteBlackouts = blackoutDates.filter(
+                (b) => b.campsite_id === campsite.id
+              );
 
               // Styling for inactive campsites
               const isInactive = !campsite.is_active;
@@ -736,7 +866,7 @@ export default function CalendarGrid({
                          }
                       } else {
                          if (isWeekend(day)) bgClass = "bg-[var(--color-surface-elevated)]/30";
-                         if (isToday(day)) bgClass = "bg-[var(--color-status-active)]/10";
+                         if (isToday(day)) bgClass = "bg-[var(--color-status-active)]/15";
                       }
 
                       const isHovered = dragPreview?.campsiteId === campsite.id && dragPreview?.startDate === dayStr;
@@ -745,16 +875,22 @@ export default function CalendarGrid({
                         <div
                           key={day.toString()}
                           data-date={dayStr}
-                          className={`w-8 lg:w-10 xl:w-12 h-12 lg:h-14 xl:h-16 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${
+                          className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${
                             isDragging && isHovered
                               ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
                               : ''
+                          } ${
+                            isCreating && selection?.campsiteId === campsite.id && dayStr >= selection.start && dayStr <= selection.end
+                            ? 'bg-[var(--color-accent-gold)]/20'
+                            : ''
                           }`}
                           onDragOver={(e) => {
                             e.preventDefault();
                             handleDragOverCell(campsite.id, dayStr);
                           }}
                           onDrop={handleDrop}
+                          onMouseDown={() => handleCellMouseDown(campsite.id, dayStr)}
+                          onMouseEnter={() => handleCellMouseEnter(campsite.id, dayStr)}
                         />
                       );
                     })}
@@ -774,6 +910,37 @@ export default function CalendarGrid({
                         isResizing={resizeState?.reservation.id === res.id}
                       />
                     ))}
+
+                    {/* Blackout Dates Overlays */}
+                    {siteBlackouts.map((blackout) => {
+                        const start = blackout.start_date < format(monthStart, 'yyyy-MM-dd') ? format(monthStart, 'yyyy-MM-dd') : blackout.start_date;
+                        const end = blackout.end_date > format(monthEnd, 'yyyy-MM-dd') ? format(monthEnd, 'yyyy-MM-dd') : blackout.end_date;
+                        
+                        // Check if visible
+                        if (start > end) return null;
+
+                        const duration = differenceInDays(parseISO(end), parseISO(start)) + 1; // Inclusive
+                        const offset = differenceInDays(parseISO(start), monthStart);
+                        
+                        return (
+                          <div
+                            key={blackout.id}
+                            className="absolute top-1 bottom-1 bg-red-500/10 border-2 border-red-500/30 w-full z-10 flex items-center justify-center overflow-hidden pointer-events-none rounded-md"
+                            style={{
+                              left: `${(offset / days.length) * 100}%`,
+                              width: `${(duration / days.length) * 100}%`,
+                            }}
+                            title={`Blackout: ${blackout.reason || 'Unavailable'}`}
+                          >
+                            <div className="flex items-center gap-1.5 px-2 overflow-hidden w-full justify-center">
+                                <Ban className="text-red-500/50 w-3.5 h-3.5 flex-shrink-0" />
+                                <span className="text-[10px] sm:text-xs font-medium text-red-600/70 truncate uppercase tracking-wide">
+                                    {blackout.reason || "Unavailable"}
+                                </span>
+                            </div>
+                          </div>
+                        );
+                    })}
 
                     {/* Ghost Preview */}
                     {dragPreview && dragPreview.campsiteId === campsite.id && (
