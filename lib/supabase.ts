@@ -34,6 +34,7 @@ export type Campsite = {
     is_active: boolean;
     notes?: string;
     sort_order: number;
+    image_url?: string;
 };
 
 export type Reservation = {
@@ -60,6 +61,10 @@ export type Reservation = {
     comments?: string;
     status: ReservationStatus;
     campsite_id?: string;
+    locked?: boolean;
+    archived_at?: string | null;
+    archived_by?: string | null;
+    // Joined fields
     campsites?: {
         code: string;
         name: string;
