@@ -402,38 +402,42 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Campsite Column */}
-                                                <td className="px-5 py-4 align-top">
-                                                    {reservation.campsites ? (
-                                                        <div>
-                                                            <span className="inline-flex items-center px-2 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-primary)]">
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="flex items-center min-h-[28px]">
+                                                        {reservation.campsites ? (
+                                                            <span className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-primary)] text-xs h-7">
                                                                 {reservation.campsites.code}
                                                             </span>
-                                                        </div>
-                                                    ) : (
-                                                        <button
-                                                            className="flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded font-medium text-xs w-fit transition-colors group/unassigned border border-amber-200/50 dark:border-amber-800/50"
-                                                            onClick={(e) => {
-                                                                e.stopPropagation();
-                                                                setAssigningReservation(reservation);
-                                                            }}
-                                                        >
-                                                            <AlertTriangle size={14} className="stroke-[2.5]" />
-                                                            <span className="font-bold text-xs uppercase tracking-wide translate-y-[0.5px]">Assign</span>
-                                                        </button>
-                                                    )}
+                                                        ) : (
+                                                            <button
+                                                                className="flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded font-medium text-xs transition-colors group/unassigned border border-amber-200/50 dark:border-amber-800/50 h-7"
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    setAssigningReservation(reservation);
+                                                                }}
+                                                            >
+                                                                <AlertTriangle size={14} className="stroke-[2.5]" />
+                                                                <span className="font-bold text-xs uppercase tracking-wide translate-y-[0.5px]">Assign</span>
+                                                            </button>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 {/* Status Column */}
-                                                <td className="px-5 py-4 align-top">
-                                                    <StatusPill status={reservation.status} />
+                                                <td className="px-5 py-4 align-middle">
+                                                    <div className="flex items-center min-h-[28px]">
+                                                        <StatusPill status={reservation.status} />
+                                                    </div>
                                                 </td>
 
                                                 {/* Actions Column */}
-                                                <td className="px-5 py-4 align-top text-right">
-                                                    <RowActions
-                                                        reservation={reservation}
-                                                        updateStatus={updateStatus}
-                                                    />
+                                                <td className="px-5 py-4 align-middle text-right">
+                                                    <div className="flex items-center justify-end min-h-[28px]">
+                                                        <RowActions
+                                                            reservation={reservation}
+                                                            updateStatus={updateStatus}
+                                                        />
+                                                    </div>
                                                 </td>
                                             </tr>
                                         );
