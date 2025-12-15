@@ -77,6 +77,7 @@ export async function PATCH(request: Request, { params }: Params) {
         if (formData.isActive !== undefined) updateData.is_active = formData.isActive;
         if (formData.notes !== undefined) updateData.notes = formData.notes || null;
         if (formData.sortOrder !== undefined) updateData.sort_order = formData.sortOrder;
+        if (formData.imageUrl !== undefined) updateData.image_url = formData.imageUrl || null;
 
         // Update campsite
         const { data, error } = await supabaseAdmin

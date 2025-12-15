@@ -14,6 +14,9 @@ export default function EditCampsitePage() {
     const [saving, setSaving] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [campsite, setCampsite] = useState<Campsite | null>(null);
+    const [imagePreview, setImagePreview] = useState<string | null>(null);
+    const [imageFile, setImageFile] = useState<File | null>(null);
+    const [uploadingImage, setUploadingImage] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         code: "",
@@ -23,6 +26,7 @@ export default function EditCampsitePage() {
         isActive: true,
         notes: "",
         sortOrder: 0,
+        imageUrl: "",
     });
 
     useEffect(() => {
@@ -52,7 +56,13 @@ export default function EditCampsitePage() {
                 isActive: data.is_active,
                 notes: data.notes || "",
                 sortOrder: data.sort_order,
+                imageUrl: data.image_url || "",
             });
+
+            // Set image preview if exists
+            if (data.image_url) {
+                setImagePreview(data.image_url);
+            }
         } catch (err: any) {
             console.error('Error fetching campsite:', err);
             setError(err.message || 'Failed to load campsite');
@@ -67,10 +77,19 @@ export default function EditCampsitePage() {
         setError(null);
 
         try {
+            let imageUrl = formData.imageUrl;
+
+            // Upload image if selected
+            if (imageFile) {
+                setUploadingImage(true);
+                imageUrl = await uploadImage(imageFile);
+                setUploadingImage(false);
+            }
+
             const response = await fetch(`/api/admin/campsites/${id}`, {
                 method: 'PATCH',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(formData),
+                body: JSON.stringify({ ...formData, imageUrl }),
             });
 
             if (!response.ok) {
@@ -85,6 +104,49 @@ export default function EditCampsitePage() {
             setError(err.message || 'Failed to update campsite');
             setSaving(false);
         }
+    }
+
+    async function uploadImage(file: File): Promise<string> {
+        const formDataObj = new FormData();
+        formDataObj.append('file', file);
+        formDataObj.append('name', `campsite-${Date.now()}-${Math.random().toString(36).substring(7)}`);
+
+        const response = await fetch('/api/admin/upload-image', {
+            method: 'POST',
+            body: formDataObj,
+        });
+
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Failed to upload image');
+        }
+
+        const { url } = await response.json();
+        return url;
+    }
+
+    async function handleImageChange(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            setError('Please select a valid image file');
+            return;
+        }
+
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+            setError('Image must be less than 5MB');
+            return;
+        }
+
+        setImageFile(file);
+        const reader = new FileReader();
+        reader.onloadend = () => {
+            setImagePreview(reader.result as string);
+        };
+        reader.readAsDataURL(file);
     }
 
     async function handleDeactivate() {
@@ -179,6 +241,74 @@ export default function EditCampsitePage() {
                             />
                             <p className="text-xs text-[var(--color-text-muted)] mt-1">
                                 Short code for internal use (letters and numbers only)
+                            </p>
+                        </div>
+
+                        {/* Image Upload */}
+                        <div>
+                            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                                Campsite Image
+                            </label>
+                            <div className="space-y-3">
+                                {imagePreview ? (
+                                    <div className="relative">
+                                        <img
+                                            src={imagePreview}
+                                            alt="Preview"
+                                            className="w-full h-48 object-cover rounded-lg border border-[var(--color-border-default)]"
+                                        />
+                                        <button
+                                            type="button"
+                                            onClick={() => {
+                                                setImageFile(null);
+                                                setImagePreview(null);
+                                                setFormData({ ...formData, imageUrl: "" });
+                                            }}
+                                            className="absolute top-2 right-2 bg-red-600 text-white px-3 py-1 rounded text-sm hover:bg-red-700 transition-colors"
+                                        >
+                                            Remove
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <label className="flex items-center justify-center w-full h-32 border-2 border-dashed border-[var(--color-border-default)] rounded-lg cursor-pointer hover:border-[var(--color-accent-gold)] transition-colors">
+                                        <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                                            <svg
+                                                className="w-8 h-8 text-[var(--color-text-muted)] mb-2"
+                                                fill="none"
+                                                stroke="currentColor"
+                                                viewBox="0 0 24 24"
+                                            >
+                                                <path
+                                                    strokeLinecap="round"
+                                                    strokeLinejoin="round"
+                                                    strokeWidth={2}
+                                                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                />
+                                            </svg>
+                                            <p className="text-sm text-[var(--color-text-muted)]">
+                                                Click to upload or drag and drop
+                                            </p>
+                                            <p className="text-xs text-[var(--color-text-muted)]">
+                                                PNG, JPG, WebP (max 5MB)
+                                            </p>
+                                        </div>
+                                        <input
+                                            type="file"
+                                            className="hidden"
+                                            accept="image/*"
+                                            onChange={handleImageChange}
+                                            disabled={uploadingImage}
+                                        />
+                                    </label>
+                                )}
+                                {uploadingImage && (
+                                    <p className="text-sm text-[var(--color-accent-gold)]">
+                                        Uploading image...
+                                    </p>
+                                )}
+                            </div>
+                            <p className="text-xs text-[var(--color-text-muted)] mt-2">
+                                This image will be displayed as a thumbnail in the campsites table
                             </p>
                         </div>
 
