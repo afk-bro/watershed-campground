@@ -15,10 +15,13 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
     const [currentMonth, setCurrentMonth] = useState(new Date());
     const [availability, setAvailability] = useState<DayStatus[]>([]);
     const [loading, setLoading] = useState(false);
-    
+
     // Internal selection state for the drag/click interaction
     const [selectionStart, setSelectionStart] = useState<string | null>(checkIn);
     const [selectionEnd, setSelectionEnd] = useState<string | null>(checkOut);
+
+    // Hover preview state for range selection
+    const [hoverDate, setHoverDate] = useState<string | null>(null);
 
     useEffect(() => {
         fetchAvailability();
@@ -112,24 +115,35 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
                         const dateStr = format(day, 'yyyy-MM-dd');
                         const status = loading ? 'loading' : getDayStatus(dateStr);
                         const isBlocked = status === 'sold-out' || status === 'blackout';
-                        const isSelected = (selectionStart === dateStr) || (selectionEnd === dateStr) || 
+
+                        // Selected state
+                        const isSelected = (selectionStart === dateStr) || (selectionEnd === dateStr) ||
                                            (selectionStart && selectionEnd && dateStr > selectionStart && dateStr < selectionEnd);
+
+                        // Hover preview state - show preview when start is selected but end is not
+                        const isInHoverRange = selectionStart && !selectionEnd && hoverDate &&
+                                               dateStr > selectionStart && dateStr <= hoverDate;
+                        const isHoverEnd = selectionStart && !selectionEnd && hoverDate === dateStr;
 
                         return (
                             <button
                                 key={dateStr}
                                 onClick={() => handleDayClick(dateStr, status)}
+                                onMouseEnter={() => !isBlocked && setHoverDate(dateStr)}
+                                onMouseLeave={() => setHoverDate(null)}
                                 disabled={isBlocked || loading}
                                 className={`
                                     h-10 w-full rounded-md flex items-center justify-center text-sm font-medium transition-all relative
                                     ${isBlocked ? 'text-[var(--color-text-muted)] opacity-50 cursor-not-allowed bg-[var(--color-surface-primary)]/50' : 'hover:bg-[var(--color-brand-forest-light)]/20 text-[var(--color-text-primary)]'}
                                     ${status === 'blackout' ? 'diagonal-stripes' : ''}
                                     ${isSelected ? '!bg-[var(--color-accent-gold)] !text-[var(--color-brand-forest)] shadow-md z-10' : ''}
+                                    ${isInHoverRange ? '!bg-[var(--color-accent-gold)]/30 !text-[var(--color-text-primary)]' : ''}
+                                    ${isHoverEnd ? '!bg-[var(--color-accent-gold)]/50 !text-[var(--color-brand-forest)] border-2 border-[var(--color-accent-gold)]' : ''}
                                     ${isBlocked && !isSelected ? 'line-through decoration-red-500/50' : ''}
                                 `}
                             >
                                 {format(day, 'd')}
-                                {status === 'limited' && !isBlocked && !isSelected && (
+                                {status === 'limited' && !isBlocked && !isSelected && !isInHoverRange && (
                                     <div className="absolute bottom-1 w-1 h-1 rounded-full bg-orange-500"></div>
                                 )}
                             </button>
@@ -138,11 +152,28 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
                 </div>
             </div>
             
-            {selectionStart && selectionEnd && (
-                <div className="text-center pt-4">
-                     <p className="text-[var(--color-accent-gold)] font-medium mb-4">
-                        {format(parseISO(selectionStart), 'MMM d')} — {format(parseISO(selectionEnd), 'MMM d, yyyy')}
-                     </p>
+            {/* Selection preview */}
+            {selectionStart && (
+                <div className="text-center pt-4 animate-in fade-in duration-300">
+                    {selectionEnd ? (
+                        <p className="text-[var(--color-accent-gold)] font-medium mb-4">
+                            {format(parseISO(selectionStart), 'MMM d')} → {format(parseISO(selectionEnd), 'MMM d, yyyy')}
+                            <span className="ml-2 text-sm text-[var(--color-text-muted)]">
+                                ({Math.abs(new Date(selectionEnd).getTime() - new Date(selectionStart).getTime()) / (1000 * 60 * 60 * 24)} nights)
+                            </span>
+                        </p>
+                    ) : hoverDate && hoverDate > selectionStart ? (
+                        <p className="text-[var(--color-text-primary)]/60 font-medium text-sm">
+                            {format(parseISO(selectionStart), 'MMM d')} → {format(parseISO(hoverDate), 'MMM d, yyyy')}
+                            <span className="ml-2 text-[var(--color-accent-gold)]/60">
+                                ({Math.abs(new Date(hoverDate).getTime() - new Date(selectionStart).getTime()) / (1000 * 60 * 60 * 24)} nights)
+                            </span>
+                        </p>
+                    ) : (
+                        <p className="text-[var(--color-text-muted)] text-sm">
+                            Select your check-out date
+                        </p>
+                    )}
                 </div>
             )}
         </div>
