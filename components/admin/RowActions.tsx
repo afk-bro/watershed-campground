@@ -59,7 +59,7 @@ export default function RowActions({ reservation, updateStatus }: Props) {
                 <ActionButton
                     onClick={() => updateStatus(id, 'checked_in')}
                     icon={LogIn}
-                    colorClass="text-blue-600 hover:bg-blue-100 hover:ring-1 hover:ring-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/30 dark:hover:ring-blue-600"
+                    colorClass="text-blue-600 hover:bg-blue-200 hover:ring-1 hover:ring-blue-500 dark:text-blue-400 dark:hover:bg-blue-900/50 dark:hover:ring-blue-600"
                     title="Check In"
                 />
                 <ActionButton
