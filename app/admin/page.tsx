@@ -292,7 +292,7 @@ export default function AdminPage() {
                             Show Archived
                         </label>
                         <Link href="/admin/calendar">
-                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] rounded-md transition-colors whitespace-nowrap">
+                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] rounded-md transition-colors whitespace-nowrap cursor-pointer">
                                 <span>📅</span> Calendar
                             </button>
                         </Link>
