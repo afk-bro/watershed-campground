@@ -4,9 +4,10 @@ import { useState } from "react";
 import DateStep from "./steps/DateStep";
 import CampsiteParamsStep from "./steps/CampsiteParamsStep";
 import ResultsStep from "./steps/ResultsStep";
+import ReservationSummary from "./ReservationSummary";
 
 interface BookingWizardProps {
-    onComplete: (data: any) => void; 
+    onComplete: (data: any) => void;
 }
 
 export default function BookingWizard({ onComplete }: BookingWizardProps) {
@@ -22,6 +23,7 @@ export default function BookingWizard({ onComplete }: BookingWizardProps) {
 
     const next = () => setStep(s => s + 1);
     const back = () => setStep(s => s - 1);
+    const goToStep = (stepNum: number) => setStep(stepNum);
 
     const handleDateSelection = (start: string, end: string) => {
         setBookingData(prev => ({ ...prev, checkIn: start, checkOut: end }));
@@ -59,7 +61,7 @@ export default function BookingWizard({ onComplete }: BookingWizardProps) {
             {/* Content */}
             <div className="min-h-[400px]">
                 {step === 1 && (
-                    <DateStep 
+                    <DateStep
                         checkIn={bookingData.checkIn}
                         checkOut={bookingData.checkOut}
                         onSelectRange={handleDateSelection}
@@ -67,29 +69,38 @@ export default function BookingWizard({ onComplete }: BookingWizardProps) {
                 )}
                 {step === 2 && (
                     <>
-                        <CampsiteParamsStep 
+                        <ReservationSummary
+                            checkIn={bookingData.checkIn}
+                            checkOut={bookingData.checkOut}
+                            guests={bookingData.guests}
+                            unitType={bookingData.unitType}
+                            currentStep={step}
+                            totalSteps={3}
+                            onChangeDates={() => goToStep(1)}
+                        />
+                        <CampsiteParamsStep
                             formData={bookingData}
                             onChange={(data) => setBookingData(prev => ({...prev, ...data}))}
                             onNext={next}
                         />
-                        <div className="text-center mt-6">
-                            <button onClick={back} className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
-                                Back to Dates
-                            </button>
-                        </div>
                     </>
                 )}
                 {step === 3 && (
                     <>
-                        <ResultsStep 
+                        <ReservationSummary
+                            checkIn={bookingData.checkIn}
+                            checkOut={bookingData.checkOut}
+                            guests={bookingData.guests}
+                            unitType={bookingData.unitType}
+                            currentStep={step}
+                            totalSteps={3}
+                            onChangeDates={() => goToStep(1)}
+                            onChangeDetails={() => goToStep(2)}
+                        />
+                        <ResultsStep
                             searchParams={bookingData}
                             onSelectSite={handleSelectSite}
                         />
-                        <div className="text-center mt-6">
-                            <button onClick={back} className="text-sm text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors">
-                                Back to Details
-                            </button>
-                        </div>
                     </>
                 )}
             </div>
