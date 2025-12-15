@@ -175,3 +175,43 @@ export async function searchCampsites(params: SearchParams) {
         return true;
     });
 }
+
+/**
+ * Check availability for a specific date range and optional campsite.
+ * Used by payment flow to verify availability before creating payment intent.
+ */
+export async function checkAvailability(params: {
+    checkIn: string;
+    checkOut: string;
+    guestCount: number;
+    campsiteId?: string;
+}): Promise<{ available: boolean; recommendedSiteId: string | null }> {
+    const { checkIn, checkOut, guestCount, campsiteId } = params;
+
+    // Search for available campsites
+    const availableSites = await searchCampsites({
+        checkIn,
+        checkOut,
+        guestCount,
+        unitType: '',
+        rvLength: 0
+    });
+
+    // If no sites available at all
+    if (availableSites.length === 0) {
+        return { available: false, recommendedSiteId: null };
+    }
+
+    // If specific campsite requested, verify it's available
+    if (campsiteId) {
+        const requestedSite = availableSites.find(site => site.id === campsiteId);
+        if (requestedSite) {
+            return { available: true, recommendedSiteId: campsiteId };
+        }
+        // Requested site not available, but others are - return first available
+        return { available: true, recommendedSiteId: availableSites[0].id };
+    }
+
+    // No specific site requested, return first available
+    return { available: true, recommendedSiteId: availableSites[0].id };
+}
