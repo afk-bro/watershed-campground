@@ -40,10 +40,18 @@ export default function AdminLayout({
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between h-16">
                                 <div className="flex items-center gap-4">
+                                    <a
+                                        href="/"
+                                        className="text-accent-beige/60 hover:text-accent-beige text-xs transition-colors flex items-center gap-1"
+                                        title="View public site"
+                                    >
+                                        ← Site
+                                    </a>
+                                    <div className="h-6 w-px bg-accent-beige/20"></div>
                                     <h1 className="text-xl font-heading font-bold text-accent-gold">
                                         Admin Panel
                                     </h1>
-                                    <span className="text-sm text-accent-beige">
+                                    <span className="text-sm text-accent-beige/60">
                                         {user.email}
                                     </span>
                                 </div>
