@@ -1,7 +1,16 @@
+import { NextResponse } from "next/server";
+import Stripe from "stripe";
 import { checkRateLimit } from "@/lib/rate-limit";
+import { supabaseAdmin } from "@/lib/supabase";
+import { checkAvailability } from "@/lib/availability/engine";
+import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
 
-// Initialize Stripe (existing code below...)
-// ...
+// Helper function to calculate total site cost
+function calculateTotal(baseRate: string, checkIn: string, checkOut: string): number {
+    const rate = parseFloat(baseRate);
+    const nights = Math.ceil((new Date(checkOut).getTime() - new Date(checkIn).getTime()) / (1000 * 60 * 60 * 24));
+    return rate * nights;
+}
 
 export async function POST(request: Request) {
     try {
