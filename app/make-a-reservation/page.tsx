@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import { Elements } from "@stripe/react-stripe-js";
 import Container from "../../components/Container";
-import Hero from "../../components/Hero";
+import TaskHero from "../../components/TaskHero";
 import PaymentForm from "../../components/PaymentForm";
 import BookingWizard from "../../components/booking/BookingWizard";
 import { format, parseISO } from "date-fns";
@@ -217,13 +217,11 @@ export default function ReservationPage() {
   if (view === 'wizard') {
       return (
           <main>
-              <Hero
+              <TaskHero
                   title="Make a Reservation"
-                  subtitle="Find your perfect spot"
-                  imageSrc="/gallery/banner.avif"
-                  align="center"
+                  subtitle="Find your perfect campsite and book your stay"
               />
-              <div className="py-16">
+              <div className="pt-8 pb-12 -mt-4">
                   <Container>
                       <BookingWizard onComplete={handleWizardComplete} />
                   </Container>
@@ -235,25 +233,16 @@ export default function ReservationPage() {
   // Form View
   return (
     <main>
-      <Hero
+      <TaskHero
         title="Complete Your Booking"
-        subtitle="Almost there!"
-        imageSrc="/gallery/banner.avif"
-        align="center"
+        subtitle="Just a few more details and you're all set"
+        currentStep={step}
+        totalSteps={4}
+        stepLabels={['Your Details', 'Add-ons', 'Review & Pay', 'Confirmed']}
       />
 
-      <div className="py-16">
+      <div className="py-12 -mt-4">
         <Container>
-           {/* Stepper */}
-            <div className="max-w-4xl mx-auto mb-8 flex justify-between items-center text-sm text-accent-beige/60">
-              <span className={step >= 1 ? "text-accent-gold font-bold" : ""}>1. Details</span>
-              <span className="h-px bg-accent-gold/20 flex-1 mx-4"></span>
-              <span className={step >= 2 ? "text-accent-gold font-bold" : ""}>2. Add-ons</span>
-              <span className="h-px bg-accent-gold/20 flex-1 mx-4"></span>
-              <span className={step >= 3 ? "text-accent-gold font-bold" : ""}>3. Review & Pay</span>
-              <span className="h-px bg-accent-gold/20 flex-1 mx-4"></span>
-              <span className={step >= 4 ? "text-accent-gold font-bold" : ""}>4. Confirmed</span>
-            </div>
 
            {errorMessage && (
               <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-100 text-sm text-center">
