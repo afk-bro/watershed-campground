@@ -12,6 +12,24 @@ if (!supabaseUrl || !supabaseKey) {
 
 export const supabase = createClient(supabaseUrl || "", supabaseKey || "");
 
+// Admin client for server-side operations (uses service role key)
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseServiceKey) {
+    console.error("WARNING: SUPABASE_SERVICE_ROLE_KEY is missing - admin operations will fail");
+}
+
+export const supabaseAdmin = createClient(
+    supabaseUrl || "",
+    supabaseServiceKey || "",
+    {
+        auth: {
+            autoRefreshToken: false,
+            persistSession: false
+        }
+    }
+);
+
 export type ReservationStatus =
     | 'pending'
     | 'confirmed'
