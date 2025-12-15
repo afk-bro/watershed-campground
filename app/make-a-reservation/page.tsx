@@ -6,6 +6,8 @@ import { Elements } from "@stripe/react-stripe-js";
 import Container from "../../components/Container";
 import Hero from "../../components/Hero";
 import PaymentForm from "../../components/PaymentForm";
+import BookingWizard from "../../components/booking/BookingWizard";
+import { format, parseISO } from "date-fns";
 
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
@@ -39,7 +41,9 @@ type PaymentBreakdown = {
 };
 
 export default function ReservationPage() {
+  const [view, setView] = useState<'wizard' | 'form'>('wizard');
   const [step, setStep] = useState<1 | 2 | 3 | 4>(1); // 1: Details, 2: Add-ons, 3: Review/Pay, 4: Success
+  
   const [formData, setFormData] = useState({
     firstName: "",
     lastName: "",
@@ -59,6 +63,7 @@ export default function ReservationPage() {
     hearAbout: "",
     contactMethod: "",
     comments: "",
+    campsiteId: "", // New field for specific site
   });
   
   // Add-ons State
@@ -83,6 +88,20 @@ export default function ReservationPage() {
         })
         .catch(err => console.error("Failed to load addons", err));
   }, []);
+
+  const handleWizardComplete = (data: any) => {
+      setFormData(prev => ({
+          ...prev,
+          checkIn: data.checkIn,
+          checkOut: data.checkOut,
+          adults: data.guests,
+          rvLength: data.rvLength?.toString() || "",
+          campingUnit: data.unitType,
+          campsiteId: data.selectedSite?.id || ""
+      }));
+      setView('form');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setFormData({
@@ -126,7 +145,8 @@ export default function ReservationPage() {
             checkOut: formData.checkOut,
             adults: Number(formData.adults),
             children: Number(formData.children),
-            addons: addonsPayload
+            addons: addonsPayload,
+            campsiteId: formData.campsiteId // PASS CAMPSITE ID
         }),
       });
 
@@ -139,7 +159,7 @@ export default function ReservationPage() {
       setClientSecret(data.clientSecret);
       setBreakdown(data.breakdown); 
       
-      // Save state to Session Storage for Redirect Flows (Stripe 3DS, etc.)
+      // Save state to Session Storage
       sessionStorage.setItem("pendingReservation", JSON.stringify({ 
           formData, 
           selectedAddons, 
@@ -193,11 +213,31 @@ export default function ReservationPage() {
     }
   };
 
+  // Wizard View
+  if (view === 'wizard') {
+      return (
+          <main>
+              <Hero
+                  title="Make a Reservation"
+                  subtitle="Find your perfect spot"
+                  imageSrc="/gallery/banner.avif"
+                  align="center"
+              />
+              <div className="py-16">
+                  <Container>
+                      <BookingWizard onComplete={handleWizardComplete} />
+                  </Container>
+              </div>
+          </main>
+      );
+  }
+
+  // Form View
   return (
     <main>
       <Hero
-        title="Make a Reservation"
-        subtitle="Start planning your lakeside getaway"
+        title="Complete Your Booking"
+        subtitle="Almost there!"
         imageSrc="/gallery/banner.avif"
         align="center"
       />
@@ -224,7 +264,23 @@ export default function ReservationPage() {
           {step === 1 && (
               <form onSubmit={handleDetailsSubmit} className="max-w-3xl mx-auto">
                 <div className="bg-gradient-to-b from-brand-forest/40 to-brand-forest/60 border border-accent-gold/25 rounded-xl shadow-2xl p-6 sm:p-10 space-y-12">
-                   {/* ... (Keep existing form fields exactly as is, shortened for brevity in this replace block, BUT I MUST include them all) ... */}
+                   
+                   {/* Summary of Selection */}
+                   <div className="bg-[var(--color-surface-elevated)] p-4 rounded-lg border border-[var(--color-accent-gold)]/30 flex items-center justify-between">
+                       <div>
+                           <div className="text-xs text-[var(--color-text-muted)] uppercase tracking-wider font-bold mb-1">Your Selection</div>
+                           <div className="text-[var(--color-text-primary)] font-medium">
+                               {formData.checkIn && format(parseISO(formData.checkIn), 'MMM d')} - {formData.checkOut && format(parseISO(formData.checkOut), 'MMM d, yyyy')}
+                           </div>
+                           <div className="text-sm text-[var(--color-text-muted)]">
+                               {formData.campingUnit} • {formData.adults} Guests
+                           </div>
+                       </div>
+                       <button type="button" onClick={() => setView('wizard')} className="text-sm text-[var(--color-accent-gold)] hover:underline">
+                           Change
+                       </button>
+                   </div>
+                   
                    {/* Personal Information */}
                   <section className="space-y-6">
                     <h3 className="font-heading text-2xl text-accent-gold-dark mb-2">Personal Information</h3>
@@ -236,29 +292,6 @@ export default function ReservationPage() {
                       <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} required className="w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
                       <input type="text" name="postalCode" placeholder="Postal Code" value={formData.postalCode} onChange={handleChange} required className="w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
                     </div>
-                  </section>
-
-                  {/* Reservation Details */}
-                  <section className="space-y-6">
-                     <h3 className="font-heading text-2xl text-accent-gold-dark mb-2">Reservation Details</h3>
-                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                        <div className="flex flex-col"><label className="text-sm mb-1 text-accent-beige/70">Check In</label><input type="date" name="checkIn" value={formData.checkIn} onChange={handleChange} required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" /></div>
-                        <div className="flex flex-col"><label className="text-sm mb-1 text-accent-beige/70">Check Out</label><input type="date" name="checkOut" value={formData.checkOut} onChange={handleChange} required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" /></div>
-                        <input type="text" name="rvLength" placeholder="RV Length (e.g. 25 ft)" value={formData.rvLength} onChange={handleChange} required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                        <input type="text" name="rvYear" placeholder="RV Year" value={formData.rvYear} onChange={handleChange} className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                        <input type="number" name="adults" placeholder="Adults (18+)" value={formData.adults} onChange={handleChange} min="1" required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                        <input type="number" name="children" placeholder="Children" value={formData.children} onChange={handleChange} min="0" className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                     </div>
-                  </section>
-
-                  {/* Camping Unit */}
-                  <section className="space-y-6">
-                     <h3 className="font-heading text-2xl text-accent-gold-dark mb-2">Camping Unit</h3>
-                     <div className="grid grid-cols-2 gap-3">
-                         {["Pull Trailer", "5th Wheel", "Camper Van", "Tent Trailer", "Motorhome", "Tent", "Other"].map(unit => (
-                             <label key={unit} className="flex items-center gap-2 p-3 border border-white/10 rounded cursor-pointer hover:bg-white/5"><input type="radio" name="campingUnit" value={unit} checked={formData.campingUnit === unit} onChange={handleChange} required /> <span className="text-sm">{unit}</span></label>
-                         ))}
-                     </div>
                   </section>
 
                    {/* Other Info */}
@@ -273,6 +306,15 @@ export default function ReservationPage() {
                           <textarea name="comments" placeholder="Comments..." value={formData.comments} onChange={handleChange} className="sm:col-span-2 px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
                       </div>
                   </section>
+                  
+                  {/* Additional Hidden / Readonly Fields to ensure State Persistence */}
+                   <div className="hidden">
+                       <input type="hidden" name="checkIn" value={formData.checkIn} />
+                       <input type="hidden" name="checkOut" value={formData.checkOut} />
+                       <input type="hidden" name="adults" value={formData.adults} />
+                       <input type="hidden" name="children" value={formData.children} />
+                       <input type="hidden" name="unit" value={formData.campingUnit} />
+                   </div>
 
                   <button type="submit" className="w-full bg-accent-gold hover:bg-accent-gold-dark text-brand-forest font-bold py-4 rounded-xl transition-all">
                       Continue to Add-ons
