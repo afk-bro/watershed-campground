@@ -170,18 +170,17 @@ export default function RescheduleConfirmDialog({
                     <Calendar size={16} className={checkInChanged ? "text-[var(--color-accent-gold)]" : "text-[var(--color-text-muted)]"} />
                   </td>
                   <td className="p-3 border-b border-[var(--color-border-subtle)]">
-                    <div className="flex items-baseline gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <span className={checkInChanged ? "font-medium text-[var(--color-text-primary)]" : "font-normal text-[var(--color-text-muted)]"}>
                         Check-in
                       </span>
                       {checkInChanged && (
-                        <span className={`text-xs font-normal inline-flex items-center gap-1 ${
+                        <span className={`text-xs font-normal ${
                           checkInMovedEarlier ? "text-[var(--color-status-active)]" : "text-[var(--color-warning)]"
                         }`}>
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full ${
-                            checkInMovedEarlier ? "bg-[var(--color-status-active)]" : "bg-[var(--color-warning)]"
-                          }`}></span>
-                          {checkInMovedEarlier ? `${Math.abs(checkInDaysDiff)}d earlier` : `${checkInDaysDiff}d later`}
+                          {checkInMovedEarlier
+                            ? `${Math.abs(checkInDaysDiff)} ${Math.abs(checkInDaysDiff) === 1 ? 'day' : 'days'} earlier`
+                            : `+${checkInDaysDiff} ${checkInDaysDiff === 1 ? 'day' : 'days'} later`}
                         </span>
                       )}
                     </div>
@@ -205,18 +204,17 @@ export default function RescheduleConfirmDialog({
                     <Calendar size={16} className={checkOutChanged ? "text-[var(--color-accent-gold)]" : "text-[var(--color-text-muted)]"} />
                   </td>
                   <td className="p-3 border-b border-[var(--color-border-subtle)]">
-                    <div className="flex items-baseline gap-1.5">
+                    <div className="flex flex-col gap-1">
                       <span className={checkOutChanged ? "font-medium text-[var(--color-text-primary)]" : "font-normal text-[var(--color-text-muted)]"}>
                         Check-out
                       </span>
                       {checkOutChanged && (
-                        <span className={`text-xs font-normal inline-flex items-center gap-1 ${
+                        <span className={`text-xs font-normal ${
                           checkOutMovedEarlier ? "text-[var(--color-status-active)]" : "text-[var(--color-warning)]"
                         }`}>
-                          <span className={`inline-block w-1.5 h-1.5 rounded-full ${
-                            checkOutMovedEarlier ? "bg-[var(--color-status-active)]" : "bg-[var(--color-warning)]"
-                          }`}></span>
-                          {checkOutMovedEarlier ? `${Math.abs(checkOutDaysDiff)}d earlier` : `${checkOutDaysDiff}d later`}
+                          {checkOutMovedEarlier
+                            ? `${Math.abs(checkOutDaysDiff)} ${Math.abs(checkOutDaysDiff) === 1 ? 'day' : 'days'} earlier`
+                            : `+${checkOutDaysDiff} ${checkOutDaysDiff === 1 ? 'day' : 'days'} later`}
                         </span>
                       )}
                     </div>

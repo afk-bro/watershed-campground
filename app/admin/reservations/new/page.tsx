@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import Container from "@/components/Container";
 import Link from "next/link";
@@ -23,6 +23,7 @@ type Campsite = {
 
 function ReservationForm() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const supabase = createClient();
     const { toast } = useToast();
     
@@ -53,6 +54,22 @@ function ReservationForm() {
     });
 
     const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        // Auto-populate from URL
+        const start = searchParams.get('start');
+        const end = searchParams.get('end');
+        const campsite = searchParams.get('campsite'); // Note: ID or Code? Usually ID passed from calendar
+
+        if (start || end || campsite) {
+            setFormData(prev => ({
+                ...prev,
+                checkIn: start || prev.checkIn,
+                checkOut: end || prev.checkOut,
+                campsiteId: campsite || prev.campsiteId
+            }));
+        }
+    }, [searchParams]);
 
     useEffect(() => {
         // Fetch Metadata
@@ -191,7 +208,9 @@ function ReservationForm() {
 export default function NewReservationPage() {
     return (
         <ToastProvider>
-            <ReservationForm />
+            <Suspense fallback={<div className="p-12 text-center">Loading form...</div>}>
+                <ReservationForm />
+            </Suspense>
         </ToastProvider>
     );
 }

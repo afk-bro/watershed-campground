@@ -55,6 +55,12 @@ export default function AdminLayout({
                                         Reservations
                                     </a>
                                     <a
+                                        href="/admin/calendar"
+                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
+                                    >
+                                        Calendar
+                                    </a>
+                                    <a
                                         href="/admin/campsites"
                                         className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
                                     >
@@ -65,6 +71,12 @@ export default function AdminLayout({
                                         className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
                                     >
                                         Settings
+                                    </a>
+                                    <a
+                                        href="/admin/help"
+                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm flex items-center gap-1"
+                                    >
+                                        Help
                                     </a>
                                     <button
                                         onClick={handleLogout}

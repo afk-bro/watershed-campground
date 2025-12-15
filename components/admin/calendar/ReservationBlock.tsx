@@ -1,7 +1,7 @@
 
 import { Reservation } from "@/lib/supabase";
 import { format, differenceInDays, parseISO } from "date-fns";
-import { User, Tent, Home, AlertCircle } from "lucide-react";
+import { User, Tent, Home, AlertCircle, Truck } from "lucide-react";
 import { useState } from "react";
 
 type ResizeSide = "left" | "right";
@@ -61,6 +61,17 @@ export default function ReservationBlock({
   // Non-draggable/resizable statuses
   const isInteractive = reservation.status !== 'cancelled' && reservation.status !== 'no_show';
 
+  // Get equipment icon based on camping unit
+  const getEquipmentIcon = () => {
+    const unit = reservation.camping_unit?.toLowerCase() || '';
+    if (unit.includes('tent')) {
+      return <Tent size={12} className="flex-shrink-0 opacity-80" />;
+    } else if (unit.includes('rv') || unit.includes('trailer') || unit.includes('motorhome') || unit.includes('camper')) {
+      return <Truck size={12} className="flex-shrink-0 opacity-80" />;
+    }
+    return null;
+  };
+
   const handleLeftResizeStart = (e: React.PointerEvent) => {
     e.stopPropagation(); // Prevent drag from starting
     e.preventDefault(); // Prevent default behavior
@@ -115,10 +126,13 @@ export default function ReservationBlock({
       )}
 
       {/* Content */}
-      <span className="truncate flex-1 text-left pointer-events-none">
-        {reservation.last_name}, {reservation.first_name}
-      </span>
-      {reservation.status === 'pending' && <AlertCircle size={12} className="pointer-events-none" />}
+      <div className="truncate flex-1 text-left pointer-events-none flex items-center gap-1">
+        {getEquipmentIcon()}
+        <span className="truncate">
+          {reservation.last_name}, {reservation.first_name}
+        </span>
+      </div>
+      {reservation.status === 'pending' && <AlertCircle size={12} className="pointer-events-none flex-shrink-0" />}
 
       {/* Right Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
