@@ -232,6 +232,66 @@ select:focus-visible {
   box-shadow: 0 0 0 3px rgba(200, 167, 90, 0.15);
 }
 
+/* Custom Checkbox Styling - Full Control */
+input[type="checkbox"] {
+  /* Reset native appearance */
+  appearance: none;
+  -webkit-appearance: none;
+
+  /* Sizing - reduced by 2px from default 16px */
+  width: 14px;
+  height: 14px;
+
+  /* Visual styling */
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: 3px;
+
+  /* Positioning for checkmark */
+  position: relative;
+  cursor: pointer;
+
+  /* Smooth transitions */
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Hover state */
+input[type="checkbox"]:hover:not(:disabled) {
+  border-color: var(--color-accent-gold);
+}
+
+/* Checked state - brand gold background */
+input[type="checkbox"]:checked {
+  background: var(--color-accent-gold);
+  border-color: var(--color-accent-gold);
+}
+
+/* Checkmark visual using ::after */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-brand-forest);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Focus state - matches existing focus treatment */
+input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(200, 167, 90, 0.15);
+  border-color: var(--color-accent-gold);
+}
+
+/* Disabled state */
+input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 /* ============================================================================
    LAYOUT UTILITIES - SECTION SPACING
    ============================================================================ */
