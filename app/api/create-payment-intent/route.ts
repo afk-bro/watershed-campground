@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { checkRateLimit } from "@/lib/rate-limit";
-import { supabaseAdmin } from "@/lib/supabase";
+import { supabaseAdmin } from "@/lib/supabase-admin";
 import { checkAvailability } from "@/lib/availability/engine";
 import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
 
