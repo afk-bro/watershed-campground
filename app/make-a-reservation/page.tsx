@@ -78,7 +78,9 @@ export default function ReservationPage() {
   // Form Status
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState("");
-  const [toast, setToast] = useState<{ message: string; visible: boolean }>({ message: "", visible: false });
+
+  // Field-level validation errors
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
   useEffect(() => {
       // Fetch Add-ons on mount
@@ -105,10 +107,20 @@ export default function ReservationPage() {
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
+
+    // Clear field error when user starts typing
+    if (fieldErrors[name]) {
+      setFieldErrors(prev => {
+        const updated = { ...prev };
+        delete updated[name];
+        return updated;
+      });
+    }
   };
 
   const handleAddonToggle = (id: string, qty: number) => {
@@ -118,21 +130,65 @@ export default function ReservationPage() {
       }));
   };
 
-  // Toast helper
-  const showToast = (message: string) => {
-    setToast({ message, visible: true });
-    setTimeout(() => setToast({ message: "", visible: false }), 4000);
+  // Validate all required fields
+  const validatePersonalInfo = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.firstName.trim()) {
+      errors.firstName = "First name is required";
+    }
+
+    if (!formData.lastName.trim()) {
+      errors.lastName = "Last name is required";
+    }
+
+    if (!formData.address1.trim()) {
+      errors.address1 = "Address is required";
+    }
+
+    if (!formData.city.trim()) {
+      errors.city = "City is required";
+    }
+
+    if (!formData.postalCode.trim()) {
+      errors.postalCode = "Postal code is required";
+    }
+
+    if (!formData.phone.trim()) {
+      errors.phone = "Phone number is required";
+    } else if (!/^[\d\s\(\)\-\+]+$/.test(formData.phone)) {
+      errors.phone = "Please enter a valid phone number";
+    }
+
+    if (!formData.email.trim()) {
+      errors.email = "Email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      errors.email = "Please enter a valid email address";
+    }
+
+    if (!formData.contactMethod) {
+      errors.contactMethod = "Please select your preferred contact method";
+    }
+
+    setFieldErrors(errors);
+
+    // Scroll to first error
+    if (Object.keys(errors).length > 0) {
+      const firstErrorField = Object.keys(errors)[0];
+      const element = document.getElementsByName(firstErrorField)[0];
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+
+    return Object.keys(errors).length === 0;
   };
 
   // Step 1: Form -> Step 2: Add-ons
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
 
-    // Check HTML5 validation
-    if (!form.checkValidity()) {
-      showToast("Please fill out all required information before proceeding.");
-      form.reportValidity(); // Show browser validation messages
+    if (!validatePersonalInfo()) {
       return;
     }
 
@@ -143,12 +199,8 @@ export default function ReservationPage() {
   // Skip add-ons and go directly to checkout
   const skipToCheckout = async (e: React.FormEvent) => {
     e.preventDefault();
-    const form = e.currentTarget as HTMLFormElement;
 
-    // Check HTML5 validation
-    if (!form.checkValidity()) {
-      showToast("Please fill out all required information before proceeding.");
-      form.reportValidity();
+    if (!validatePersonalInfo()) {
       return;
     }
 
@@ -276,15 +328,6 @@ export default function ReservationPage() {
       <div className="py-12 -mt-4">
         <Container>
 
-           {/* Toast Notification */}
-           {toast.visible && (
-              <div className="fixed top-24 left-1/2 -translate-x-1/2 z-50 animate-in slide-in-from-top-4 fade-in duration-300">
-                <div className="bg-[var(--color-accent-gold)] text-[var(--color-brand-forest)] px-6 py-4 rounded-lg shadow-2xl border-2 border-[var(--color-accent-gold-dark)] font-medium max-w-md">
-                  {toast.message}
-                </div>
-              </div>
-           )}
-
            {errorMessage && (
               <div className="max-w-3xl mx-auto mb-6 p-4 bg-red-500/20 border border-red-500/50 rounded-lg text-red-100 text-sm text-center">
                 {errorMessage}
@@ -294,7 +337,7 @@ export default function ReservationPage() {
           {step === 1 && (
               <form onSubmit={handleDetailsSubmit} className="max-w-3xl mx-auto">
                 <div className="bg-gradient-to-b from-brand-forest/40 to-brand-forest/60 border border-accent-gold/25 rounded-xl shadow-2xl p-6 sm:p-10 space-y-12">
-                   
+
                    {/* Summary of Selection */}
                    <div className="bg-[var(--color-surface-elevated)] p-4 rounded-lg border border-[var(--color-accent-gold)]/30 flex items-center justify-between">
                        <div>
@@ -310,17 +353,46 @@ export default function ReservationPage() {
                            Change
                        </button>
                    </div>
+
+                   {/* Validation Error Summary */}
+                   {Object.keys(fieldErrors).length > 0 && (
+                       <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
+                           <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                           </svg>
+                           <div>
+                               <p className="text-red-200 font-medium text-sm">
+                                   Please fix the highlighted fields to continue
+                               </p>
+                           </div>
+                       </div>
+                   )}
                    
                    {/* Personal Information */}
                   <section className="space-y-6">
                     <h3 className="font-heading text-2xl text-accent-gold-dark mb-2">Personal Information</h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                      <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} required className="w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                      <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} required className="w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                      <input type="text" name="address1" placeholder="Address Line 1" value={formData.address1} onChange={handleChange} required className="sm:col-span-2 w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
+                      <div>
+                        <input type="text" name="firstName" placeholder="First Name" value={formData.firstName} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.firstName ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                        {fieldErrors.firstName && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.firstName}</p>}
+                      </div>
+                      <div>
+                        <input type="text" name="lastName" placeholder="Last Name" value={formData.lastName} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.lastName ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                        {fieldErrors.lastName && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.lastName}</p>}
+                      </div>
+                      <div className="sm:col-span-2">
+                        <input type="text" name="address1" placeholder="Address Line 1" value={formData.address1} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.address1 ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                        {fieldErrors.address1 && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.address1}</p>}
+                      </div>
                       <input type="text" name="address2" placeholder="Address Line 2 (Optional)" value={formData.address2} onChange={handleChange} className="sm:col-span-2 w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                      <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} required className="w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                      <input type="text" name="postalCode" placeholder="Postal Code" value={formData.postalCode} onChange={handleChange} required className="w-full px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
+                      <div>
+                        <input type="text" name="city" placeholder="City" value={formData.city} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.city ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                        {fieldErrors.city && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.city}</p>}
+                      </div>
+                      <div>
+                        <input type="text" name="postalCode" placeholder="Postal Code" value={formData.postalCode} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.postalCode ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                        {fieldErrors.postalCode && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.postalCode}</p>}
+                      </div>
                     </div>
                   </section>
 
@@ -328,11 +400,20 @@ export default function ReservationPage() {
                   <section className="space-y-6">
                      <h3 className="font-heading text-2xl text-accent-gold-dark mb-2">Contact & Other</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-                          <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                          <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
-                          <select name="contactMethod" value={formData.contactMethod} onChange={handleChange} required className="px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige">
+                          <div>
+                            <input type="tel" name="phone" placeholder="Phone" value={formData.phone} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.phone ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                            {fieldErrors.phone && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.phone}</p>}
+                          </div>
+                          <div>
+                            <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.email ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`} />
+                            {fieldErrors.email && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.email}</p>}
+                          </div>
+                          <div>
+                            <select name="contactMethod" value={formData.contactMethod} onChange={handleChange} className={`w-full px-4 py-3 bg-brand-forest/60 border rounded-lg text-accent-beige ${fieldErrors.contactMethod ? 'border-red-400/60 focus:border-red-400' : 'border-accent-gold/30'}`}>
                               <option value="">Preferred Contact Method</option><option value="Phone">Phone</option><option value="Email">Email</option><option value="Either">Either</option>
-                          </select>
+                            </select>
+                            {fieldErrors.contactMethod && <p className="text-red-300 text-sm mt-1.5 flex items-center gap-1.5"><svg className="w-4 h-4 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clipRule="evenodd" /></svg>{fieldErrors.contactMethod}</p>}
+                          </div>
                           <textarea name="comments" placeholder="Comments..." value={formData.comments} onChange={handleChange} className="sm:col-span-2 px-4 py-3 bg-brand-forest/60 border border-accent-gold/30 rounded-lg text-accent-beige" />
                       </div>
                   </section>
