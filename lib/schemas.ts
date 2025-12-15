@@ -63,6 +63,7 @@ export const campsiteFormSchema = z.object({
     isActive: z.boolean().default(true),
     notes: z.string().optional(),
     sortOrder: z.coerce.number().default(0),
+    imageUrl: z.string().optional(),
 });
 
 export type ContactFormData = z.infer<typeof contactFormSchema>;
