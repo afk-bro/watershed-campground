@@ -28,7 +28,7 @@ export default function RowActions({ reservation, updateStatus }: Props) {
                 onClick();
             }}
             title={title}
-            className={`p-2 rounded-full transition-colors ${colorClass}`}
+            className={`p-2 rounded-full transition-colors cursor-pointer ${colorClass}`}
         >
             <Icon size={16} />
         </button>
@@ -59,7 +59,7 @@ export default function RowActions({ reservation, updateStatus }: Props) {
                 <ActionButton
                     onClick={() => updateStatus(id, 'checked_in')}
                     icon={LogIn}
-                    colorClass="text-blue-600 hover:bg-blue-100 dark:text-blue-400 dark:hover:bg-blue-900/30"
+                    colorClass="text-amber-700 hover:bg-amber-100 dark:text-amber-400 dark:hover:bg-amber-900/30 border border-amber-300 dark:border-amber-800"
                     title="Check In"
                 />
                 <ActionButton
