@@ -306,14 +306,14 @@ export default function AdminPage() {
                             <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 <tr>
                                     <th className="px-3 pl-4 py-3 w-10 text-left font-medium text-gray-500 shrink-0">
-                                <input 
-                                    type="checkbox" 
-                                    className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
-                                    checked={selectedIds.size > 0 && selectedIds.size === filteredReservations.length}
-                                    ref={input => { if (input) input.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredReservations.length; }}
-                                    onChange={toggleAll}
-                                />
-                            </th>
+                                        <input
+                                            type="checkbox"
+                                            className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                            checked={selectedIds.size > 0 && selectedIds.size === filteredReservations.length}
+                                            ref={input => { if (input) input.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredReservations.length; }}
+                                            onChange={toggleAll}
+                                        />
+                                    </th>
                             <th className="px-5 py-3 w-[20%]">Guest</th>
                                     <th className="px-5 py-3 w-[15%] whitespace-nowrap">Dates</th>
                                     <th className="px-5 py-3 w-[20%]">Details</th>
@@ -355,13 +355,15 @@ export default function AdminPage() {
                                                 onClick={() => setSelectedReservation(reservation)}
                                             >
                                                 {/* Checkbox Column */}
-                                                <td className="px-3 pl-4 py-4 w-10 align-top" onClick={(e) => e.stopPropagation()}>
-                                                    <input 
-                                                        type="checkbox" 
-                                                        className="rounded border-gray-300 text-brand-primary focus:ring-brand-primary cursor-pointer w-4 h-4"
-                                                        checked={selectedIds.has(reservation.id!)}
-                                                        onChange={() => toggleSelection(reservation.id!)}
-                                                    />
+                                                <td className="px-3 pl-4 py-4 w-10 align-middle" onClick={(e) => e.stopPropagation()}>
+                                                    <div className="flex items-center min-h-[28px]">
+                                                        <input
+                                                            type="checkbox"
+                                                            className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                                            checked={selectedIds.has(reservation.id!)}
+                                                            onChange={() => toggleSelection(reservation.id!)}
+                                                        />
+                                                    </div>
                                                 </td>
 
                                                 {/* Guest Column */}
