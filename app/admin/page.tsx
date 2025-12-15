@@ -52,27 +52,22 @@ export default function AdminPage() {
     const fetchReservations = async () => {
         setLoading(true);
         try {
-            let query = supabase
-                .from('reservations')
-                .select(`
-                    *,
-                    campsites (
-                        name,
-                        code
-                    )
-                `)
-                .order('created_at', { ascending: false });
-
-            if (showArchived) {
-                query = query.not('archived_at', 'is', null);
-            } else {
-                query = query.is('archived_at', null);
+            const response = await fetch('/api/admin/reservations');
+            if (!response.ok) {
+                throw new Error('Failed to fetch reservations');
             }
 
-            const { data, error } = await query;
+            const { data } = await response.json();
 
-            if (error) throw error;
-            setReservations(data || []);
+            // Filter archived/non-archived client-side
+            let filtered = data || [];
+            if (showArchived) {
+                filtered = filtered.filter((r: Reservation) => r.archived_at !== null);
+            } else {
+                filtered = filtered.filter((r: Reservation) => r.archived_at === null);
+            }
+
+            setReservations(filtered);
         } catch (err) {
             console.error('Error fetching reservations:', err);
             setError('Failed to load reservations');
