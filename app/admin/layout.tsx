@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -12,16 +12,24 @@ export default function AdminLayout({
     children: React.ReactNode;
 }) {
     const router = useRouter();
+    const pathname = usePathname();
     const supabase = createClient();
     const [user, setUser] = useState<User | null>(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
+            setLoading(false);
+
+            // Redirect to login if not authenticated (unless already on login page)
+            if (!user && pathname !== '/admin/login') {
+                router.push('/admin/login');
+            }
         };
         getUser();
-    }, [supabase]);
+    }, [supabase, router, pathname]);
 
     async function handleLogout() {
         await supabase.auth.signOut();
@@ -29,13 +37,24 @@ export default function AdminLayout({
         router.refresh();
     }
 
-    // Don't show logout button on login page
-    const isLoginPage = typeof window !== 'undefined' && window.location.pathname === '/admin/login';
+    // Don't show navbar on login page
+    const isLoginPage = pathname === '/admin/login';
+
+    // Show loading state while checking auth
+    if (loading) {
+        return (
+            <ToastProvider>
+                <div className="min-h-screen bg-[var(--color-surface-elevated)] flex items-center justify-center">
+                    <div className="text-accent-beige">Loading...</div>
+                </div>
+            </ToastProvider>
+        );
+    }
 
     return (
         <ToastProvider>
             <div className="min-h-screen bg-[var(--color-surface-elevated)]">
-                {!isLoginPage && user && (
+                {!isLoginPage && (
                     <div className="bg-brand-forest border-b border-[var(--color-border-strong)]">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between h-16">
@@ -52,7 +71,7 @@ export default function AdminLayout({
                                         Admin Panel
                                     </h1>
                                     <span className="text-sm text-accent-beige/60">
-                                        {user.email}
+                                        {user?.email}
                                     </span>
                                 </div>
                                 <div className="flex items-center gap-3">
