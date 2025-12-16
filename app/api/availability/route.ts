@@ -1,10 +1,32 @@
 import { NextResponse } from "next/server";
 import { checkAvailability, AvailabilityError } from "@/lib/availability";
+import {
+    checkRateLimit,
+    getRateLimitHeaders,
+    getClientIp,
+    createIpIdentifier,
+    rateLimiters
+} from "@/lib/rate-limit-upstash";
 
 // POST /api/availability - Check campsite availability for given dates
 // This is a public endpoint that can be called to check availability before submitting a reservation
 export async function POST(request: Request) {
     try {
+        // Rate limiting (30 requests per minute per IP - allows calendar browsing)
+        const ip = getClientIp(request);
+        const identifier = createIpIdentifier(ip, 'availability');
+        const rateLimit = await checkRateLimit(identifier, rateLimiters.availability);
+
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: "Too many availability requests. Please slow down." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit)
+                }
+            );
+        }
+
         const body = await request.json();
 
         const { checkIn, checkOut, guestCount } = body;
@@ -31,13 +53,18 @@ export async function POST(request: Request) {
             guestCount: Number(guestCount),
         });
 
-        // Return availability result
-        return NextResponse.json({
-            available: result.available,
-            message: result.message,
-            availableSites: result.availableSites,
-            recommendedSiteId: result.recommendedSiteId,
-        });
+        // Return availability result with rate limit headers
+        return NextResponse.json(
+            {
+                available: result.available,
+                message: result.message,
+                availableSites: result.availableSites,
+                recommendedSiteId: result.recommendedSiteId,
+            },
+            {
+                headers: getRateLimitHeaders(rateLimit)
+            }
+        );
 
     } catch (error) {
         if (error instanceof AvailabilityError) {
