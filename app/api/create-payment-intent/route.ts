@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { checkRateLimit } from "@/lib/rate-limit";
+import {
+    checkRateLimit,
+    getRateLimitHeaders,
+    getClientIp,
+    createIpIdentifier,
+    rateLimiters
+} from "@/lib/rate-limit-upstash";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { checkAvailability } from "@/lib/availability/engine";
 import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
@@ -14,12 +20,19 @@ function calculateTotal(baseRate: string, checkIn: string, checkOut: string): nu
 
 export async function POST(request: Request) {
     try {
-        // 0. Rate Limiting (5 attempts per minute per IP)
-        const ip = request.headers.get("x-forwarded-for") || "unknown";
-        const allowed = await checkRateLimit(`ip:${ip}:create_pi`, 5, 60);
+        // 0. Rate Limiting (5 attempts per minute per IP via Upstash Redis)
+        const ip = getClientIp(request);
+        const identifier = createIpIdentifier(ip, 'create-payment-intent');
+        const rateLimit = await checkRateLimit(identifier, rateLimiters.paymentIntent);
 
-        if (!allowed) {
-            return NextResponse.json({ error: "Rate limit exceeded. Please try again later." }, { status: 429 });
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: "Too many payment requests. Please try again later." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit)
+                }
+            );
         }
 
         if (!process.env.STRIPE_SECRET_KEY) {
@@ -124,11 +137,16 @@ export async function POST(request: Request) {
             },
         });
 
-        return NextResponse.json({
-            clientSecret: paymentIntent.client_secret,
-            breakdown: { ...breakdown, siteTotal, addonsTotal }, // Pass extra details to UI
-            campsiteId
-        });
+        return NextResponse.json(
+            {
+                clientSecret: paymentIntent.client_secret,
+                breakdown: { ...breakdown, siteTotal, addonsTotal }, // Pass extra details to UI
+                campsiteId
+            },
+            {
+                headers: getRateLimitHeaders(rateLimit)
+            }
+        );
     } catch (error) {
         console.error("Internal Error:", error);
         return NextResponse.json(

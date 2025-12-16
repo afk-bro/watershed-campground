@@ -139,9 +139,18 @@ Custom error classes:
 
 ### Rate Limiting
 
-Implemented in `lib/rate-limit.ts` using in-memory store:
-- Protects public endpoints (contact form, availability checks)
-- IP-based tracking with configurable limits
+**Upstash Redis** (`lib/rate-limit-upstash.ts`):
+- Distributed rate limiting across all Vercel instances
+- Sliding window algorithm for smooth UX
+- Standard rate limit headers (X-RateLimit-*)
+- Pre-configured limiters for different endpoints:
+  - Payment intent: 5 req/min
+  - Availability: 30 req/min
+  - Contact form: 3 req/5min
+  - Admin API: 100 req/min
+- Fails open if Upstash unavailable (prevents blocking users)
+
+**Setup:** See `docs/RATE_LIMITING.md` for Upstash configuration
 
 ## Testing Strategy
 
@@ -187,6 +196,8 @@ STRIPE_SECRET_KEY=
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=
 RESEND_API_KEY=
 NEXT_PUBLIC_GA_MEASUREMENT_ID=
+UPSTASH_REDIS_REST_URL=
+UPSTASH_REDIS_REST_TOKEN=
 ```
 
 **Testing** (`.env.test`):
