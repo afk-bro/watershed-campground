@@ -267,10 +267,25 @@ Located in `app/admin/`:
 - `lucide-react` - Icon library
 - `@playwright/test` - E2E testing
 
+## CI/CD Pipeline
+
+**GitHub Actions** (`.github/workflows/ci.yml`):
+- Runs on every PR and push to main/dev
+- **Lint & Type Check** - ESLint + TypeScript validation
+- **E2E Tests** - All 24 Playwright tests with local Supabase
+- **Build Check** - Verifies production build succeeds
+- **Lighthouse** - Performance checks on PRs to main
+- **Artifacts** - Playwright reports uploaded on failure
+
+**Pipeline takes ~8-12 minutes** for full run.
+
+See `docs/CI_CD.md` for complete documentation.
+
 ## Deployment Notes
 
 **Vercel Deployment:**
 - Automatic deployment on push to main
+- Preview deployments on every PR
 - Environment variables configured in Vercel dashboard
 - Security headers configured in `next.config.ts`
 
