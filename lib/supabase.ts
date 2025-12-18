@@ -80,3 +80,35 @@ export type BlackoutDate = {
     campsite_id?: string | null; // null means all sites
     created_at?: string;
 };
+
+// Overview item types for unified reservations + blocking events view
+export type ReservationOverviewItem = {
+    type: 'reservation';
+    id: string;
+    check_in: string;
+    check_out: string;
+    guest_name: string;
+    guest_email: string;
+    guest_phone: string;
+    adults: number;
+    children: number;
+    status: ReservationStatus;
+    campsite_code?: string;
+    campsite_name?: string;
+    campsite_type?: CampsiteType;
+    created_at: string;
+};
+
+export type BlockingEventOverviewItem = {
+    type: 'maintenance' | 'blackout';
+    id: string;
+    start_date: string;
+    end_date: string;
+    reason?: string;
+    campsite_code?: string;
+    campsite_name?: string;
+    campsite_type?: CampsiteType;
+    created_at: string;
+};
+
+export type OverviewItem = ReservationOverviewItem | BlockingEventOverviewItem;
