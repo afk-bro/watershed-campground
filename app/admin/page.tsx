@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { AlertTriangle, X } from "lucide-react";
-import { supabase, type Reservation, type ReservationStatus } from "@/lib/supabase";
+import { AlertTriangle, X, Wrench } from "lucide-react";
+import { supabase, type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
 import StatusPill from "@/components/admin/StatusPill";
 import RowActions from "@/components/admin/RowActions";
 import ReservationDrawer from "@/components/admin/calendar/ReservationDrawer";
@@ -11,11 +11,13 @@ import AssignmentDialog from "@/components/admin/AssignmentDialog";
 import Container from "@/components/Container";
 import OnboardingChecklist from "@/components/admin/dashboard/OnboardingChecklist";
 
+type FilterType = ReservationStatus | 'all' | 'maintenance';
+
 export default function AdminPage() {
-    const [reservations, setReservations] = useState<Reservation[]>([]);
+    const [items, setItems] = useState<OverviewItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
-    const [filter, setFilter] = useState<ReservationStatus | 'all'>('all');
+    const [filter, setFilter] = useState<FilterType>('all');
     const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
     const [assigningReservation, setAssigningReservation] = useState<Reservation | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -59,15 +61,12 @@ export default function AdminPage() {
 
             const { data } = await response.json();
 
-            // Filter archived/non-archived client-side
-            let filtered = data || [];
-            if (showArchived) {
-                filtered = filtered.filter((r: Reservation) => r.archived_at !== null);
-            } else {
-                filtered = filtered.filter((r: Reservation) => r.archived_at === null);
-            }
+            // Note: Blocking events (maintenance) don't have archived_at, so we'll show them when showArchived is false
+            const filtered = showArchived
+                ? (data || []).filter((item: OverviewItem) => item.type === 'reservation' && 'archived_at' in item)
+                : data || [];
 
-            setReservations(filtered);
+            setItems(filtered);
         } catch (err) {
             console.error('Error fetching reservations:', err);
             setError('Failed to load reservations');
@@ -91,9 +90,12 @@ export default function AdminPage() {
         fetchReservations();
     };
 
-    const filteredReservations = filter === 'all'
-        ? reservations
-        : reservations.filter(r => r.status === filter);
+    const filteredItems = (() => {
+        if (filter === 'all') return items;
+        if (filter === 'maintenance') return items.filter(item => item.type === 'maintenance' || item.type === 'blackout');
+        // Filter by reservation status
+        return items.filter(item => item.type === 'reservation' && item.status === filter);
+    })();
 
     const toggleSelection = (id: string) => {
         const newSet = new Set(selectedIds);
@@ -106,10 +108,10 @@ export default function AdminPage() {
     };
 
     const toggleAll = () => {
-        if (selectedIds.size === filteredReservations.length) {
+        if (selectedIds.size === filteredItems.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredReservations.map(r => r.id!))); // id! assumption safe for fetched data
+            setSelectedIds(new Set(filteredItems.map(item => item.id)));
         }
     };
 
@@ -197,8 +199,13 @@ export default function AdminPage() {
         }
     };
 
-    const statusCounts = reservations.reduce((acc, r) => {
-        acc[r.status] = (acc[r.status] || 0) + 1;
+    const reservationItems = items.filter(item => item.type === 'reservation');
+    const maintenanceCount = items.filter(item => item.type === 'maintenance' || item.type === 'blackout').length;
+
+    const statusCounts = reservationItems.reduce((acc, item) => {
+        if (item.type === 'reservation') {
+            acc[item.status] = (acc[item.status] || 0) + 1;
+        }
         return acc;
     }, {} as Record<ReservationStatus, number>);
 
@@ -264,21 +271,35 @@ export default function AdminPage() {
                                     : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                             }`}
                         >
-                            {showArchived ? 'Archived' : 'All'} ({reservations.length})
+                            {showArchived ? 'Archived' : 'All'} ({items.length})
                         </button>
-                        {!showArchived && (['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'] as ReservationStatus[]).map(status => (
-                            <button
-                                key={status}
-                                onClick={() => setFilter(status)}
-                                className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
-                                    filter === status
-                                        ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
-                                        : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-                                }`}
-                            >
-                                {status.replace('_', ' ')} <span className="text-xs opacity-70 ml-1">({statusCounts[status] || 0})</span>
-                            </button>
-                        ))}
+                        {!showArchived && (
+                            <>
+                                {(['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'] as ReservationStatus[]).map(status => (
+                                    <button
+                                        key={status}
+                                        onClick={() => setFilter(status)}
+                                        className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
+                                            filter === status
+                                                ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
+                                                : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                                        }`}
+                                    >
+                                        {status.replace('_', ' ')} <span className="text-xs opacity-70 ml-1">({statusCounts[status] || 0})</span>
+                                    </button>
+                                ))}
+                                <button
+                                    onClick={() => setFilter('maintenance')}
+                                    className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
+                                        filter === 'maintenance'
+                                            ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
+                                            : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                                    }`}
+                                >
+                                    🛠️ Maintenance <span className="text-xs opacity-70 ml-1">({maintenanceCount})</span>
+                                </button>
+                            </>
+                        )}
                     </div>
                     
                     <div className="flex items-center gap-4">
@@ -323,14 +344,104 @@ export default function AdminPage() {
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--color-border-subtle)] text-sm">
-                                {filteredReservations.length === 0 ? (
+                                {filteredItems.length === 0 ? (
                                     <tr>
                                         <td colSpan={7} className="px-5 py-12 text-center text-[var(--color-text-muted)]">
-                                            No reservations found matching this filter.
+                                            No items found matching this filter.
                                         </td>
                                     </tr>
                                 ) : (
-                                    filteredReservations.map((reservation) => {
+                                    filteredItems.map((item) => {
+                                        // Handle blocking events (maintenance/blackout)
+                                        if (item.type === 'maintenance' || item.type === 'blackout') {
+                                            const isSelected = selectedIds.has(item.id);
+                                            const rowClass = `group transition-colors cursor-pointer border-l-2 opacity-70 ${
+                                                isSelected
+                                                    ? 'border-l-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/5'
+                                                    : 'border-l-transparent hover:bg-[var(--color-surface-elevated)]'
+                                            }`;
+
+                                            return (
+                                                <tr
+                                                    key={item.id}
+                                                    className={rowClass}
+                                                    onClick={() => {/* TODO: Open maintenance drawer */}}
+                                                >
+                                                    {/* Checkbox */}
+                                                    <td className="px-3 pl-4 py-4 w-10 align-middle" onClick={(e) => e.stopPropagation()}>
+                                                        <div className="flex items-center min-h-[28px]">
+                                                            <input
+                                                                type="checkbox"
+                                                                className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                                                checked={selectedIds.has(item.id)}
+                                                                onChange={() => toggleSelection(item.id)}
+                                                            />
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Guest Column - Show "—" for maintenance */}
+                                                    <td className="px-5 py-4 align-top">
+                                                        <div className="flex items-center gap-2">
+                                                            <Wrench size={16} className="text-[var(--color-text-muted)]" />
+                                                            <span className="text-[var(--color-text-muted)] italic">Maintenance Block</span>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Dates Column */}
+                                                    <td className="px-5 py-4 align-top whitespace-nowrap">
+                                                        <div className="text-[var(--color-text-primary)]">
+                                                            {new Date(item.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
+                                                            <span className="text-[var(--color-text-muted)] mx-2">→</span>
+                                                            {new Date(item.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
+                                                        </div>
+                                                        <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
+                                                            {getNights(item.start_date, item.end_date)} days
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Details Column - Show reason */}
+                                                    <td className="px-5 py-4 align-top">
+                                                        <div className="text-[var(--color-text-muted)] text-sm">
+                                                            {item.reason || 'No reason specified'}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Campsite Column */}
+                                                    <td className="px-5 py-4 align-middle">
+                                                        <div className="flex items-center min-h-[28px]">
+                                                            {item.campsite_code ? (
+                                                                <span className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-muted)] text-xs h-7">
+                                                                    {item.campsite_code}
+                                                                </span>
+                                                            ) : (
+                                                                <span className="text-[var(--color-text-muted)] text-xs italic">All sites</span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Status Column - Show maintenance pill */}
+                                                    <td className="px-5 py-4 align-middle">
+                                                        <div className="flex items-center min-h-[28px]">
+                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
+                                                                🛠️ Blocked
+                                                            </span>
+                                                        </div>
+                                                    </td>
+
+                                                    {/* Actions Column */}
+                                                    <td className="px-5 py-4 align-middle text-right">
+                                                        <div className="flex items-center justify-end min-h-[28px]">
+                                                            <button className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] text-xs">
+                                                                Edit
+                                                            </button>
+                                                        </div>
+                                                    </td>
+                                                </tr>
+                                            );
+                                        }
+
+                                        // Handle regular reservations
+                                        const reservation = item as any; // Type assertion since we know it's a reservation here
                                         // Row-level styling based on status
                                         const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
                                         const isCheckedIn = reservation.status === 'checked_in';
