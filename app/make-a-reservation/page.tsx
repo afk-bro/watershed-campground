@@ -74,6 +74,8 @@ export default function ReservationPage() {
   const [clientSecret, setClientSecret] = useState("");
   const [breakdown, setBreakdown] = useState<PaymentBreakdown | null>(null);
   const [isInitializingPayment, setIsInitializingPayment] = useState(false);
+  const [paymentMethod, setPaymentMethod] = useState<'full' | 'deposit' | 'in-person'>('full');
+  const [depositAmount, setDepositAmount] = useState<string>('');
 
   // Form Status
   const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
@@ -212,14 +214,30 @@ export default function ReservationPage() {
   const handleAddonsSubmit = async () => {
     setIsInitializingPayment(true);
     setErrorMessage("");
-    
+
     try {
+      // If pay in person, skip payment intent creation
+      if (paymentMethod === 'in-person') {
+        await handlePayInPersonReservation();
+        return;
+      }
+
       const addonsPayload = Object.entries(selectedAddons)
           .filter(([_, qty]) => qty > 0)
           .map(([id, qty]) => {
               const addon = availableAddons.find(a => a.id === id);
               return { id, quantity: qty, price: addon?.price || 0 };
           });
+
+      // For deposit payments, validate and include custom amount
+      let customDepositAmount: number | undefined;
+      if (paymentMethod === 'deposit') {
+        const amount = parseFloat(depositAmount);
+        if (isNaN(amount) || amount < 10) {
+          throw new Error("Deposit amount must be at least $10");
+        }
+        customDepositAmount = amount;
+      }
 
       const res = await fetch("/api/create-payment-intent", {
         method: "POST",
@@ -230,7 +248,9 @@ export default function ReservationPage() {
             adults: Number(formData.adults),
             children: Number(formData.children),
             addons: addonsPayload,
-            campsiteId: formData.campsiteId // PASS CAMPSITE ID
+            campsiteId: formData.campsiteId,
+            paymentMethod: paymentMethod,
+            customDepositAmount: customDepositAmount
         }),
       });
 
@@ -241,13 +261,13 @@ export default function ReservationPage() {
       }
 
       setClientSecret(data.clientSecret);
-      setBreakdown(data.breakdown); 
-      
+      setBreakdown(data.breakdown);
+
       // Save state to Session Storage
-      sessionStorage.setItem("pendingReservation", JSON.stringify({ 
-          formData, 
-          selectedAddons, 
-          availableAddons 
+      sessionStorage.setItem("pendingReservation", JSON.stringify({
+          formData,
+          selectedAddons,
+          availableAddons
       }));
 
       setStep(3); // Review & Pay
@@ -257,6 +277,42 @@ export default function ReservationPage() {
       setErrorMessage(err instanceof Error ? err.message : "Failed to calculate costs.");
     } finally {
       setIsInitializingPayment(false);
+    }
+  };
+
+  // Handle pay-in-person reservations (no payment required)
+  const handlePayInPersonReservation = async () => {
+    try {
+      const addonsPayload = Object.entries(selectedAddons)
+          .filter(([_, qty]) => qty > 0)
+          .map(([id, qty]) => {
+              const addon = availableAddons.find(a => a.id === id);
+              return { id, quantity: qty, price: addon?.price || 0 };
+          });
+
+      const response = await fetch("/api/reservation", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+           ...formData,
+           addons: addonsPayload,
+           paymentMethod: 'in-person'
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Reservation failed");
+      }
+
+      setStep(4); // Success
+      setStatus("success");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } catch (error) {
+      console.error("Reservation error:", error);
+      setErrorMessage(error instanceof Error ? error.message : "Failed to create reservation");
+      throw error;
     }
   };
 
@@ -473,10 +529,91 @@ export default function ReservationPage() {
                          </div>
                      )}
 
+                     {/* Payment Method Selection */}
+                     <div className="border-t border-white/10 pt-6 mt-6">
+                        <h4 className="font-heading text-xl text-accent-gold mb-4">Payment Method</h4>
+                        <div className="space-y-3">
+                            {/* Pay in Full */}
+                            <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'full' ? 'border-accent-gold bg-accent-gold/10' : 'border-white/10 hover:border-white/20'}`}>
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="full"
+                                        checked={paymentMethod === 'full'}
+                                        onChange={(e) => setPaymentMethod(e.target.value as 'full')}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="font-bold text-accent-beige">Pay in Full</div>
+                                        <div className="text-sm text-accent-beige/60">Pay the full amount now with credit card</div>
+                                    </div>
+                                </div>
+                            </label>
+
+                            {/* Pay Deposit */}
+                            <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'deposit' ? 'border-accent-gold bg-accent-gold/10' : 'border-white/10 hover:border-white/20'}`}>
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="deposit"
+                                        checked={paymentMethod === 'deposit'}
+                                        onChange={(e) => setPaymentMethod(e.target.value as 'deposit')}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="font-bold text-accent-beige">Pay Deposit</div>
+                                        <div className="text-sm text-accent-beige/60 mb-2">Pay a deposit now, remainder later (minimum $10)</div>
+                                        {paymentMethod === 'deposit' && (
+                                            <div className="mt-2">
+                                                <label htmlFor="depositAmount" className="block text-sm text-accent-beige/80 mb-1">
+                                                    Deposit Amount:
+                                                </label>
+                                                <div className="flex items-center gap-2">
+                                                    <span className="text-accent-gold">$</span>
+                                                    <input
+                                                        id="depositAmount"
+                                                        type="number"
+                                                        min="10"
+                                                        step="1"
+                                                        value={depositAmount}
+                                                        onChange={(e) => setDepositAmount(e.target.value)}
+                                                        placeholder="10"
+                                                        className="flex-1 px-3 py-2 bg-brand-forest border border-accent-gold/30 rounded text-accent-beige focus:border-accent-gold focus:outline-none"
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    />
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </label>
+
+                            {/* Pay in Person */}
+                            <label className={`block p-4 rounded-lg border-2 cursor-pointer transition-all ${paymentMethod === 'in-person' ? 'border-accent-gold bg-accent-gold/10' : 'border-white/10 hover:border-white/20'}`}>
+                                <div className="flex items-start gap-3">
+                                    <input
+                                        type="radio"
+                                        name="paymentMethod"
+                                        value="in-person"
+                                        checked={paymentMethod === 'in-person'}
+                                        onChange={(e) => setPaymentMethod(e.target.value as 'in-person')}
+                                        className="mt-1"
+                                    />
+                                    <div className="flex-1">
+                                        <div className="font-bold text-accent-beige">Pay in Person</div>
+                                        <div className="text-sm text-accent-beige/60">Reserve now, pay when you arrive (cash or card)</div>
+                                    </div>
+                                </div>
+                            </label>
+                        </div>
+                     </div>
+
                      <div className="flex gap-4 pt-4">
                         <button type="button" onClick={() => setStep(1)} className="flex-1 py-3 text-accent-beige/60 hover:text-accent-beige border border-white/10 hover:border-white/30 rounded-lg">Back</button>
                         <button type="button" onClick={handleAddonsSubmit} disabled={isInitializingPayment} className="flex-[2] bg-accent-gold hover:bg-accent-gold-dark text-brand-forest font-bold py-3 rounded-lg">
-                            {isInitializingPayment ? "Calculating..." : "Review & Pay"}
+                            {isInitializingPayment ? "Calculating..." : (paymentMethod === 'in-person' ? "Reserve Now" : "Review & Pay")}
                         </button>
                      </div>
                  </div>
@@ -554,7 +691,15 @@ export default function ReservationPage() {
                 </div>
                 <h2 className="font-heading text-4xl text-accent-gold">Reservation Confirmed!</h2>
                 <p className="text-accent-beige/90 text-lg max-w-lg mx-auto">
-                    Thank you, {formData.firstName}. We have received your payment and secured your spot. 
+                    Thank you, {formData.firstName}. {paymentMethod === 'in-person'
+                        ? 'Your reservation has been secured. Payment will be collected when you arrive.'
+                        : paymentMethod === 'deposit'
+                        ? 'We have received your deposit and secured your spot. The remaining balance will be due before your arrival.'
+                        : 'We have received your payment and secured your spot.'
+                    }
+                </p>
+                <p className="text-accent-beige/70 text-sm max-w-lg mx-auto">
+                    A confirmation email has been sent to {formData.email}
                 </p>
                 <div className="pt-8">
                      <a href="/" className="inline-block bg-brand-forest hover:bg-brand-forest-light border border-accent-gold/30 text-accent-beige px-8 py-3 rounded-lg transition-colors">

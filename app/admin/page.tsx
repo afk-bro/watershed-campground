@@ -63,7 +63,7 @@ export default function AdminPage() {
 
             // Note: Blocking events (maintenance) don't have archived_at, so we'll show them when showArchived is false
             const filtered = showArchived
-                ? (data || []).filter((item: OverviewItem) => item.type === 'reservation' && 'archived_at' in item)
+                ? (data || []).filter((item: any) => item.type === 'reservation' && item.archived_at != null)
                 : data || [];
 
             setItems(filtered);
@@ -97,7 +97,13 @@ export default function AdminPage() {
         return items.filter(item => item.type === 'reservation' && item.status === filter);
     })();
 
-    const toggleSelection = (id: string) => {
+    // Only reservations can be selected for bulk operations
+    const selectableReservations = filteredItems.filter(item => item.type === 'reservation');
+
+    const toggleSelection = (id: string, itemType: 'reservation' | 'maintenance' | 'blackout') => {
+        // Only allow selecting reservations
+        if (itemType !== 'reservation') return;
+
         const newSet = new Set(selectedIds);
         if (newSet.has(id)) {
             newSet.delete(id);
@@ -108,10 +114,10 @@ export default function AdminPage() {
     };
 
     const toggleAll = () => {
-        if (selectedIds.size === filteredItems.length) {
+        if (selectedIds.size === selectableReservations.length) {
             setSelectedIds(new Set());
         } else {
-            setSelectedIds(new Set(filteredItems.map(item => item.id)));
+            setSelectedIds(new Set(selectableReservations.map(item => item.id)));
         }
     };
 
@@ -330,8 +336,8 @@ export default function AdminPage() {
                                         <input
                                             type="checkbox"
                                             className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
-                                            checked={selectedIds.size > 0 && selectedIds.size === filteredReservations.length}
-                                            ref={input => { if (input) input.indeterminate = selectedIds.size > 0 && selectedIds.size < filteredReservations.length; }}
+                                            checked={selectedIds.size > 0 && selectedIds.size === selectableReservations.length}
+                                            ref={input => { if (input) input.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableReservations.length; }}
                                             onChange={toggleAll}
                                         />
                                     </th>
@@ -365,16 +371,16 @@ export default function AdminPage() {
                                                 <tr
                                                     key={item.id}
                                                     className={rowClass}
-                                                    onClick={() => {/* TODO: Open maintenance drawer */}}
+                                                    title="Maintenance blocks cannot be bulk-operated"
                                                 >
-                                                    {/* Checkbox */}
+                                                    {/* Checkbox - Disabled for maintenance */}
                                                     <td className="px-3 pl-4 py-4 w-10 align-middle" onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex items-center min-h-[28px]">
                                                             <input
                                                                 type="checkbox"
-                                                                className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
-                                                                checked={selectedIds.has(item.id)}
-                                                                onChange={() => toggleSelection(item.id)}
+                                                                className="rounded-md border-2 border-[var(--color-border-subtle)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 w-5 h-5 opacity-30 cursor-not-allowed"
+                                                                disabled
+                                                                checked={false}
                                                             />
                                                         </div>
                                                     </td>
@@ -401,7 +407,10 @@ export default function AdminPage() {
 
                                                     {/* Details Column - Show reason */}
                                                     <td className="px-5 py-4 align-top">
-                                                        <div className="text-[var(--color-text-muted)] text-sm">
+                                                        <div
+                                                            className="text-[var(--color-text-muted)] text-sm truncate max-w-xs"
+                                                            title={item.reason || 'No reason specified'}
+                                                        >
                                                             {item.reason || 'No reason specified'}
                                                         </div>
                                                     </td>
@@ -472,7 +481,7 @@ export default function AdminPage() {
                                                             type="checkbox"
                                                             className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
                                                             checked={selectedIds.has(reservation.id!)}
-                                                            onChange={() => toggleSelection(reservation.id!)}
+                                                            onChange={() => toggleSelection(reservation.id!, 'reservation')}
                                                         />
                                                     </div>
                                                 </td>

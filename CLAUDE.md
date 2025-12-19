@@ -26,12 +26,12 @@ npx playwright show-report                   # View test report
 # Run a single test file
 npx playwright test tests/admin/smoke.spec.ts
 
-# Database (Supabase Local)
-supabase start          # Start local Supabase (requires Docker)
-supabase stop           # Stop local instance
-supabase db reset       # Reset DB and run all migrations
-supabase migration new <name>  # Create new migration
-supabase db push        # Push local schema to remote (use carefully)
+# Database (Supabase Local - installed via npm)
+npx supabase start          # Start local Supabase (requires Docker)
+npx supabase stop           # Stop local instance
+npx supabase db reset       # Reset DB and run all migrations
+npx supabase migration new <name>  # Create new migration
+npx supabase db push        # Push local schema to remote (use carefully)
 ```
 
 ## Architecture Overview
@@ -67,7 +67,28 @@ This is implemented at the root layout level (`app/layout.tsx`) and uses Next.js
 1. Supabase Auth handles login via `/admin/login`
 2. Protected routes check auth state in `app/admin/layout.tsx`
 3. Session stored in cookies via `@supabase/ssr`
-4. E2E tests use pre-authenticated state in `tests/.auth/admin.json`
+4. Auth callback handler at `/app/auth/callback/route.ts` processes:
+   - Email invite links
+   - Password reset links
+   - Email confirmation links
+   - Magic link authentication
+5. E2E tests use pre-authenticated state in `tests/.auth/admin.json`
+
+**Password Reset Flow:**
+1. User visits `/admin/forgot-password` and enters email
+2. Supabase sends password reset email with link to `/auth/callback?type=recovery`
+3. Callback handler redirects to `/admin/update-password`
+4. User sets new password and is redirected to `/admin`
+
+**User Invitation Flow:**
+1. Admin invites user via Supabase dashboard
+2. User receives invite email with link to `/auth/callback?code=...`
+3. Callback handler exchanges code for session
+4. User is redirected to admin area or password setup page
+
+**Important:** All Supabase auth redirect URLs must be allowlisted in:
+- Local: `supabase/config.toml` → `[auth].additional_redirect_urls`
+- Production: Supabase dashboard → Authentication → URL Configuration
 
 **Test Setup:**
 - `tests/auth.setup.ts` runs once to authenticate and save session

@@ -6,14 +6,15 @@ import Container from "./Container";
 import CTAButton from "./CTAButton";
 
 type Props = {
-  title: string;
+  title: string | React.ReactNode;
   subtitle?: string;
   imageSrc: string;
-  cta?: { label: string; href: string };
+  cta?: { label: string; href: string; subtext?: string };
+  trustSignals?: string[];
   align?: "left" | "center";
 };
 
-export default function Hero({ title, subtitle, imageSrc, cta, align = "center" }: Props) {
+export default function Hero({ title, subtitle, imageSrc, cta, trustSignals, align = "center" }: Props) {
   const textAlign = align === "center" ? "items-center text-center" : "items-start text-left";
   const [scrollY, setScrollY] = useState(0);
   
@@ -103,7 +104,7 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
             <div className="relative max-w-xl z-10">
                 <h1 className="font-heading text-4xl sm:text-5xl md:text-5xl lg:text-6xl text-accent-gold leading-[0.95] tracking-wide" style={{ textShadow: '0 2px 4px rgba(0,0,0,0.75), 0 4px 8px rgba(0,0,0,0.45)' }}>{title}</h1>
                 {/* Premium gold accent line (softened and shortened) */}
-                <div className="mt-2 mb-1 h-[2px] w-20 sm:w-24 bg-gradient-to-r from-accent-gold/60 via-accent-gold/50 to-transparent" />
+                <div className={`mt-1.5 mb-1 h-[1.5px] w-20 sm:w-24 bg-gradient-to-r from-accent-gold/60 via-accent-gold/50 to-transparent ${align === "center" ? "mx-auto" : ""}`} />
               {subtitle && (
                 <p
                     className="mt-1 mb-6 text-[17px] sm:text-[21px] text-accent-beige leading-relaxed font-medium tracking-[0.5px]"
@@ -112,7 +113,28 @@ export default function Hero({ title, subtitle, imageSrc, cta, align = "center" 
                   {subtitle}
                 </p>
               )}
-                {cta && <div className="mt-10"><CTAButton label={cta.label} href={cta.href} /></div>}
+                {cta && (
+                  <div className="mt-10">
+                    <CTAButton label={cta.label} href={cta.href} />
+                    {cta.subtext && (
+                      <p className="mt-3 text-sm text-accent-beige/80 tracking-wide" style={{ textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
+                        {cta.subtext}
+                      </p>
+                    )}
+                  </div>
+                )}
+                {trustSignals && trustSignals.length > 0 && (
+                  <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 justify-center text-accent-beige text-sm">
+                    {trustSignals.map((signal, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <svg className="w-4 h-4 text-accent-gold flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ filter: 'drop-shadow(0 1px 2px rgba(0,0,0,0.8))' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span style={{ textShadow: '0 2px 4px rgba(0,0,0,0.8), 0 1px 2px rgba(0,0,0,0.9)' }}>{signal}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
             </div>
           </div>
         </Container>

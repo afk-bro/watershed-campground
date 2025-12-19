@@ -9,10 +9,14 @@ export default function Home() {
   return (
     <main>
       <Hero
-        title="Lakeside Camping, Peaceful and Close to Nature"
-        subtitle="Find your spot under the trees and by the water."
+        title="Lakeside Camping"
+        subtitle="Peaceful, private, and close to nature"
         imageSrc="/gallery/banner.avif"
-        cta={{ label: "Make a Reservation", href: "/make-a-reservation" }}
+        cta={{
+          label: "Make a Reservation",
+          href: "/make-a-reservation",
+          subtext: "Check availability in under 30 seconds"
+        }}
       />
       {/* Gold divider */}
       <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />

@@ -70,7 +70,7 @@ export async function POST(request: Request) {
         const body = await request.json();
         console.log("DEBUG: Received body", body);
 
-        const { paymentIntentId, ...formDataRaw } = body;
+        const { paymentIntentId, paymentMethod, ...formDataRaw } = body;
 
         // Validate request body
         const result = reservationFormSchema.safeParse(formDataRaw);
@@ -85,24 +85,48 @@ export async function POST(request: Request) {
         const formData = result.data;
         const name = `${formData.firstName} ${formData.lastName}`;
 
-        // 0. FETCH PRICING DATA (Campsite + Addons)
-        // ... Availability Check is done above partially, but let's keep the flow ...
-        // We re-did availability check to get ID. It's efficient enough.
+        // Retrieve payment intent if provided (do this once to avoid duplicate API calls)
+        let paymentIntent: Stripe.PaymentIntent | null = null;
+        if (paymentIntentId) {
+            paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
 
-        // Ensure we pass the campsiteId if it exists to lock the site
-        const availabilityResult = await checkAvailability({
-            checkIn: formData.checkIn,
-            checkOut: formData.checkOut,
-            guestCount: formData.adults + formData.children,
-            campsiteId: formData.campsiteId
-        });
-
-        if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
-            console.log("DEBUG: No campsites available");
-            return NextResponse.json({ error: "Dates no longer available." }, { status: 400 });
+            if (paymentIntent.status !== 'succeeded') {
+                return NextResponse.json({ error: "Payment not verified" }, { status: 400 });
+            }
         }
 
-        const recommendedSiteId = availabilityResult.recommendedSiteId;
+        // Determine campsite ID based on payment status
+        let recommendedSiteId: string;
+
+        // If payment has already been processed, use the campsite from payment intent metadata
+        // This prevents race conditions where the site gets booked between payment and reservation creation
+        if (paymentIntent) {
+            // Use campsite ID from payment intent metadata (locked at payment time)
+            const metadataCampsiteId = paymentIntent.metadata.campsiteId;
+            if (!metadataCampsiteId) {
+                console.error("DEBUG: Payment intent missing campsiteId in metadata");
+                return NextResponse.json({ error: "Invalid payment: missing campsite information" }, { status: 400 });
+            }
+
+            recommendedSiteId = metadataCampsiteId;
+            console.log("DEBUG: Using campsite from payment intent metadata:", recommendedSiteId);
+
+        } else {
+            // For offline/admin bookings, check availability normally
+            const availabilityResult = await checkAvailability({
+                checkIn: formData.checkIn,
+                checkOut: formData.checkOut,
+                guestCount: formData.adults + formData.children,
+                campsiteId: formData.campsiteId
+            });
+
+            if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
+                console.log("DEBUG: No campsites available");
+                return NextResponse.json({ error: "Dates no longer available." }, { status: 400 });
+            }
+
+            recommendedSiteId = availabilityResult.recommendedSiteId;
+        }
 
         // Fetch Campsite Base Rate
         const { data: campsite, error: siteError } = await supabaseAdmin
@@ -157,13 +181,8 @@ export async function POST(request: Request) {
         const isOffline = (formDataRaw as any).isOffline;
         const adminToken = request.headers.get("Authorization")?.split(" ")[1];
 
-        if (paymentIntentId) {
-            const paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-
-            if (paymentIntent.status !== 'succeeded') {
-                return NextResponse.json({ error: "Payment not verified" }, { status: 400 });
-            }
-
+        if (paymentIntent) {
+            // Payment intent already verified above
             paymentStatus = 'paid';
             amountPaid = (paymentIntent.amount_received || 0) / 100;
 
@@ -212,11 +231,16 @@ export async function POST(request: Request) {
 
             console.log(`DEBUG: Admin bypass used by ${user.email}`);
 
-        } else {
-            // No payment intent? Assume manual/pay later or error?
-            // For this system, we expect payment.
-            // But let's allow "pending" for now if logic allows.
+        } else if (paymentMethod === 'in-person') {
+            // Pay in person - no payment yet, full amount due on arrival
+            paymentStatus = 'pay_on_arrival';
+            amountPaid = 0;
             balanceDue = totalAmount;
+            paymentType = 'cash';
+            console.log("DEBUG: Pay in person reservation");
+        } else {
+            // No payment intent and no valid payment method
+            return NextResponse.json({ error: "Payment method required" }, { status: 400 });
         }
 
         // Generate magic link token
@@ -311,17 +335,17 @@ export async function POST(request: Request) {
 
         console.log("DEBUG: Supabase insert successful");
 
-        // ... Email sending logic (existing) ...
-        // Update email to mention payment receipt? Leaving as is for now.
+        // Send confirmation emails ONLY for pay-in-person reservations
+        // For Stripe payments, the webhook handles email sending (more reliable)
+        if (paymentMethod === 'in-person') {
+            const resend = new Resend(process.env.RESEND_API_KEY);
 
-        // ... (rest of function) ...
+            try {
+                console.log("DEBUG: Sending pay-in-person confirmation email...");
+                console.log("DEBUG: RESEND_API_KEY configured:", !!process.env.RESEND_API_KEY);
 
-        const resend = new Resend(process.env.RESEND_API_KEY);
-
-        try {
-            console.log("DEBUG: Sending emails via Resend...");
             // Send email to admin
-            await resend.emails.send({
+            const adminEmailResult = await resend.emails.send({
                 from: "The Watershed Campground <onboarding@resend.dev>",
                 to: ["info@thewatershedcampground.com"], // Replace with actual admin email
                 replyTo: formData.email,
@@ -346,18 +370,26 @@ export async function POST(request: Request) {
           <p><strong>Comments:</strong> ${escapeHtml(formData.comments || "None")}</p>
         `,
             });
-            console.log("DEBUG: Admin email sent");
+            console.log("DEBUG: Admin email sent successfully:", adminEmailResult);
+
+            // Payment status message for guest email
+            const paymentMessage = paymentStatus === 'pay_on_arrival'
+                ? '<p><strong>Payment Method:</strong> Pay in person when you arrive (cash or card accepted)</p>'
+                : paymentStatus === 'deposit_paid'
+                ? `<p><strong>Deposit Received:</strong> $${amountPaid.toFixed(2)}<br><strong>Balance Due:</strong> $${balanceDue.toFixed(2)}</p>`
+                : `<p><strong>Payment Received:</strong> $${amountPaid.toFixed(2)} - Thank you!</p>`;
 
             // Send confirmation to user with magic link
-            await resend.emails.send({
+            const guestEmailResult = await resend.emails.send({
                 from: "The Watershed Campground <onboarding@resend.dev>",
                 to: [formData.email],
-                subject: "We received your reservation request",
+                subject: "Reservation Confirmed - The Watershed Campground",
                 html: `
-          <h1>Reservation Request Received</h1>
+          <h1>Reservation Confirmed!</h1>
           <p>Hi ${escapeHtml(formData.firstName)},</p>
-          <p>Thanks for your reservation request! We have received your details for <strong>${escapeHtml(formData.checkIn)} to ${escapeHtml(formData.checkOut)}</strong>.</p>
-          <p>This is <strong>not</strong> a confirmation of your booking. We will review availability and contact you via ${escapeHtml(formData.contactMethod.toLowerCase())} shortly to confirm details and arrange deposit.</p>
+          <p>Great news! Your reservation for <strong>${escapeHtml(formData.checkIn)} to ${escapeHtml(formData.checkOut)}</strong> has been confirmed.</p>
+
+          ${paymentMessage}
 
           <h2>Manage Your Reservation</h2>
           <p>You can view or cancel your reservation using this secure link:</p>
@@ -368,16 +400,32 @@ export async function POST(request: Request) {
           <p>Best regards,<br>The Watershed Campground Team</p>
         `,
             });
-            console.log("DEBUG: User confirmation email sent");
+                console.log("DEBUG: Guest confirmation email sent successfully:", guestEmailResult);
+                console.log("DEBUG: Email sent to:", formData.email);
 
-            return NextResponse.json({ success: true });
-        } catch (emailError) {
-            console.error("DEBUG: Resend error:", emailError);
-            return NextResponse.json(
-                { error: "Failed to send email" },
-                { status: 500 }
-            );
+                // Mark email as sent
+                await supabaseAdmin
+                    .from('reservations')
+                    .update({ email_sent_at: new Date().toISOString() })
+                    .eq('id', reservation.id);
+
+            } catch (emailError) {
+                console.error("DEBUG: Email sending failed:", emailError);
+                console.error("DEBUG: Email error details:", JSON.stringify(emailError, null, 2));
+                // Don't fail the reservation - email is not critical for pay-in-person
+            }
         }
+
+        // For Stripe payments, return immediately - webhook will send email
+        const message = paymentMethod === 'in-person'
+            ? 'Reservation created. Confirmation email sent.'
+            : 'Reservation created. Confirmation email will be sent once payment is processed.';
+
+        return NextResponse.json({
+            success: true,
+            reservationId: reservation.id,
+            message: message
+        });
     } catch (error) {
         console.error("DEBUG: Uncaught error in API", error);
         return NextResponse.json({ error: String(error) }, { status: 500 });

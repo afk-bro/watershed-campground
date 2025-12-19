@@ -23,8 +23,9 @@ export default function AdminLayout({
             setUser(user);
             setLoading(false);
 
-            // Redirect to login if not authenticated (unless already on login page)
-            if (!user && pathname !== '/admin/login') {
+            // Redirect to login if not authenticated (unless already on auth-related pages)
+            const authPages = ['/admin/login', '/admin/forgot-password', '/admin/update-password'];
+            if (!user && !authPages.includes(pathname)) {
                 router.push('/admin/login');
             }
         };
@@ -37,8 +38,9 @@ export default function AdminLayout({
         router.refresh();
     }
 
-    // Don't show navbar on login page
-    const isLoginPage = pathname === '/admin/login';
+    // Don't show navbar on auth pages
+    const authPages = ['/admin/login', '/admin/forgot-password', '/admin/update-password'];
+    const isAuthPage = authPages.includes(pathname);
 
     // Show loading state while checking auth
     if (loading) {
@@ -54,7 +56,7 @@ export default function AdminLayout({
     return (
         <ToastProvider>
             <div className="min-h-screen bg-[var(--color-surface-elevated)]">
-                {!isLoginPage && (
+                {!isAuthPage && (
                     <div className="bg-brand-forest border-b border-[var(--color-border-strong)]">
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between h-16">

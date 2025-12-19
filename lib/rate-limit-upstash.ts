@@ -40,10 +40,10 @@ export interface RateLimitResult {
  * Create a rate limiter for a specific use case
  *
  * @param requests - Number of requests allowed
- * @param window - Time window (e.g., "60 s", "1 m", "1 h")
+ * @param window - Time window as Duration string
  * @returns Ratelimit instance
  */
-function createRateLimiter(requests: number, window: string) {
+function createRateLimiter(requests: number, window: `${number}${'ms' | 's' | 'm' | 'h' | 'd'}`) {
     if (!redis) {
         // Return a no-op rate limiter for local development
         return {
@@ -68,19 +68,19 @@ function createRateLimiter(requests: number, window: string) {
 // Pre-configured rate limiters for different endpoints
 export const rateLimiters = {
     // Payment intent creation: 5 requests per minute
-    paymentIntent: createRateLimiter(5, '60 s'),
+    paymentIntent: createRateLimiter(5, '60s'),
 
     // Availability checks: 30 requests per minute (allows calendar browsing)
-    availability: createRateLimiter(30, '60 s'),
+    availability: createRateLimiter(30, '60s'),
 
     // Contact form: 3 requests per 5 minutes (prevent spam)
-    contactForm: createRateLimiter(3, '5 m'),
+    contactForm: createRateLimiter(3, '300s'),
 
     // Reservation creation: 10 requests per hour
-    reservationCreate: createRateLimiter(10, '60 m'),
+    reservationCreate: createRateLimiter(10, '3600s'),
 
     // Admin API: 100 requests per minute
-    adminApi: createRateLimiter(100, '60 s'),
+    adminApi: createRateLimiter(100, '60s'),
 };
 
 /**

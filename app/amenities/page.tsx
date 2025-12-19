@@ -58,7 +58,10 @@ export default function AmenitiesPage() {
         subtitle="Everything you need for a comfortable stay"
       />
 
-      <div className="py-12 -mt-4">
+      {/* Divider */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />
+
+      <div className="py-12">
         <Container size="xl">
           {/* Amenities Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
