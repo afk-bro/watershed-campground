@@ -9,7 +9,10 @@ export default function RulesPage() {
         subtitle="Creating a respectful and enjoyable environment for everyone"
       />
 
-      <div className="py-12 -mt-4">
+      {/* Divider */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />
+
+      <div className="py-12">
         <Container size="xl">
           {/* Introduction */}
           <div className="max-w-4xl mx-auto mb-16 text-center">

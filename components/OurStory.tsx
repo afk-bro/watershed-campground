@@ -24,7 +24,7 @@ export default function OurStory() {
             {/* A Family Legacy */}
             <FadeInSection delay={50}>
               <div id="family-legacy" className="space-y-5 text-accent-beige/95 text-lg sm:text-xl leading-[1.8]">
-              <h3 className="text-accent-gold/80 font-heading text-xl sm:text-2xl mb-3 tracking-wide">A Family Legacy</h3>
+              <h3 className="text-accent-gold-dark font-heading text-2xl sm:text-3xl mb-4 tracking-wider">A Family Legacy</h3>
               <p>
                 Welcome to <span className="text-accent-gold-muted font-medium">The Watershed</span>, a cherished family property that began its journey in <span className="text-accent-gold-muted">1993</span>.
                 Originally envisioned by our parents as a vacation rental, life took us in a different
@@ -42,7 +42,7 @@ export default function OurStory() {
             {/* A Place to Explore */}
             <FadeInSection delay={100}>
               <div className="space-y-5 text-accent-beige/95 text-lg sm:text-xl leading-[1.8]">
-              <h3 className="text-accent-gold/80 font-heading text-xl sm:text-2xl mb-3 tracking-wide">A Place to Explore</h3>
+              <h3 className="text-accent-gold-dark font-heading text-2xl sm:text-3xl mb-4 tracking-wider">A Place to Explore</h3>
               <p>
                 Located in <span className="text-accent-gold-muted font-medium">Balfour, BC</span>, along the shores of <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, with a beautiful beach, it&apos;s
                 the perfect spot for <span className="text-accent-gold-muted">fishing</span>, <span className="text-accent-gold-muted">swimming</span>, and <span className="text-accent-gold-muted">boating</span> adventures. Immerse yourself in nature
@@ -55,7 +55,7 @@ export default function OurStory() {
             {/* The Heart of Kootenay Lake */}
             <FadeInSection delay={150}>
               <div className="space-y-5 text-accent-beige/95 text-lg sm:text-xl leading-[1.8]">
-              <h3 className="text-accent-gold/80 font-heading text-xl sm:text-2xl mb-3 tracking-wide">The Heart of Kootenay Lake</h3>
+              <h3 className="text-accent-gold-dark font-heading text-2xl sm:text-3xl mb-4 tracking-wider">The Heart of Kootenay Lake</h3>
               <p>
                 <span className="text-accent-gold-muted font-medium">Kootenay Lake</span>, the largest natural lake in southern <span className="text-accent-gold-muted font-medium">British Columbia</span>, is divided into four
                 distinct sections: <span className="text-accent-gold-muted">North End, West, Main Lake, and South End</span>. This beautiful body of water
@@ -73,7 +73,7 @@ export default function OurStory() {
 
           {/* Right Column - Image (40%) - Aligned with "A Family Legacy" heading */}
           <FadeInSection delay={200}>
-            <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[600px] rounded-lg overflow-hidden border border-accent-gold/20 shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(200,167,90,0.4)] transition-shadow duration-500 will-change-shadow lg:sticky lg:top-24 lg:mt-[140px]">
+            <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] rounded-lg overflow-hidden border border-accent-gold/20 shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(200,167,90,0.4)] transition-shadow duration-500 will-change-shadow lg:sticky lg:top-24 lg:mt-[140px]">
             <Image
               src="/gallery/landing_page.avif"
               alt="The Watershed Campground on Kootenay Lake"

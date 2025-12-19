@@ -25,7 +25,7 @@ function ReservationForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createClient();
-    const { toast } = useToast();
+    const { showToast } = useToast();
     
     // State
     const [step, setStep] = useState(1);
@@ -116,11 +116,11 @@ function ReservationForm() {
                 throw new Error(err.error || "Failed to create reservation");
             }
 
-            toast("Reservation created successfully!", "success");
+            showToast("Reservation created successfully!", "success");
             router.push("/admin");
         } catch (err: any) {
             console.error(err);
-            toast(err.message, "error");
+            showToast(err.message, "error");
         } finally {
             setLoading(false);
         }

@@ -55,7 +55,10 @@ export default function ContactPage() {
         subtitle="We'd love to hear from you — send us a message"
       />
 
-      <div className="py-12 -mt-4">
+      {/* Divider */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />
+
+      <div className="py-12">
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 max-w-7xl mx-auto">
             {/* Left Column: Contact Info + Map */}

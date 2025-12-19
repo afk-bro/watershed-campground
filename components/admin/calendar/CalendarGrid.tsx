@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useCallback, useEffect, useRef } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { Campsite, Reservation, BlackoutDate } from "@/lib/supabase";
 import { format, eachDayOfInterval, isSameMonth, isToday, isWeekend, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from "date-fns";
 import ReservationBlock from "./ReservationBlock";
@@ -12,6 +12,29 @@ import InstructionalOverlay from "./InstructionalOverlay";
 import EmptyStateHelper from "./EmptyStateHelper";
 import CreationDialog from "./CreationDialog";
 import { useRouter } from "next/navigation";
+
+// Throttle utility for performance optimization
+function throttle<T extends (...args: any[]) => any>(
+  func: T,
+  wait: number
+): (...args: Parameters<T>) => void {
+  let timeout: NodeJS.Timeout | null = null;
+  let lastArgs: Parameters<T> | null = null;
+
+  return function (...args: Parameters<T>) {
+    lastArgs = args;
+
+    if (!timeout) {
+      timeout = setTimeout(() => {
+        if (lastArgs) {
+          func(...lastArgs);
+        }
+        timeout = null;
+        lastArgs = null;
+      }, wait);
+    }
+  };
+}
 
 interface CalendarGridProps {
   campsites: Campsite[];
@@ -227,7 +250,8 @@ export default function CalendarGrid({
     e.dataTransfer.effectAllowed = 'move';
   };
 
-  const handleDragOverCell = (campsiteId: string, dateStr: string) => {
+  // Store the actual heavy logic separately
+  const updateDragPreview = useCallback((campsiteId: string, dateStr: string) => {
     if (!draggedReservation) return;
 
     // Check if date is out of current month range
@@ -255,7 +279,13 @@ export default function CalendarGrid({
     // Update preview state
     setDragPreview({ campsiteId, startDate: dateStr, endDate });
     setValidationError(validation.valid ? null : validation.error);
-  };
+  }, [draggedReservation, monthStart, monthEnd, campsites, reservations]);
+
+  // Throttled version - only runs every 16ms (~60fps)
+  const handleDragOverCell = useMemo(
+    () => throttle(updateDragPreview, 16),
+    [updateDragPreview]
+  );
 
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
@@ -393,11 +423,9 @@ export default function CalendarGrid({
     return null;
   };
 
-  const handleResizeMove = useCallback((e: PointerEvent) => {
+  // Heavy resize logic - separated for throttling
+  const updateResizePreview = useCallback((e: PointerEvent) => {
     if (!resizeState) return;
-
-    // Update auto-scroll direction based on pointer position
-    updateScrollDirection(e.clientX, e.clientY);
 
     const hoveredDate = getDateFromPointer(e.clientX, e.clientY);
     if (!hoveredDate) return;
@@ -440,7 +468,23 @@ export default function CalendarGrid({
     );
 
     setValidationError(validation.valid ? null : validation.error);
-  }, [resizeState, updateScrollDirection]);
+  }, [resizeState, monthStart, monthEnd, campsites, reservations]);
+
+  // Throttled resize handler - 16ms for smooth ~60fps
+  const throttledResizePreview = useMemo(
+    () => throttle(updateResizePreview, 16),
+    [updateResizePreview]
+  );
+
+  const handleResizeMove = useCallback((e: PointerEvent) => {
+    if (!resizeState) return;
+
+    // Update auto-scroll direction immediately (visual feedback)
+    updateScrollDirection(e.clientX, e.clientY);
+
+    // Throttle the heavy validation and state updates
+    throttledResizePreview(e);
+  }, [resizeState, updateScrollDirection, throttledResizePreview]);
 
   const handleResizeEnd = useCallback(() => {
     // Stop auto-scroll

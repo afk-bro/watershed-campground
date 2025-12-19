@@ -52,7 +52,7 @@ export const campsiteFormSchema = z.object({
         .toUpperCase()
         .regex(/^[A-Z0-9]+$/, "Code must contain only uppercase letters and numbers"),
     type: z.enum(['rv', 'tent', 'cabin'], {
-        errorMap: () => ({ message: "Type must be rv, tent, or cabin" })
+        message: "Type must be rv, tent, or cabin"
     }),
     maxGuests: z.coerce.number()
         .min(1, "At least 1 guest capacity is required")

@@ -79,10 +79,10 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                         <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
                             Vehicle Length (ft)
                         </label>
-                        <input 
+                        <input
                             type="number"
-                            value={formData.rvLength || 0}
-                            onChange={(e) => handleChange('rvLength', parseInt(e.target.value))}
+                            value={formData.rvLength || ''}
+                            onChange={(e) => handleChange('rvLength', parseInt(e.target.value) || 0)}
                             className="w-full p-4 bg-[var(--color-surface-primary)] border border-[var(--color-border-default)] rounded-lg focus:border-[var(--color-accent-gold)] outline-none transition-colors"
                             placeholder="e.g. 25"
                         />

@@ -2,7 +2,7 @@
 import { Reservation } from "@/lib/supabase";
 import { format, differenceInDays, parseISO } from "date-fns";
 import { User, Tent, Home, AlertCircle, Truck } from "lucide-react";
-import { useState } from "react";
+import { useState, memo } from "react";
 
 type ResizeSide = "left" | "right";
 
@@ -18,7 +18,7 @@ interface ReservationBlockProps {
   isResizing?: boolean;
 }
 
-export default function ReservationBlock({
+function ReservationBlock({
   reservation,
   monthStart,
   monthEnd,
@@ -145,3 +145,19 @@ export default function ReservationBlock({
     </div>
   );
 }
+
+// Memoize to prevent unnecessary re-renders during drag operations
+export default memo(ReservationBlock, (prevProps, nextProps) => {
+  // Only re-render if relevant props change
+  return (
+    prevProps.reservation.id === nextProps.reservation.id &&
+    prevProps.reservation.check_in === nextProps.reservation.check_in &&
+    prevProps.reservation.check_out === nextProps.reservation.check_out &&
+    prevProps.reservation.status === nextProps.reservation.status &&
+    prevProps.reservation.campsite_id === nextProps.reservation.campsite_id &&
+    prevProps.isDragging === nextProps.isDragging &&
+    prevProps.isResizing === nextProps.isResizing &&
+    prevProps.monthStart.getTime() === nextProps.monthStart.getTime() &&
+    prevProps.monthEnd.getTime() === nextProps.monthEnd.getTime()
+  );
+});

@@ -53,10 +53,10 @@ export default function TaskHero({
 
       <div className="absolute inset-0 flex items-center">
         <Container>
-          <div className="flex flex-col justify-center h-full">
+          <div className="flex flex-col justify-center text-center h-full">
             {/* Progress indicator - visible immediately */}
             {currentStep && totalSteps && (
-              <div className="mb-5">
+              <div className="mb-5 flex flex-col items-center mx-auto">
                 <div className="flex items-center gap-2 mb-2">
                   {Array.from({ length: totalSteps }).map((_, i) => (
                     <div key={i} className="flex items-center">
@@ -85,22 +85,24 @@ export default function TaskHero({
               </div>
             )}
 
-            {/* Compact, focused title */}
-            <h1
-              className="font-heading text-3xl sm:text-4xl md:text-5xl text-accent-gold leading-tight tracking-wide max-w-2xl"
-              style={{
-                textShadow: '0 2px 12px rgba(0,0,0,0.4)'
-              }}
-            >
-              {title}
-            </h1>
+            {/* Title and accent line grouped together */}
+            <div className="mx-auto">
+              <h1
+                className="font-heading text-3xl sm:text-4xl md:text-5xl text-accent-gold leading-tight tracking-wide text-center"
+                style={{
+                  textShadow: '0 2px 12px rgba(0,0,0,0.4)'
+                }}
+              >
+                {title}
+              </h1>
 
-            {/* Subtle accent line */}
-            <div className="mt-3 h-[1.5px] w-16 bg-gradient-to-r from-accent-gold/70 via-accent-gold/40 to-transparent rounded-full" />
+              {/* Subtle accent line */}
+              <div className="mt-1.5 h-[1.5px] w-16 bg-gradient-to-r from-accent-gold/70 via-accent-gold/40 to-transparent rounded-full" />
+            </div>
 
             {subtitle && (
               <p
-                className="mt-3 text-base sm:text-lg text-accent-beige/90 leading-relaxed max-w-xl font-light tracking-wide"
+                className="mt-3 text-base sm:text-lg text-accent-beige/90 leading-relaxed max-w-xl font-light tracking-wide mx-auto"
                 style={{
                   textShadow: '0 1px 8px rgba(0,0,0,0.3)'
                 }}

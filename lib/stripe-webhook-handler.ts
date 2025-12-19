@@ -1,5 +1,84 @@
 import { supabase } from "@/lib/supabase";
 import Stripe from "stripe";
+import { Resend } from "resend";
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+
+// Helper to escape HTML
+function escapeHtml(unsafe: string) {
+    if (!unsafe) return "";
+    return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
+}
+
+// Helper to send confirmation email
+async function sendConfirmationEmail(reservation: any) {
+    try {
+        // Check if email was already sent (idempotency)
+        if (reservation.email_sent_at) {
+            console.log(`Email already sent for reservation ${reservation.id} at ${reservation.email_sent_at}`);
+            return { sent: false, reason: 'already_sent' };
+        }
+
+        const name = `${reservation.first_name} ${reservation.last_name}`;
+        const manageUrl = process.env.NEXT_PUBLIC_BASE_URL
+            ? `${process.env.NEXT_PUBLIC_BASE_URL}/manage-reservation`
+            : 'http://localhost:3000/manage-reservation';
+
+        // Determine payment message based on payment status
+        const paymentMessage = reservation.payment_status === 'pay_on_arrival'
+            ? '<p><strong>Payment Method:</strong> Pay in person when you arrive (cash or card accepted)</p>'
+            : reservation.payment_status === 'deposit_paid'
+            ? `<p><strong>Deposit Received:</strong> $${reservation.amount_paid?.toFixed(2) || '0.00'}<br><strong>Balance Due:</strong> $${reservation.balance_due?.toFixed(2) || '0.00'}</p>`
+            : `<p><strong>Payment Received:</strong> $${reservation.amount_paid?.toFixed(2) || '0.00'} - Thank you!</p>`;
+
+        // Send email to guest
+        const emailResult = await resend.emails.send({
+            from: "The Watershed Campground <onboarding@resend.dev>",
+            to: [reservation.email],
+            subject: "Reservation Confirmed - The Watershed Campground",
+            html: `
+                <h1>Reservation Confirmed!</h1>
+                <p>Hi ${escapeHtml(reservation.first_name)},</p>
+                <p>Great news! Your reservation for <strong>${escapeHtml(reservation.check_in)} to ${escapeHtml(reservation.check_out)}</strong> has been confirmed.</p>
+
+                ${paymentMessage}
+
+                <h2>Reservation Details</h2>
+                <p><strong>Name:</strong> ${escapeHtml(name)}</p>
+                <p><strong>Dates:</strong> ${escapeHtml(reservation.check_in)} to ${escapeHtml(reservation.check_out)}</p>
+                <p><strong>Guests:</strong> ${reservation.adults} Adults, ${reservation.children} Children</p>
+                <p><strong>Camping Unit:</strong> ${escapeHtml(reservation.camping_unit)}</p>
+
+                <h2>Manage Your Reservation</h2>
+                <p>You can view or cancel your reservation using this secure link:</p>
+                <p><a href="${escapeHtml(manageUrl)}" style="display: inline-block; background-color: #0b3d2e; color: #e9dfc7; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">Manage Reservation</a></p>
+                <p style="color: #666; font-size: 14px;">Or copy this link: ${escapeHtml(manageUrl)}</p>
+                <p style="color: #666; font-size: 14px;"><strong>Keep this link safe!</strong> Anyone with this link can view and manage your reservation.</p>
+
+                <p>Best regards,<br>The Watershed Campground Team</p>
+            `,
+        });
+
+        console.log(`✉️ Confirmation email sent to ${reservation.email}:`, emailResult);
+
+        // Mark email as sent
+        await supabase
+            .from('reservations')
+            .update({ email_sent_at: new Date().toISOString() })
+            .eq('id', reservation.id);
+
+        return { sent: true, emailId: emailResult.data?.id };
+    } catch (error) {
+        console.error(`Failed to send confirmation email for reservation ${reservation.id}:`, error);
+        // Don't throw - we don't want to fail the webhook if email fails
+        return { sent: false, error: error instanceof Error ? error.message : String(error) };
+    }
+}
 
 // Helper to handle the business logic of the webhook
 export async function handleStripeWebhook(event: Stripe.Event) {
@@ -85,6 +164,9 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                     throw updateTxError;
                 }
                 console.log(`Updated Payment Transaction for ${stripeId} to 'succeeded'`);
+
+                // 4. Send Confirmation Email (if not already sent)
+                await sendConfirmationEmail(reservation);
 
                 return { received: true, status: 'processed_success' };
             }

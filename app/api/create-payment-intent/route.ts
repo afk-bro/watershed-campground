@@ -47,7 +47,7 @@ export async function POST(request: Request) {
             apiVersion: "2025-11-17.clover" as any, // Cast to any to avoid strict type mismatch if needed, or use the suggested version
         });
 
-        const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId } = await request.json();
+        const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json();
 
         if (!checkIn || !checkOut) {
             return NextResponse.json(
@@ -109,7 +109,42 @@ export async function POST(request: Request) {
         // 4. Determine Payment Policy & Breakdown
         const checkInDate = new Date(checkIn);
         const policy = await determinePaymentPolicy(supabaseAdmin, campsite.id, campsite.type, checkInDate);
-        const breakdown = calculatePaymentAmounts(totalAmount, policy, checkInDate);
+        let breakdown = calculatePaymentAmounts(totalAmount, policy, checkInDate);
+
+        // Override with custom deposit amount if provided (for deposit payment method)
+        if (paymentMethod === 'deposit' && customDepositAmount) {
+            if (customDepositAmount < 10) {
+                return NextResponse.json({ error: "Deposit amount must be at least $10" }, { status: 400 });
+            }
+            if (customDepositAmount > totalAmount) {
+                return NextResponse.json({ error: "Deposit amount cannot exceed total amount" }, { status: 400 });
+            }
+
+            breakdown = {
+                ...breakdown,
+                dueNow: customDepositAmount,
+                dueLater: totalAmount - customDepositAmount,
+                depositAmount: customDepositAmount,
+                policyApplied: {
+                    ...breakdown.policyApplied,
+                    policy_type: 'deposit',
+                    name: 'Custom Deposit'
+                }
+            };
+        } else if (paymentMethod === 'full') {
+            // Force full payment
+            breakdown = {
+                ...breakdown,
+                dueNow: totalAmount,
+                dueLater: 0,
+                depositAmount: 0,
+                policyApplied: {
+                    ...breakdown.policyApplied,
+                    policy_type: 'full',
+                    name: 'Pay in Full'
+                }
+            };
+        }
 
         // 5. Create Stripe PaymentIntent for DUE NOW amount
         const amountInCents = Math.round(breakdown.dueNow * 100);
