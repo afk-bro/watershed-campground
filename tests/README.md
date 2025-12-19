@@ -59,12 +59,16 @@ tests/
 │   ├── smoke.spec.ts         # Basic admin functionality
 │   ├── reservation-management.spec.ts
 │   ├── calendar-interactions.spec.ts
-│   └── maintenance-blocks.spec.ts
+│   ├── maintenance-blocks.spec.ts
+│   ├── campsite-crud.spec.ts # Campsite CRUD operations ✨ NEW
+│   └── blackout-dates.spec.ts # Blackout dates management ✨ NEW
 ├── guest/                     # Public-facing tests (no auth)
 │   ├── booking-flow.spec.ts  # Guest reservation flow
 │   ├── booking-complete.spec.ts  # Full booking with payment
 │   ├── booking-errors.spec.ts    # Payment failures & validation ✨ NEW
 │   └── manage-reservation.spec.ts # Guest self-service cancel ✨ NEW
+├── integration/               # Integration tests ✨ NEW
+│   └── stripe-webhooks.spec.ts # Stripe webhook handling
 └── security/                  # Security tests ✨ NEW
     └── rate-limiting.spec.ts  # Rate limit enforcement
 ```
@@ -254,10 +258,108 @@ tests/
 
 ---
 
+### Campsite CRUD (`admin/campsite-crud.spec.ts`) ✨ NEW
+**Purpose:** Tests complete campsite inventory management
+
+**Tests:**
+1. **List Campsites** - Display all active campsites
+   - Filter by type (RV, tent, cabin)
+   - Toggle show inactive
+
+2. **Create Campsite** - Add new campsites (22 tests)
+   - Create RV, tent, and cabin sites
+   - Reject duplicate campsite codes (409)
+   - Validate required fields (name, code, type)
+   - Validate guest capacity (1-50)
+   - Validate type enum
+
+3. **Read Campsite** - Fetch single campsite
+   - Get by ID
+   - Return 404 for non-existent
+
+4. **Update Campsite** - Modify campsite details
+   - Update name, rate, capacity
+   - Update multiple fields at once
+   - Activate/deactivate sites
+   - Reject duplicate code updates
+
+5. **Delete Campsite** - Soft delete (deactivate)
+   - Sets is_active to false
+   - Campsite still exists in database
+   - Return 404 for non-existent
+
+**Why This Matters:** Core inventory management. Sites must be accurate for availability and pricing. Validation prevents booking errors.
+
+---
+
+### Blackout Dates (`admin/blackout-dates.spec.ts`) ✨ NEW
+**Purpose:** Tests blocking dates for maintenance or closures
+
+**Tests:**
+1. **Create Blackout Dates** - Block dates
+   - Campground-wide blackout (all sites)
+   - Site-specific blackout
+   - Single-day blackout
+   - Validate required fields
+   - Prevent end date before start date
+
+2. **Blackout Impact on Availability** - Integration testing
+   - Prevent bookings during blackout period
+   - Allow bookings before blackout
+   - Allow bookings after blackout
+
+3. **Site-Specific Blackout** - Granular blocking
+   - Prevent booking specific site during its blackout
+   - Allow booking other sites during site-specific blackout
+
+4. **List Blackout Dates** - Query blackouts
+   - Fetch all blackouts
+   - Filter by date range
+   - Filter by campsite
+
+**Why This Matters:** Prevents bookings during maintenance or off-season. Supports seasonal operations and planned downtime.
+
+---
+
+### Stripe Webhooks (`integration/stripe-webhooks.spec.ts`) ✨ NEW
+**Purpose:** Tests Stripe payment webhook integration
+
+**Tests:**
+1. **Payment Intent Succeeded Workflow**
+   - Pending reservation ready for webhook
+   - Webhook requires stripe-signature header
+   - Reject invalid signatures
+
+2. **Webhook Idempotency**
+   - Track processed webhooks
+   - Prevent duplicate processing
+
+3. **Email Notification After Payment**
+   - Track email_sent_at timestamp
+   - Idempotency for email sending
+
+4. **Reservation Status Transitions**
+   - Transition pending → confirmed
+   - Update payment status
+
+**Why This Matters:** Critical for payment processing reliability. Prevents double-charging and ensures reservations are confirmed after successful payment.
+
+**Note:** Full webhook signature verification testing requires Stripe CLI or test environment.
+
+---
+
 ## Test Suites
 
 ### Admin Tests (`tests/admin/`)
 Tests requiring admin authentication. Uses saved session from `auth.setup.ts`.
+
+**Coverage:**
+- Authentication flows (login, logout, password reset)
+- Reservation management (assign, check-in, cancel, lifecycle)
+- Calendar interactions (drag-and-drop, conflict prevention)
+- Maintenance blocks management
+- Campsite CRUD operations (create, read, update, delete) ✨ NEW
+- Blackout dates management (campground-wide, site-specific) ✨ NEW
 
 **Run:** `npm run test:admin` or `./scripts/test-admin.sh`
 
@@ -283,6 +385,16 @@ Security and abuse prevention tests.
 - Fail-open behavior (graceful degradation)
 
 **Run:** `npx playwright test tests/security/`
+
+### Integration Tests (`tests/integration/`) ✨ NEW
+Cross-system integration tests.
+
+**Coverage:**
+- Stripe webhook handling (payment succeeded, idempotency)
+- Email notifications (tracking, status updates)
+- Payment-to-reservation workflow
+
+**Run:** `npx playwright test tests/integration/`
 
 ## Helper Scripts
 
