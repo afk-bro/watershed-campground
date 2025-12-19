@@ -1,6 +1,69 @@
-# E2E Test Suite
+# Watershed Campground - E2E Test Suite
 
-This directory contains end-to-end tests for The Watershed Campground application using Playwright.
+Comprehensive end-to-end test suite using Playwright for testing both admin panel and public-facing features.
+
+## Quick Start
+
+### Initial Setup (First Time)
+
+```bash
+# Setup complete test environment
+npm run test:setup
+
+# Or use the script with options
+./scripts/test-setup.sh --help
+```
+
+This automated script will:
+- Check prerequisites (Docker, Node.js)
+- Start local Supabase
+- Reset database and run all migrations
+- Seed test data (7 campsites, 3 reservations, 1 admin user)
+- Verify everything is ready
+
+### Run Tests
+
+```bash
+# Run all tests
+npm test
+
+# Run only admin tests
+npm run test:admin
+
+# Run only guest tests
+npm run test:guest
+
+# Run quick smoke tests (fastest validation)
+npm run test:quick
+
+# Run with browser UI (useful for debugging)
+npm run test:headed
+
+# Debug mode (step through tests)
+npm run test:debug
+
+# View last test report
+npm run test:report
+```
+
+## Test Organization
+
+```
+tests/
+├── README.md                  # This file
+├── auth.setup.ts              # Auth setup (runs once before all tests)
+├── .auth/
+│   └── admin.json            # Saved admin session state
+├── admin/                     # Admin panel tests (require auth)
+│   ├── auth.spec.ts          # Authentication flows
+│   ├── smoke.spec.ts         # Basic admin functionality
+│   ├── reservation-management.spec.ts
+│   ├── calendar-interactions.spec.ts
+│   └── maintenance-blocks.spec.ts
+└── guest/                     # Public-facing tests (no auth)
+    ├── booking-flow.spec.ts  # Guest reservation flow
+    └── booking-complete.spec.ts
+```
 
 ## Test Coverage
 
@@ -83,59 +146,127 @@ This directory contains end-to-end tests for The Watershed Campground applicatio
 
 ---
 
-## Running Tests
+## Test Suites
 
-### Run All Tests
+### Admin Tests (`tests/admin/`)
+Tests requiring admin authentication. Uses saved session from `auth.setup.ts`.
+
+**Run:** `npm run test:admin` or `./scripts/test-admin.sh`
+
+### Guest Tests (`tests/guest/`)
+Public-facing tests that don't require authentication.
+
+**Run:** `npm run test:guest` or `./scripts/test-guest.sh`
+
+## Helper Scripts
+
+All scripts are in `scripts/` directory:
+
+### `test-setup.sh` - Complete Environment Setup
 ```bash
-npx playwright test
+./scripts/test-setup.sh              # Setup only
+./scripts/test-setup.sh --dev        # Setup + start dev server
+./scripts/test-setup.sh --test       # Setup + run tests
+./scripts/test-setup.sh --dev --test # Full workflow
 ```
 
-### Run Specific Test File
+### `test-admin.sh` - Run Admin Tests
 ```bash
-npx playwright test tests/guest-booking-complete.spec.ts
-npx playwright test tests/admin/reservation-management.spec.ts
-npx playwright test tests/admin/calendar-interactions.spec.ts
+./scripts/test-admin.sh              # Run all admin tests
+./scripts/test-admin.sh --headed     # Run with browser UI
+./scripts/test-admin.sh --debug      # Debug mode
 ```
 
-### Run with UI (Headed Mode)
+### `test-guest.sh` - Run Guest Tests
 ```bash
-npx playwright test --headed
+./scripts/test-guest.sh              # Run all guest tests
+./scripts/test-guest.sh --headed     # Run with browser UI
 ```
 
-### Run with Debug Mode
+### `test-quick.sh` - Quick Validation
 ```bash
-npx playwright test --debug
+./scripts/test-quick.sh              # Run smoke tests only
 ```
 
-### Run Single Test
+## Common Commands
+
 ```bash
+# Run all tests
+npm test
+
+# Run specific suite
+npm run test:admin
+npm run test:guest
+
+# Run specific test file
+npx playwright test tests/admin/smoke.spec.ts
+npx playwright test tests/guest/booking-complete.spec.ts
+
+# Run with UI (headed mode)
+npm run test:headed
+
+# Debug mode
+npm run test:debug
+
+# Run single test by name
 npx playwright test -g "should complete full booking with Stripe payment"
+
+# View test report
+npm run test:report
 ```
 
-### View Test Report
+## Test Environment
+
+### Prerequisites
+- Docker (required for local Supabase)
+- Node.js 20+
+- NPM dependencies installed
+
+### Local Supabase
+Tests run against a local Supabase instance.
+
+**Test Credentials:**
+- Admin Email: `admin@test.com`
+- Admin Password: `testpass123`
+- Supabase Studio: http://localhost:54323
+- PostgreSQL: `postgresql://postgres:postgres@localhost:54322/postgres`
+
+### Environment Variables
+Configuration in `.env.test`:
+
 ```bash
-npx playwright show-report
-```
-
-## Prerequisites
-
-### 1. Environment Setup
-Tests require `.env.test` file with local Supabase credentials:
-```env
+# Local Supabase (from npx supabase start)
 NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<your-anon-key>
-SUPABASE_SERVICE_ROLE_KEY=<your-service-role-key>
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
+
+# Test Admin Credentials
 TEST_ADMIN_EMAIL=admin@test.com
 TEST_ADMIN_PASSWORD=testpass123
+
+# Stripe Test Keys
+NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
+STRIPE_SECRET_KEY=sk_test_...
 ```
 
-### 2. Local Supabase Running
-```bash
-supabase start
-```
+### Seed Data
+Database is automatically seeded with test data:
 
-### 3. Dev Server (Auto-Started by Playwright)
-The Playwright config automatically starts the dev server via `webServer` configuration.
+**Campsites (7):**
+- S1, S2, S3: RV sites (riverfront)
+- S4, S5: Tent sites (forest)
+- C1, C2: Cabins
+
+**Reservations (3):**
+- 2 assigned reservations (confirmed)
+- 1 unassigned reservation (pending) - for testing assignment flow
+
+**Admin User:**
+- Email: admin@test.com
+- Password: testpass123
+
+### Dev Server
+The Playwright config automatically starts the dev server if not running.
 
 ## Test Architecture
 
@@ -216,6 +347,52 @@ See [Stripe Testing Docs](https://stripe.com/docs/testing) for more test cards.
 
 ## Troubleshooting
 
+### Docker Not Running
+```
+Error: Docker is not running
+```
+**Fix:** Start Docker Desktop
+
+### Port Already in Use
+```
+Error: Port 3000 is already in use
+```
+**Fix:** Kill existing process
+```bash
+lsof -ti:3000 | xargs kill -9
+```
+
+### Supabase Not Starting
+```
+Error: Failed to start Supabase
+```
+**Fix:** Reset Docker containers
+```bash
+npx supabase stop
+docker system prune -f
+npx supabase start
+```
+
+### Auth Setup Failing
+```
+Error: Login failed
+```
+**Fix:** Ensure database is seeded with admin user
+```bash
+npx supabase db reset
+```
+
+### Tests Failing Randomly
+**Common causes:**
+- Database state not reset between runs
+- Dev server not ready
+- Network timeouts
+
+**Fix:** Use test setup script
+```bash
+./scripts/test-setup.sh --test
+```
+
 ### Tests Fail with "Cannot find module 'server-only'"
 - This is expected in test context
 - Admin tests use `tests/helpers/test-supabase.ts` instead of `lib/supabase-admin.ts`
@@ -227,12 +404,12 @@ See [Stripe Testing Docs](https://stripe.com/docs/testing) for more test cards.
 - Check browser console for Stripe errors
 
 ### Calendar Tests Fail
-- Ensure local Supabase is running: `supabase start`
+- Ensure local Supabase is running: `npx supabase start`
 - Verify at least 2 active campsites exist in database
-- Check `tests/.auth/admin.json` exists (run auth.setup.ts first)
+- Check `tests/.auth/admin.json` exists (run setup first)
 
 ### Database State Errors
-- Reset local database: `supabase db reset`
+- Reset local database: `npx supabase db reset`
 - Run migrations: Check `supabase/migrations/`
 - Verify test data cleanup in `afterAll` hooks
 

@@ -1,7 +1,13 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+import path from 'path';
+
+// Load .env.test for E2E tests (local Supabase credentials)
+// Playwright runs from project root, so .env.test is in the same directory
+dotenv.config({ path: '.env.test' });
 
 export default defineConfig({
-    testDir: './tests',
+    testDir: '../tests',
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
@@ -10,16 +16,71 @@ export default defineConfig({
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
+        screenshot: 'only-on-failure',
+        video: 'retain-on-failure',
     },
     projects: [
+        // ============================================
+        // Setup Project
+        // ============================================
+        // Runs once before all tests to authenticate and save session
+        {
+            name: 'setup',
+            testMatch: /auth\.setup\.ts/,
+        },
+
+        // ============================================
+        // Admin Test Suite
+        // ============================================
+        // Tests requiring admin authentication
+        {
+            name: 'admin',
+            testMatch: /tests\/admin\/.*\.spec\.ts/,
+            use: {
+                ...devices['Desktop Chrome'],
+                storageState: 'tests/.auth/admin.json', // Use authenticated state
+            },
+            dependencies: ['setup'],
+        },
+
+        // ============================================
+        // Guest Test Suite
+        // ============================================
+        // Public-facing tests (no auth required)
+        {
+            name: 'guest',
+            testMatch: /tests\/guest\/.*\.spec\.ts/,
+            use: {
+                ...devices['Desktop Chrome'],
+                storageState: { cookies: [], origins: [] }, // No auth state
+            },
+        },
+
+        // ============================================
+        // All Tests (Default)
+        // ============================================
+        // Runs all tests with appropriate auth state
         {
             name: 'chromium',
-            use: { ...devices['Desktop Chrome'] },
+            testMatch: /tests\/.*\.spec\.ts/,
+            use: {
+                ...devices['Desktop Chrome'],
+                // Admin tests will override this in their describe blocks
+                storageState: 'tests/.auth/admin.json',
+            },
+            dependencies: ['setup'],
         },
     ],
     webServer: {
         command: 'npm run dev',
         url: 'http://localhost:3000',
-        reuseExistingServer: !process.env.CI,
+        reuseExistingServer: true, // Use existing dev server
+        timeout: 120000,
+        stdout: 'pipe',
+        stderr: 'pipe',
+        env: {
+            ...process.env, // Includes all vars from .env.test loaded by dotenv.config above
+            NODE_ENV: 'test',
+        },
     },
 });

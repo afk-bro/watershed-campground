@@ -7,7 +7,15 @@
     "build": "next build",
     "start": "next start",
     "type-check": "tsc --noEmit",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0"
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "test": "playwright test",
+    "test:admin": "playwright test --project=admin",
+    "test:guest": "playwright test --project=guest",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:report": "playwright show-report",
+    "test:setup": "./scripts/test-setup.sh",
+    "test:quick": "playwright test tests/admin/smoke.spec.ts"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.4.1",
@@ -19,10 +27,10 @@
     "date-fns": "^4.1.0",
     "dotenv": "^17.2.3",
     "lucide-react": "^0.561.0",
-    "next": "^16.0.9",
+    "next": "^16.0.10",
     "node-fetch": "^2.7.0",
-    "react": "^19.2.2",
-    "react-dom": "^19.2.2",
+    "react": "^19.2.3",
+    "react-dom": "^19.2.3",
     "resend": "^6.6.0",
     "stripe": "^20.0.0",
     "zod": "^4.1.13"
