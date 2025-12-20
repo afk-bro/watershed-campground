@@ -1,13 +1,12 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
-import path from 'path';
 
 // Load .env.test for E2E tests (local Supabase credentials)
-// Playwright runs from project root, so .env.test is in the same directory
-dotenv.config({ path: '.env.test' });
+// Playwright runs from project root via symlink, so .env.test is in same directory
+const envConfig = dotenv.config({ path: '.env.test' });
 
 export default defineConfig({
-    testDir: '../tests',
+    testDir: './tests',
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
@@ -72,9 +71,10 @@ export default defineConfig({
         },
     ],
     webServer: {
+        // Use dev server for E2E tests - Stripe works better in dev mode
         command: 'npm run dev',
         url: 'http://localhost:3000',
-        reuseExistingServer: true, // Use existing dev server
+        reuseExistingServer: true,
         timeout: 120000,
         stdout: 'pipe',
         stderr: 'pipe',
