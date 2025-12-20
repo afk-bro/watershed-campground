@@ -45,12 +45,12 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
     const handleDayClick = (dateStr: string, status: string) => {
         if (status === 'sold-out' || status === 'blackout') return;
 
-        // Reset if we already have a range or if clicking before start
-        if (!selectionStart || (selectionStart && selectionEnd) || (selectionStart && dateStr < selectionStart)) {
+        // Reset if we already have a range or if clicking before/same as start
+        if (!selectionStart || (selectionStart && selectionEnd) || (selectionStart && dateStr <= selectionStart)) {
             setSelectionStart(dateStr);
             setSelectionEnd(null);
         } else {
-            // Completing the range
+            // Completing the range (dateStr is guaranteed to be > selectionStart)
             setSelectionEnd(dateStr);
             onSelectRange(selectionStart, dateStr);
         }

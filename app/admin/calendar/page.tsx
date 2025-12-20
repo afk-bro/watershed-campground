@@ -66,8 +66,8 @@ export default function CalendarPage() {
   }
 
   return (
-    <div className="h-[calc(100vh-4rem)] flex flex-col bg-[var(--color-surface-elevated)]">
-      <div className="p-4 sm:p-6 lg:p-8 flex-1 overflow-hidden flex flex-col">
+    <div className="min-h-screen bg-[var(--color-surface-elevated)]">
+      <div className="p-4 sm:p-6 lg:p-8">
         <div className="mb-6">
           <h1 className="text-3xl font-heading font-bold text-accent-gold">
             Availability Calendar
@@ -77,15 +77,13 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <div className="flex-1 min-h-0">
-          <CalendarGrid
-            campsites={campsites}
-            reservations={reservations}
-            date={currentDate}
-            onDateChange={setCurrentDate}
-            blackoutDates={blackoutDates}
-          />
-        </div>
+        <CalendarGrid
+          campsites={campsites}
+          reservations={reservations}
+          date={currentDate}
+          onDateChange={setCurrentDate}
+          blackoutDates={blackoutDates}
+        />
       </div>
     </div>
   );

@@ -102,7 +102,7 @@ function ReservationBlock({
         width: `${widthPercent}%`,
         cursor: isInteractive && !isResizing ? 'grab' : 'pointer',
       }}
-      draggable={isInteractive && !isResizing && !isHovered}
+      draggable={isInteractive && !isResizing}
       onDragStart={(e) => {
         // Don't allow drag to start if we're resizing or hovering over handles
         if (isResizing || !isInteractive) {

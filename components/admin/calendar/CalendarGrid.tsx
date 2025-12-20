@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { Campsite, Reservation, BlackoutDate } from "@/lib/supabase";
-import { format, eachDayOfInterval, isSameMonth, isToday, isWeekend, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays } from "date-fns";
+import { format, eachDayOfInterval, isSameMonth, isToday, isWeekend, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays, subDays } from "date-fns";
 import ReservationBlock from "./ReservationBlock";
 import ReservationDrawer from "./ReservationDrawer";
 import RescheduleConfirmDialog from "./RescheduleConfirmDialog";
@@ -66,6 +66,7 @@ export default function CalendarGrid({
   // Drag-and-drop state (Move)
   const [isDragging, setIsDragging] = useState(false);
   const [draggedReservation, setDraggedReservation] = useState<Reservation | null>(null);
+  const [dragOffsetDays, setDragOffsetDays] = useState<number>(0); // Track where user clicked on reservation
   const [dragPreview, setDragPreview] = useState<{
     campsiteId: string;
     startDate: string;
@@ -141,36 +142,37 @@ export default function CalendarGrid({
 
   const updateScrollDirection = useCallback((clientX: number, clientY: number) => {
     const container = scrollContainerRef.current;
-    if (!container) return;
+    if (!container) {
+      console.log('[RESIZE AUTO-SCROLL] No container ref');
+      return;
+    }
 
     const rect = container.getBoundingClientRect();
 
+    // Handle container edges that may be clipped by viewport
+    const leftEdge = Math.max(rect.left, 0);
+    const rightEdge = Math.min(rect.right, window.innerWidth);
+
     let x = 0;
-    let y = 0;
 
-    // Horizontal scrolling
-    if (clientX < rect.left + SCROLL_ZONE_PX) {
+    // Horizontal scrolling - use container's visible edges
+    if (clientX < leftEdge + SCROLL_ZONE_PX) {
       x = -1; // Scroll left
-    } else if (clientX > rect.right - SCROLL_ZONE_PX) {
+      console.log('[RESIZE AUTO-SCROLL] Scrolling LEFT', { clientX, leftEdge, SCROLL_ZONE_PX });
+    } else if (clientX > rightEdge - SCROLL_ZONE_PX) {
       x = 1; // Scroll right
+      console.log('[RESIZE AUTO-SCROLL] Scrolling RIGHT', { clientX, rightEdge, SCROLL_ZONE_PX });
     }
 
-    // Vertical scrolling
-    if (clientY < rect.top + SCROLL_ZONE_PX) {
-      y = -1; // Scroll up
-    } else if (clientY > rect.bottom - SCROLL_ZONE_PX) {
-      y = 1; // Scroll down
-    }
+    // Vertical scrolling removed - page handles vertical scroll naturally
 
-    const directionChanged =
-      scrollDirectionRef.current.x !== x ||
-      scrollDirectionRef.current.y !== y;
+    const directionChanged = scrollDirectionRef.current.x !== x;
 
-    scrollDirectionRef.current = { x, y };
+    scrollDirectionRef.current = { x, y: 0 }; // y always 0
 
-    if ((x !== 0 || y !== 0) && directionChanged) {
+    if (x !== 0 && directionChanged) {
       startAutoScroll();
-    } else if (x === 0 && y === 0) {
+    } else if (x === 0) {
       stopAutoScroll();
     }
   }, [startAutoScroll, stopAutoScroll]);
@@ -245,18 +247,47 @@ export default function CalendarGrid({
 
   // Drag event handlers
   const handleDragStart = (e: React.DragEvent, reservation: Reservation) => {
+    console.log('[DRAG START]', { reservation: reservation.id, isDragging: true });
     setIsDragging(true);
     setDraggedReservation(reservation);
     e.dataTransfer.effectAllowed = 'move';
+
+    // Calculate drag offset - which day within the reservation the user clicked
+    const elements = document.elementsFromPoint(e.clientX, e.clientY);
+    const dayCell = elements.find(el => el.hasAttribute('data-date'));
+
+    if (dayCell) {
+      const clickedDate = dayCell.getAttribute('data-date');
+      if (clickedDate) {
+        // Calculate offset in days from reservation start
+        const offsetDays = differenceInDays(parseISO(clickedDate), parseISO(reservation.check_in));
+        setDragOffsetDays(Math.max(0, offsetDays)); // Ensure non-negative
+        console.log('[DRAG START] Offset:', offsetDays, 'days from check-in');
+      }
+    } else {
+      // Fallback - assume clicked on first day
+      setDragOffsetDays(0);
+    }
   };
 
   // Store the actual heavy logic separately
   const updateDragPreview = useCallback((campsiteId: string, dateStr: string) => {
     if (!draggedReservation) return;
 
-    // Check if date is out of current month range
-    if (!isDateInMonthRange(dateStr)) {
-      setDragPreview({ campsiteId, startDate: dateStr, endDate: dateStr });
+    // Adjust for drag offset - calculate where check-in should actually be
+    // If user clicked 2 days into the reservation, we need to subtract those 2 days
+    const cursorDate = parseISO(dateStr);
+    const adjustedCheckIn = format(subDays(cursorDate, dragOffsetDays), 'yyyy-MM-dd');
+
+    console.log('[DRAG PREVIEW]', {
+      cursorOn: dateStr,
+      offsetDays: dragOffsetDays,
+      adjustedCheckIn
+    });
+
+    // Check if adjusted date is out of current month range
+    if (!isDateInMonthRange(adjustedCheckIn)) {
+      setDragPreview({ campsiteId, startDate: adjustedCheckIn, endDate: adjustedCheckIn });
       setValidationError('Out of month range');
       return;
     }
@@ -265,21 +296,21 @@ export default function CalendarGrid({
     const endDate = calculateNewEndDate(
       draggedReservation.check_in,
       draggedReservation.check_out,
-      dateStr
+      adjustedCheckIn
     );
 
     // SYNC validation (fast, no await)
     const validation = validateMoveLocal(
       draggedReservation,
       campsiteId,
-      dateStr,
+      adjustedCheckIn,
       endDate
     );
 
     // Update preview state
-    setDragPreview({ campsiteId, startDate: dateStr, endDate });
+    setDragPreview({ campsiteId, startDate: adjustedCheckIn, endDate });
     setValidationError(validation.valid ? null : validation.error);
-  }, [draggedReservation, monthStart, monthEnd, campsites, reservations]);
+  }, [draggedReservation, dragOffsetDays, monthStart, monthEnd, campsites, reservations]);
 
   // Throttled version - only runs every 16ms (~60fps)
   const handleDragOverCell = useMemo(
@@ -321,6 +352,7 @@ export default function CalendarGrid({
   const handleDragEnd = () => {
     setIsDragging(false);
     setDraggedReservation(null);
+    setDragOffsetDays(0); // Reset drag offset
     setDragPreview(null);
     setValidationError(null);
 
@@ -331,23 +363,48 @@ export default function CalendarGrid({
     }
   };
 
-  // Auto-scroll when dragging near edges
+  // Auto-scroll when dragging near edges (HTML5 drag events)
   useEffect(() => {
+    console.log('[DRAG EFFECT] isDragging:', isDragging);
     if (!isDragging) return;
 
+    console.log('[DRAG EFFECT] Setting up dragover listener');
+
     const handleDragMove = (e: DragEvent) => {
+      e.preventDefault(); // Critical for dragover to continue firing
+
       const container = scrollContainerRef.current;
-      if (!container) return;
+      if (!container) {
+        console.log('[AUTO-SCROLL] No container ref');
+        return;
+      }
 
       const rect = container.getBoundingClientRect();
       const scrollThreshold = 80; // Distance from edge to trigger scroll
       const scrollSpeed = 15; // Pixels to scroll per interval
 
-      // Calculate distance from edges
-      const distanceFromLeft = e.clientX - rect.left;
-      const distanceFromRight = rect.right - e.clientX;
-      const distanceFromTop = e.clientY - rect.top;
-      const distanceFromBottom = rect.bottom - e.clientY;
+      // Handle container edges that may be clipped by viewport
+      const leftEdge = Math.max(rect.left, 0);
+      const rightEdge = Math.min(rect.right, window.innerWidth);
+
+      // Calculate distance from container's visible edges
+      const distanceFromLeft = e.clientX - leftEdge;
+      const distanceFromRight = rightEdge - e.clientX;
+
+      // Debug logging
+      console.log('[AUTO-SCROLL]', {
+        clientX: e.clientX,
+        rectLeft: rect.left,
+        rectRight: rect.right,
+        leftEdge,
+        rightEdge,
+        distanceFromLeft,
+        distanceFromRight,
+        scrollThreshold,
+        currentScrollLeft: container.scrollLeft,
+        scrollWidth: container.scrollWidth,
+        clientWidth: container.clientWidth,
+      });
 
       // Clear existing interval
       if (autoScrollIntervalRef.current) {
@@ -355,32 +412,26 @@ export default function CalendarGrid({
         autoScrollIntervalRef.current = null;
       }
 
-      // Determine scroll direction
+      // Determine horizontal scroll direction
       let scrollX = 0;
-      let scrollY = 0;
 
-      // Horizontal scrolling (most important for calendar)
+      // Horizontal scrolling - use container edges
       if (distanceFromLeft < scrollThreshold && distanceFromLeft > 0) {
         scrollX = -scrollSpeed;
+        console.log('[AUTO-SCROLL] Scrolling LEFT');
       } else if (distanceFromRight < scrollThreshold && distanceFromRight > 0) {
         scrollX = scrollSpeed;
+        console.log('[AUTO-SCROLL] Scrolling RIGHT');
       }
 
-      // Vertical scrolling
-      if (distanceFromTop < scrollThreshold && distanceFromTop > 0) {
-        scrollY = -scrollSpeed;
-      } else if (distanceFromBottom < scrollThreshold && distanceFromBottom > 0) {
-        scrollY = scrollSpeed;
-      }
-
-      // Start auto-scroll if needed
-      if (scrollX !== 0 || scrollY !== 0) {
+      // Start auto-scroll if needed (horizontal only)
+      if (scrollX !== 0) {
         autoScrollIntervalRef.current = window.setInterval(() => {
           if (container) {
             container.scrollBy({
               left: scrollX,
-              top: scrollY,
-              behavior: 'auto' // Smooth but immediate
+              top: 0, // No vertical scroll
+              behavior: 'auto'
             });
           }
         }, 16); // ~60fps
@@ -585,7 +636,7 @@ export default function CalendarGrid({
   const handleCellMouseDown = (campsiteId: string, dateStr: string) => {
     // Only start if not dragging an existing reservation
     if (isDragging || resizeState) return;
-    
+
     setIsCreating(true);
     setCreationStart({ campsiteId, date: dateStr });
     setCreationEnd({ campsiteId, date: dateStr });
@@ -593,7 +644,7 @@ export default function CalendarGrid({
 
   const handleCellMouseEnter = (campsiteId: string, dateStr: string) => {
     if (!isCreating || !creationStart) return;
-    
+
     // Only allow selection within the same campsite
     if (campsiteId !== creationStart.campsiteId) return;
 
@@ -606,6 +657,25 @@ export default function CalendarGrid({
     setIsCreating(false);
     setShowCreationDialog(true);
   };
+
+  // Auto-scroll during creation drag
+  const handleCreationMouseMove = useCallback((e: MouseEvent) => {
+    if (!isCreating) return;
+    updateScrollDirection(e.clientX, e.clientY);
+  }, [isCreating, updateScrollDirection]);
+
+  // Add/remove window mouse listeners for creation drag
+  useEffect(() => {
+    if (isCreating) {
+      console.log('[CREATION] Setting up mousemove listener for auto-scroll');
+      window.addEventListener('mousemove', handleCreationMouseMove);
+      return () => {
+        console.log('[CREATION] Removing mousemove listener');
+        window.removeEventListener('mousemove', handleCreationMouseMove);
+        stopAutoScroll(); // Stop any active scrolling
+      };
+    }
+  }, [isCreating, handleCreationMouseMove, stopAutoScroll]);
 
   const handleCreateBlackout = async (reason: string) => {
     if (!creationStart || !creationEnd) return;
@@ -653,7 +723,7 @@ export default function CalendarGrid({
   const selection = getSelectionRange();
 
   return (
-    <div className="flex flex-col h-full admin-card overflow-hidden relative select-none">
+    <div className="flex flex-col admin-card relative select-none">
       <InstructionalOverlay />
       {blackoutDates.length === 0 && reservations.length === 0 && <EmptyStateHelper />}
       
@@ -719,16 +789,17 @@ export default function CalendarGrid({
         </div>
       </div>
 
-      {/* Grid Container - Scrollable */}
-      <div 
-        ref={scrollContainerRef} 
-        className="flex-1 overflow-auto relative"
-        onMouseUp={handleCellMouseUp} 
+      {/* Grid Container - Horizontal Scroll Only */}
+      <div
+        ref={scrollContainerRef}
+        className="overflow-x-auto overflow-y-visible relative"
+        onMouseUp={handleCellMouseUp}
         onMouseLeave={() => {
            if (isCreating) {
              setIsCreating(false);
              setCreationStart(null);
              setCreationEnd(null);
+             stopAutoScroll(); // Stop scrolling when mouse leaves
            }
         }}
       >
