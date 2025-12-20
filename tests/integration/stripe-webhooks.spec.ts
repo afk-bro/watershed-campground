@@ -157,7 +157,7 @@ test.describe('Stripe Webhook Integration', () => {
             const tomorrow = addDays(new Date(), 60);
             const checkOut = addDays(tomorrow, 2);
 
-            const { data } = await supabaseAdmin
+            const { data, error } = await supabaseAdmin
                 .from('reservations')
                 .insert({
                     first_name: 'Email',
@@ -175,10 +175,17 @@ test.describe('Stripe Webhook Integration', () => {
                     camping_unit: 'Tent',
                     contact_method: 'Email',
                     status: 'confirmed',
+                    total_amount: 100.00,
+                    amount_paid: 100.00,
                     email_sent_at: null, // Initially not sent
                 })
                 .select()
                 .single();
+
+            if (error) {
+                console.error('Failed to create test reservation:', error);
+                throw error;
+            }
 
             const testId = data!.id;
 
@@ -217,7 +224,7 @@ test.describe('Stripe Webhook Integration', () => {
             const checkOut = addDays(tomorrow, 2);
 
             // Create pending reservation
-            const { data } = await supabaseAdmin
+            const { data, error } = await supabaseAdmin
                 .from('reservations')
                 .insert({
                     first_name: 'Status',
@@ -235,9 +242,15 @@ test.describe('Stripe Webhook Integration', () => {
                     camping_unit: 'RV / Trailer',
                     contact_method: 'Email',
                     status: 'pending',
+                    total_amount: 100.00,
                 })
                 .select()
                 .single();
+
+            if (error) {
+                console.error('Failed to create test reservation:', error);
+                throw error;
+            }
 
             const testId = data!.id;
 
