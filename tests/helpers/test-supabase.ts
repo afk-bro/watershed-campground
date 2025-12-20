@@ -2,6 +2,8 @@
  * Test helper for Supabase admin client
  * This is a test-specific version that doesn't use 'server-only' package
  * Safe to use in Playwright tests
+ *
+ * Note: Environment variables are loaded by playwright.config.ts
  */
 import { createClient } from '@supabase/supabase-js';
 

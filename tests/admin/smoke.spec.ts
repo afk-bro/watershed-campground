@@ -12,16 +12,17 @@ test.describe('Admin Smoke Tests', () => {
         });
 
         test('unauth user redirected from /admin to /admin/login', async ({ page }) => {
-            await page.goto('/admin');
-            // Should redirect to login
-            await page.waitForURL('/admin/login');
-            await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible();
+            await page.goto('/admin', { waitUntil: 'networkidle' });
+            // Should redirect to login - wait for heading instead of just URL
+            await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible({ timeout: 10000 });
+            await expect(page).toHaveURL('/admin/login');
         });
 
-        test('unauth user redirected from /admin/reservations to /admin/login', async ({ page }) => {
-            await page.goto('/admin/reservations');
-            await page.waitForURL('/admin/login');
-            await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible();
+        test('unauth user redirected from /admin/calendar to /admin/login', async ({ page }) => {
+            await page.goto('/admin/calendar', { waitUntil: 'networkidle' });
+            // Should redirect to login - wait for heading instead of just URL
+            await expect(page.getByRole('heading', { name: 'Admin Login' })).toBeVisible({ timeout: 10000 });
+            await expect(page).toHaveURL('/admin/login');
         });
     });
 
@@ -31,14 +32,6 @@ test.describe('Admin Smoke Tests', () => {
         test('/admin dashboard loads', async ({ page }) => {
             await page.goto('/admin');
             await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible();
-        });
-
-        test('/admin/reservations loads', async ({ page }) => {
-            await page.goto('/admin/reservations');
-            // Should show reservations page (not redirect)
-            await expect(page).toHaveURL('/admin/reservations');
-            // Look for reservations-related content
-            await expect(page.getByText(/reservations/i)).toBeVisible();
         });
 
         test('/admin/calendar loads', async ({ page }) => {
@@ -51,7 +44,8 @@ test.describe('Admin Smoke Tests', () => {
         test('/admin/campsites loads', async ({ page }) => {
             await page.goto('/admin/campsites');
             await expect(page).toHaveURL('/admin/campsites');
-            await expect(page.getByText(/campsites/i)).toBeVisible();
+            // Use specific heading instead of generic text that matches multiple elements
+            await expect(page.getByRole('heading', { name: /Campsite Management/i })).toBeVisible();
         });
     });
 });

@@ -48,6 +48,7 @@ test.describe('Guest Manage Reservation', () => {
                     contact_method: 'Email',
                     status: 'confirmed',
                     public_edit_token_hash: tokenHash,
+                    total_amount: 150.00,
                 })
                 .select()
                 .single();
@@ -152,6 +153,7 @@ test.describe('Guest Manage Reservation', () => {
                     contact_method: 'Email',
                     status: 'confirmed',
                     public_edit_token_hash: tokenHash,
+                    total_amount: 150.00,
                 })
                 .select()
                 .single();
@@ -196,7 +198,7 @@ test.describe('Guest Manage Reservation', () => {
             await page.waitForTimeout(1000);
 
             // Verify status changed to cancelled in UI
-            await expect(page.getByText(/CANCELLED/i)).toBeVisible();
+            await expect(page.getByText('CANCELLED', { exact: true })).toBeVisible();
 
             // Verify cancel button is no longer shown
             await expect(page.getByRole('button', { name: /Cancel Reservation/i })).not.toBeVisible();
@@ -244,7 +246,7 @@ test.describe('Guest Manage Reservation', () => {
             await page.waitForTimeout(1000);
 
             // Verify cancelled
-            await expect(page.getByText(/CANCELLED/i)).toBeVisible();
+            await expect(page.getByText('CANCELLED', { exact: true })).toBeVisible();
 
             const { data } = await supabaseAdmin
                 .from('reservations')
@@ -291,7 +293,7 @@ test.describe('Guest Manage Reservation', () => {
                 .eq('id', testReservationId);
 
             await page.goto(`/manage-reservation?rid=${testReservationId}&t=${testToken}`);
-            await expect(page.getByText(/CANCELLED/i)).toBeVisible();
+            await expect(page.getByText('CANCELLED', { exact: true })).toBeVisible();
 
             // Cancel button should NOT be visible
             await expect(page.getByRole('button', { name: /Cancel Reservation/i })).not.toBeVisible();
@@ -404,6 +406,7 @@ test.describe('Guest Manage Reservation', () => {
                     contact_method: 'Email',
                     status: 'cancelled',
                     public_edit_token_hash: tokenHash,
+                    total_amount: 150.00,
                 })
                 .select()
                 .single();
@@ -457,11 +460,16 @@ test.describe('Guest Manage Reservation', () => {
                     contact_method: 'Email',
                     status: 'checked_in',
                     public_edit_token_hash: tokenHash,
+                    total_amount: 150.00,
                 })
                 .select()
                 .single();
 
-            const testId = data!.id;
+
+
+            if (!data) throw new Error('Failed to create test reservation');
+
+            const testId = data.id;
 
             try {
                 const response = await page.request.post('/api/public/manage-reservation/cancel', {
