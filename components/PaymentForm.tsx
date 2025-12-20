@@ -3,11 +3,11 @@
 import { useStripe, useElements, PaymentElement } from "@stripe/react-stripe-js";
 import { useState } from "react";
 
-export default function PaymentForm({ 
-  totalAmount, 
+export default function PaymentForm({
+  totalAmount,
   onSuccess,
-  isProcessing: externalProcessing 
-}: { 
+  isProcessing: externalProcessing
+}: {
   totalAmount: number;
   onSuccess: (paymentIntentId: string) => void;
   isProcessing: boolean;
@@ -21,6 +21,7 @@ export default function PaymentForm({
     e.preventDefault();
 
     if (!stripe || !elements) {
+      setErrorMessage("Payment system not ready. Please wait a moment and try again.");
       return;
     }
 
@@ -29,19 +30,19 @@ export default function PaymentForm({
 
     // Trigger form validation and wallet collection
     const { error: submitError } = await elements.submit();
-    
+
     if (submitError) {
       setErrorMessage(submitError.message || "An error occurred");
       setLocalProcessing(false);
       return;
     }
 
-    // Confirm Payment 
+    // Confirm Payment
     // We use redirect: "if_required" so we can handle success inline and close the loop inside current page logic
     const { error, paymentIntent } = await stripe.confirmPayment({
       elements,
       confirmParams: {
-        return_url: `${window.location.origin}/make-a-reservation/confirmation`, 
+        return_url: `${window.location.origin}/make-a-reservation/confirmation`,
       },
       redirect: "if_required",
     });
@@ -59,10 +60,10 @@ export default function PaymentForm({
     }
   };
 
-  const isBusy = localProcessing || externalProcessing;
+  const canSubmit = !!stripe && !!elements && !localProcessing && !externalProcessing;
 
   return (
-    <div className="bg-white/5 p-6 rounded-xl border border-accent-gold/20 space-y-4">
+    <form onSubmit={handleSubmit} className="bg-white/5 p-6 rounded-xl border border-accent-gold/20 space-y-4">
       <div className="flex justify-between items-center text-accent-beige mb-4">
         <span className="text-lg font-medium">Total to Pay</span>
         <span className="text-2xl font-bold text-accent-gold">
@@ -71,7 +72,12 @@ export default function PaymentForm({
       </div>
 
       <PaymentElement />
-      
+
+      {/* Test-friendly readiness marker */}
+      <div data-testid="stripe-ready" className="sr-only">
+        {String(!!stripe && !!elements)}
+      </div>
+
       {errorMessage && (
         <div className="text-red-400 text-sm bg-red-900/20 p-3 rounded-md border border-red-500/30">
           {errorMessage}
@@ -79,16 +85,17 @@ export default function PaymentForm({
       )}
 
       <button
-        onClick={handleSubmit}
-        disabled={!stripe || !elements || isBusy}
+        type="submit"
+        disabled={!canSubmit}
+        aria-disabled={!canSubmit}
         className="w-full mt-4 bg-accent-gold hover:bg-accent-gold-dark text-brand-forest font-bold py-4 px-8 rounded-xl transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:-translate-y-1 shadow-lg"
       >
-        {isBusy ? "Processing..." : `Pay $${totalAmount.toFixed(2)} & Book`}
+        {localProcessing || externalProcessing ? "Processing..." : `Pay $${totalAmount.toFixed(2)} & Book`}
       </button>
-      
+
       <p className="text-xs text-center text-accent-beige/50 mt-4">
         Payments secured by Stripe. Your booking is confirmed immediately after payment.
       </p>
-    </div>
+    </form>
   );
 }

@@ -132,11 +132,12 @@ export async function checkAvailability(
   // Logic: Block sites if they overlap with a blackout period
   // If blackout.campsite_id is NULL, it blocks ALL sites.
   // If blackout.campsite_id is set, it blocks ONLY that site.
+  // Uses same overlap logic as reservations: end_date > checkIn AND start_date < checkOut
 
-  const { data: blackoutDates, error: blackoutError } = await supabaseAdmin
+  const { data: blackoutDates, error: blackoutError} = await supabaseAdmin
     .from('blackout_dates')
     .select('campsite_id')
-    .or(`and(end_date.gte.${checkIn},start_date.lte.${checkOut})`);
+    .or(`and(end_date.gt.${checkIn},start_date.lt.${checkOut})`);
 
   if (blackoutError) {
     console.error("Error fetching blackout dates:", blackoutError);
@@ -160,6 +161,16 @@ export async function checkAvailability(
       ?.map(b => b.campsite_id)
       .filter((id): id is string => id !== null)
   );
+
+  // Step 2.6: If checking a specific campsite, verify it's not blacked out
+  if (params.campsiteId && blackedOutSiteIds.has(params.campsiteId)) {
+    return {
+      available: false,
+      availableSites: [],
+      recommendedSiteId: null,
+      message: "Selected site is unavailable due to a blackout.",
+    };
+  }
 
   // Step 3: Get all active campsites that can accommodate the guest count
   let query = supabaseAdmin
