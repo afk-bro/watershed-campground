@@ -4,37 +4,21 @@ import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 import { Campsite, Reservation, BlackoutDate } from "@/lib/supabase";
 import { format, eachDayOfInterval, isSameMonth, isToday, isWeekend, startOfMonth, endOfMonth, parseISO, differenceInDays, addDays, subDays } from "date-fns";
 import ReservationBlock from "./ReservationBlock";
+import BlackoutBlock from "./BlackoutBlock";
 import ReservationDrawer from "./ReservationDrawer";
 import RescheduleConfirmDialog from "./RescheduleConfirmDialog";
+import GhostPreview from "./GhostPreview";
+import CalendarCell from "./CalendarCell";
 import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import InstructionalOverlay from "./InstructionalOverlay";
 import EmptyStateHelper from "./EmptyStateHelper";
 import CreationDialog from "./CreationDialog";
 import { useRouter } from "next/navigation";
-
-// Throttle utility for performance optimization
-function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
-  let lastArgs: Parameters<T> | null = null;
-
-  return function (...args: Parameters<T>) {
-    lastArgs = args;
-
-    if (!timeout) {
-      timeout = setTimeout(() => {
-        if (lastArgs) {
-          func(...lastArgs);
-        }
-        timeout = null;
-        lastArgs = null;
-      }, wait);
-    }
-  };
-}
+import type { GhostState } from "@/lib/calendar/calendar-types";
+import { useAutoScroll } from "./hooks/useAutoScroll";
+import { useCalendarSelection } from "./hooks/useCalendarSelection";
+import { useDragResize } from "./hooks/useDragResize";
 
 interface CalendarGridProps {
   campsites: Campsite[];
@@ -53,27 +37,13 @@ export default function CalendarGrid({
 }: CalendarGridProps) {
   const router = useRouter();
   const { showToast } = useToast();
+
+  // UI state
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
-
-  // Refs for auto-scroll
-  const scrollContainerRef = useRef<HTMLDivElement>(null);
-  const autoScrollIntervalRef = useRef<number | null>(null);
-  const scrollDirectionRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
-  const scrollAnimationFrameRef = useRef<number | null>(null);
-
-  // Drag-and-drop state (Move)
-  const [isDragging, setIsDragging] = useState(false);
-  const [draggedReservation, setDraggedReservation] = useState<Reservation | null>(null);
-  const [dragOffsetDays, setDragOffsetDays] = useState<number>(0); // Track where user clicked on reservation
-  const [dragPreview, setDragPreview] = useState<{
-    campsiteId: string;
-    startDate: string;
-    endDate: string;
-  } | null>(null);
-  const [validationError, setValidationError] = useState<string | null>(null);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
+  const [showCreationDialog, setShowCreationDialog] = useState(false);
   const [pendingMove, setPendingMove] = useState<{
     reservation: Reservation;
     newCampsiteId: string;
@@ -81,160 +51,130 @@ export default function CalendarGrid({
     newEndDate: string;
   } | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  // Creation State
-  const [isCreating, setIsCreating] = useState(false);
-  const [creationStart, setCreationStart] = useState<{ campsiteId: string; date: string } | null>(null);
-  const [creationEnd, setCreationEnd] = useState<{ campsiteId: string; date: string } | null>(null);
-  const [showCreationDialog, setShowCreationDialog] = useState(false);
-
-  // Resize state (using pointer events, not HTML5 DnD)
-  type ResizeSide = "left" | "right";
-  const [resizeState, setResizeState] = useState<{
-    reservation: Reservation;
-    side: ResizeSide;
-    originalCheckIn: string;
-    originalCheckOut: string;
-    newCheckIn: string;
-    newCheckOut: string;
-  } | null>(null);
+  const [confirmDialogError, setConfirmDialogError] = useState<string | null>(null);
 
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
+  const totalDays = differenceInDays(monthEnd, monthStart) + 1;
 
-  // Constants for auto-scroll
-  const SCROLL_ZONE_PX = 60;
-  const SCROLL_SPEED = 12;
+  // Auto-scroll hook
+  const { scrollContainerRef, updateScrollDirection, stopAutoScroll } = useAutoScroll();
 
-  // Smooth auto-scroll using requestAnimationFrame
-  const startAutoScroll = useCallback(() => {
-    const tick = () => {
-      const container = scrollContainerRef.current;
-      if (!container) return;
+  // Ref needed for HTML5 drag auto-scroll (legacy pattern)
+  const autoScrollIntervalRef = useRef<number | null>(null);
 
-      const { x, y } = scrollDirectionRef.current;
+  // Handle move request from drag/resize hook
+  const handleMoveRequested = useCallback((
+    reservation: Reservation,
+    newCampsiteId: string,
+    newStartDate: string,
+    newEndDate: string
+  ) => {
+    setPendingMove({
+      reservation,
+      newCampsiteId,
+      newStartDate,
+      newEndDate,
+    });
+    setShowConfirmDialog(true);
+  }, []);
 
-      if (x !== 0 || y !== 0) {
-        container.scrollBy({
-          left: x * SCROLL_SPEED,
-          top: y * SCROLL_SPEED,
-          behavior: 'auto'
-        });
-        scrollAnimationFrameRef.current = requestAnimationFrame(tick);
-      } else {
-        scrollAnimationFrameRef.current = null;
+  // Handle blackout move request from drag/resize hook
+  const handleBlackoutMoveRequested = useCallback(async (
+    blackout: BlackoutDate,
+    newCampsiteId: string,
+    newStartDate: string,
+    newEndDate: string
+  ) => {
+    try {
+      // TODO: Implement blackout update API endpoint
+      console.log('[BLACKOUT MOVE]', {
+        blackoutId: blackout.id,
+        from: { start: blackout.start_date, end: blackout.end_date, campsite: blackout.campsite_id },
+        to: { start: newStartDate, end: newEndDate, campsite: newCampsiteId },
+      });
+
+      const response = await fetch(`/api/admin/blackout-dates/${blackout.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
+          start_date: newStartDate,
+          end_date: newEndDate,
+        }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || 'Failed to update blackout date');
       }
-    };
 
-    if (!scrollAnimationFrameRef.current) {
-      scrollAnimationFrameRef.current = requestAnimationFrame(tick);
+      showToast('Blackout date updated successfully', 'success');
+      // Trigger refetch
+      window.location.reload(); // TODO: Replace with SWR mutate
+    } catch (error: any) {
+      console.error('[BLACKOUT MOVE ERROR]', error);
+      showToast(error.message || 'Failed to update blackout date', 'error');
     }
   }, []);
 
-  const stopAutoScroll = useCallback(() => {
-    scrollDirectionRef.current = { x: 0, y: 0 };
-    if (scrollAnimationFrameRef.current) {
-      cancelAnimationFrame(scrollAnimationFrameRef.current);
-      scrollAnimationFrameRef.current = null;
+  // Drag and resize hook
+  const {
+    isDragging,
+    draggedItem,
+    dragPreview,
+    resizeState,
+    validationError,
+    handleDragStart,
+    handleDragOverCell,
+    handleDrop,
+    handleDragEnd,
+    handleResizeStart,
+    getGhost,
+  } = useDragResize({
+    monthStart,
+    monthEnd,
+    campsites,
+    reservations,
+    blackoutDates,
+    autoScrollIntervalRef,
+    onReservationMoveRequested: handleMoveRequested,
+    onBlackoutMoveRequested: handleBlackoutMoveRequested,
+    updateScrollDirection,
+    stopAutoScroll,
+  });
+
+  // Calendar selection hook (after drag/resize so we can check their state)
+  const {
+    isCreating,
+    creationStart,
+    creationEnd,
+    selection,
+    handleCellMouseDown,
+    handleCellMouseEnter,
+    handleCellMouseUp: handleCellMouseUpBase,
+    clearSelection,
+  } = useCalendarSelection(!isDragging && !resizeState);
+
+  // Wrap handleCellMouseUp to also show dialog
+  const handleCellMouseUp = useCallback(() => {
+    handleCellMouseUpBase();
+    if (isCreating && creationStart && creationEnd) {
+      setShowCreationDialog(true);
     }
-  }, []);
-
-  const updateScrollDirection = useCallback((clientX: number, clientY: number) => {
-    const container = scrollContainerRef.current;
-    if (!container) {
-      console.log('[RESIZE AUTO-SCROLL] No container ref');
-      return;
-    }
-
-    const rect = container.getBoundingClientRect();
-
-    // Handle container edges that may be clipped by viewport
-    const leftEdge = Math.max(rect.left, 0);
-    const rightEdge = Math.min(rect.right, window.innerWidth);
-
-    let x = 0;
-
-    // Horizontal scrolling - use container's visible edges
-    if (clientX < leftEdge + SCROLL_ZONE_PX) {
-      x = -1; // Scroll left
-      console.log('[RESIZE AUTO-SCROLL] Scrolling LEFT', { clientX, leftEdge, SCROLL_ZONE_PX });
-    } else if (clientX > rightEdge - SCROLL_ZONE_PX) {
-      x = 1; // Scroll right
-      console.log('[RESIZE AUTO-SCROLL] Scrolling RIGHT', { clientX, rightEdge, SCROLL_ZONE_PX });
-    }
-
-    // Vertical scrolling removed - page handles vertical scroll naturally
-
-    const directionChanged = scrollDirectionRef.current.x !== x;
-
-    scrollDirectionRef.current = { x, y: 0 }; // y always 0
-
-    if (x !== 0 && directionChanged) {
-      startAutoScroll();
-    } else if (x === 0) {
-      stopAutoScroll();
-    }
-  }, [startAutoScroll, stopAutoScroll]);
+  }, [handleCellMouseUpBase, isCreating, creationStart, creationEnd]);
 
   const handleReservationClick = (res: Reservation) => {
     setSelectedReservation(res);
     setIsDrawerOpen(true);
   };
 
-  // Helper: Check if date is within current month range
-  const isDateInMonthRange = (dateStr: string): boolean => {
-    const date = parseISO(dateStr);
-    return date >= monthStart && date <= monthEnd;
-  };
-
-  // Helper: Calculate new end date preserving duration
-  const calculateNewEndDate = (oldCheckIn: string, oldCheckOut: string, newCheckIn: string): string => {
-    const durationNights = differenceInDays(parseISO(oldCheckOut), parseISO(oldCheckIn));
-    const newCheckOut = addDays(parseISO(newCheckIn), durationNights);
-    return format(newCheckOut, 'yyyy-MM-dd');
-  };
-
-  // Helper: Sync validation (no async)
-  const validateMoveLocal = (
-    reservation: Reservation,
-    targetCampsiteId: string,
-    targetCheckIn: string,
-    targetCheckOut: string
-  ): { valid: boolean; error: string | null } => {
-    // Special case: Moving to Unassigned is always valid
-    if (targetCampsiteId === 'UNASSIGNED') {
-      return { valid: true, error: null };
-    }
-
-    // Check if campsite is active
-    const targetCampsite = campsites.find(c => c.id === targetCampsiteId);
-    if (!targetCampsite) {
-      return { valid: false, error: 'Campsite not found' };
-    }
-    if (!targetCampsite.is_active) {
-      return { valid: false, error: 'Campsite is inactive' };
-    }
-
-    // Check for overlaps using already-loaded reservations
-    const conflicts = reservations.filter(r => {
-      if (r.id === reservation.id) return false; // Exclude current reservation
-      if (r.campsite_id !== targetCampsiteId) return false;
-      if (r.status === 'cancelled' || r.status === 'no_show') return false;
-
-      // Overlap check: a.start < b.end && a.end > b.start
-      return r.check_in < targetCheckOut && r.check_out > targetCheckIn;
-    });
-
-    if (conflicts.length > 0) {
-      const conflict = conflicts[0];
-      return {
-        valid: false,
-        error: `Conflicts with ${conflict.first_name} ${conflict.last_name} reservation`
-      };
-    }
-
-    return { valid: true, error: null };
+  // Blackout click handler
+  const handleBlackoutClick = (blackout: BlackoutDate) => {
+    // TODO: Implement blackout details drawer (similar to ReservationDrawer)
+    console.log('[BLACKOUT] Clicked:', blackout);
+    showToast(`Blackout: ${blackout.reason || 'Unavailable'} (${blackout.start_date} to ${blackout.end_date})`, 'info');
   };
 
   const handlePrevMonth = () => {
@@ -244,347 +184,6 @@ export default function CalendarGrid({
   const handleNextMonth = () => {
     onDateChange(new Date(date.getFullYear(), date.getMonth() + 1, 1));
   };
-
-  // Drag event handlers
-  const handleDragStart = (e: React.DragEvent, reservation: Reservation) => {
-    console.log('[DRAG START]', { reservation: reservation.id, isDragging: true });
-    setIsDragging(true);
-    setDraggedReservation(reservation);
-    e.dataTransfer.effectAllowed = 'move';
-
-    // Calculate drag offset - which day within the reservation the user clicked
-    const elements = document.elementsFromPoint(e.clientX, e.clientY);
-    const dayCell = elements.find(el => el.hasAttribute('data-date'));
-
-    if (dayCell) {
-      const clickedDate = dayCell.getAttribute('data-date');
-      if (clickedDate) {
-        // Calculate offset in days from reservation start
-        const offsetDays = differenceInDays(parseISO(clickedDate), parseISO(reservation.check_in));
-        setDragOffsetDays(Math.max(0, offsetDays)); // Ensure non-negative
-        console.log('[DRAG START] Offset:', offsetDays, 'days from check-in');
-      }
-    } else {
-      // Fallback - assume clicked on first day
-      setDragOffsetDays(0);
-    }
-  };
-
-  // Store the actual heavy logic separately
-  const updateDragPreview = useCallback((campsiteId: string, dateStr: string) => {
-    if (!draggedReservation) return;
-
-    // Adjust for drag offset - calculate where check-in should actually be
-    // If user clicked 2 days into the reservation, we need to subtract those 2 days
-    const cursorDate = parseISO(dateStr);
-    const adjustedCheckIn = format(subDays(cursorDate, dragOffsetDays), 'yyyy-MM-dd');
-
-    console.log('[DRAG PREVIEW]', {
-      cursorOn: dateStr,
-      offsetDays: dragOffsetDays,
-      adjustedCheckIn
-    });
-
-    // Check if adjusted date is out of current month range
-    if (!isDateInMonthRange(adjustedCheckIn)) {
-      setDragPreview({ campsiteId, startDate: adjustedCheckIn, endDate: adjustedCheckIn });
-      setValidationError('Out of month range');
-      return;
-    }
-
-    // Calculate new end date (preserve duration)
-    const endDate = calculateNewEndDate(
-      draggedReservation.check_in,
-      draggedReservation.check_out,
-      adjustedCheckIn
-    );
-
-    // SYNC validation (fast, no await)
-    const validation = validateMoveLocal(
-      draggedReservation,
-      campsiteId,
-      adjustedCheckIn,
-      endDate
-    );
-
-    // Update preview state
-    setDragPreview({ campsiteId, startDate: adjustedCheckIn, endDate });
-    setValidationError(validation.valid ? null : validation.error);
-  }, [draggedReservation, dragOffsetDays, monthStart, monthEnd, campsites, reservations]);
-
-  // Throttled version - only runs every 16ms (~60fps)
-  const handleDragOverCell = useMemo(
-    () => throttle(updateDragPreview, 16),
-    [updateDragPreview]
-  );
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-
-    if (!dragPreview || validationError || !draggedReservation) {
-      // Snap back - invalid drop
-      return;
-    }
-
-    // Check for "no change" scenario
-    // Handle both null and 'UNASSIGNED' comparisons
-    const currentCampsiteId = draggedReservation.campsite_id || 'UNASSIGNED';
-    const noChange =
-      currentCampsiteId === dragPreview.campsiteId &&
-      draggedReservation.check_in === dragPreview.startDate &&
-      draggedReservation.check_out === dragPreview.endDate;
-
-    if (noChange) {
-      showToast('No changes made', 'info');
-      return;
-    }
-
-    // Set pending move and show confirmation
-    setPendingMove({
-      reservation: draggedReservation,
-      newCampsiteId: dragPreview.campsiteId,
-      newStartDate: dragPreview.startDate,
-      newEndDate: dragPreview.endDate,
-    });
-    setShowConfirmDialog(true);
-  };
-
-  const handleDragEnd = () => {
-    setIsDragging(false);
-    setDraggedReservation(null);
-    setDragOffsetDays(0); // Reset drag offset
-    setDragPreview(null);
-    setValidationError(null);
-
-    // Stop auto-scroll
-    if (autoScrollIntervalRef.current) {
-      window.clearInterval(autoScrollIntervalRef.current);
-      autoScrollIntervalRef.current = null;
-    }
-  };
-
-  // Auto-scroll when dragging near edges (HTML5 drag events)
-  useEffect(() => {
-    console.log('[DRAG EFFECT] isDragging:', isDragging);
-    if (!isDragging) return;
-
-    console.log('[DRAG EFFECT] Setting up dragover listener');
-
-    const handleDragMove = (e: DragEvent) => {
-      e.preventDefault(); // Critical for dragover to continue firing
-
-      const container = scrollContainerRef.current;
-      if (!container) {
-        console.log('[AUTO-SCROLL] No container ref');
-        return;
-      }
-
-      const rect = container.getBoundingClientRect();
-      const scrollThreshold = 80; // Distance from edge to trigger scroll
-      const scrollSpeed = 15; // Pixels to scroll per interval
-
-      // Handle container edges that may be clipped by viewport
-      const leftEdge = Math.max(rect.left, 0);
-      const rightEdge = Math.min(rect.right, window.innerWidth);
-
-      // Calculate distance from container's visible edges
-      const distanceFromLeft = e.clientX - leftEdge;
-      const distanceFromRight = rightEdge - e.clientX;
-
-      // Debug logging
-      console.log('[AUTO-SCROLL]', {
-        clientX: e.clientX,
-        rectLeft: rect.left,
-        rectRight: rect.right,
-        leftEdge,
-        rightEdge,
-        distanceFromLeft,
-        distanceFromRight,
-        scrollThreshold,
-        currentScrollLeft: container.scrollLeft,
-        scrollWidth: container.scrollWidth,
-        clientWidth: container.clientWidth,
-      });
-
-      // Clear existing interval
-      if (autoScrollIntervalRef.current) {
-        window.clearInterval(autoScrollIntervalRef.current);
-        autoScrollIntervalRef.current = null;
-      }
-
-      // Determine horizontal scroll direction
-      let scrollX = 0;
-
-      // Horizontal scrolling - use container edges
-      if (distanceFromLeft < scrollThreshold && distanceFromLeft > 0) {
-        scrollX = -scrollSpeed;
-        console.log('[AUTO-SCROLL] Scrolling LEFT');
-      } else if (distanceFromRight < scrollThreshold && distanceFromRight > 0) {
-        scrollX = scrollSpeed;
-        console.log('[AUTO-SCROLL] Scrolling RIGHT');
-      }
-
-      // Start auto-scroll if needed (horizontal only)
-      if (scrollX !== 0) {
-        autoScrollIntervalRef.current = window.setInterval(() => {
-          if (container) {
-            container.scrollBy({
-              left: scrollX,
-              top: 0, // No vertical scroll
-              behavior: 'auto'
-            });
-          }
-        }, 16); // ~60fps
-      }
-    };
-
-    // Add event listener
-    document.addEventListener('dragover', handleDragMove);
-
-    // Cleanup
-    return () => {
-      document.removeEventListener('dragover', handleDragMove);
-      if (autoScrollIntervalRef.current) {
-        window.clearInterval(autoScrollIntervalRef.current);
-        autoScrollIntervalRef.current = null;
-      }
-    };
-  }, [isDragging]);
-
-  // Resize event handlers (pointer events)
-  const handleResizeStart = (reservation: Reservation, side: ResizeSide) => {
-    setResizeState({
-      reservation,
-      side,
-      originalCheckIn: reservation.check_in,
-      originalCheckOut: reservation.check_out,
-      newCheckIn: reservation.check_in,
-      newCheckOut: reservation.check_out,
-    });
-  };
-
-  const getDateFromPointer = (clientX: number, clientY: number): string | null => {
-    // Find the day cell under the pointer
-    // Use elementsFromPoint to penetrate through the captured handle
-    const elements = document.elementsFromPoint(clientX, clientY);
-    const dayCell = elements.find(el => el.hasAttribute('data-date'));
-    if (dayCell) {
-      return dayCell.getAttribute('data-date');
-    }
-    return null;
-  };
-
-  // Heavy resize logic - separated for throttling
-  const updateResizePreview = useCallback((e: PointerEvent) => {
-    if (!resizeState) return;
-
-    const hoveredDate = getDateFromPointer(e.clientX, e.clientY);
-    if (!hoveredDate) return;
-
-    let newCheckIn = resizeState.originalCheckIn;
-    let newCheckOut = resizeState.originalCheckOut;
-
-    if (resizeState.side === 'left') {
-      // Resizing left handle (changing check-in)
-      newCheckIn = hoveredDate;
-    } else {
-      // Resizing right handle (changing check-out)
-      // Add 1 day since check_out is exclusive
-      const hoveredDateObj = parseISO(hoveredDate);
-      newCheckOut = format(addDays(hoveredDateObj, 1), 'yyyy-MM-dd');
-    }
-
-    // Always update state first (so ghost preview shows)
-    setResizeState(prev => prev ? { ...prev, newCheckIn, newCheckOut } : null);
-
-    // Then validate and set errors
-    // Check if date is within month range
-    if (!isDateInMonthRange(hoveredDate)) {
-      setValidationError('Out of month range');
-      return;
-    }
-
-    // Validate: must have at least 1 night
-    if (newCheckOut <= newCheckIn) {
-      setValidationError('Minimum 1 night required');
-      return;
-    }
-
-    // Sync validation for conflicts
-    const validation = validateMoveLocal(
-      resizeState.reservation,
-      resizeState.reservation.campsite_id || 'UNASSIGNED',
-      newCheckIn,
-      newCheckOut
-    );
-
-    setValidationError(validation.valid ? null : validation.error);
-  }, [resizeState, monthStart, monthEnd, campsites, reservations]);
-
-  // Throttled resize handler - 16ms for smooth ~60fps
-  const throttledResizePreview = useMemo(
-    () => throttle(updateResizePreview, 16),
-    [updateResizePreview]
-  );
-
-  const handleResizeMove = useCallback((e: PointerEvent) => {
-    if (!resizeState) return;
-
-    // Update auto-scroll direction immediately (visual feedback)
-    updateScrollDirection(e.clientX, e.clientY);
-
-    // Throttle the heavy validation and state updates
-    throttledResizePreview(e);
-  }, [resizeState, updateScrollDirection, throttledResizePreview]);
-
-  const handleResizeEnd = useCallback(() => {
-    // Stop auto-scroll
-    stopAutoScroll();
-
-    if (!resizeState) return;
-
-    // Check for validation errors
-    if (validationError) {
-      // Snap back - invalid resize
-      setResizeState(null);
-      setValidationError(null);
-      return;
-    }
-
-    // Check for no change
-    const noChange =
-      resizeState.newCheckIn === resizeState.originalCheckIn &&
-      resizeState.newCheckOut === resizeState.originalCheckOut;
-
-    if (noChange) {
-      showToast('No changes made', 'info');
-      setResizeState(null);
-      return;
-    }
-
-    // Valid resize - show confirmation dialog
-    setPendingMove({
-      reservation: resizeState.reservation,
-      newCampsiteId: resizeState.reservation.campsite_id || 'UNASSIGNED',
-      newStartDate: resizeState.newCheckIn,
-      newEndDate: resizeState.newCheckOut,
-    });
-    setShowConfirmDialog(true);
-    setResizeState(null);
-  }, [resizeState, validationError, showToast, setPendingMove, setShowConfirmDialog, stopAutoScroll]);
-
-  // Add/remove window pointer listeners for resize
-  useEffect(() => {
-    if (resizeState) {
-      window.addEventListener('pointermove', handleResizeMove as any);
-      window.addEventListener('pointerup', handleResizeEnd);
-      return () => {
-        window.removeEventListener('pointermove', handleResizeMove as any);
-        window.removeEventListener('pointerup', handleResizeEnd);
-      };
-    }
-  }, [resizeState, handleResizeMove, handleResizeEnd]);
-
   const handleConfirmReschedule = async () => {
     if (!pendingMove) return;
 
@@ -626,36 +225,10 @@ export default function CalendarGrid({
     } catch (error: any) {
       console.error('Reschedule error:', error);
       // Show error in dialog, keep it open for retry
-      setValidationError(error.message);
+      setConfirmDialogError(error.message);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  // Creation Handlers
-  const handleCellMouseDown = (campsiteId: string, dateStr: string) => {
-    // Only start if not dragging an existing reservation
-    if (isDragging || resizeState) return;
-
-    setIsCreating(true);
-    setCreationStart({ campsiteId, date: dateStr });
-    setCreationEnd({ campsiteId, date: dateStr });
-  };
-
-  const handleCellMouseEnter = (campsiteId: string, dateStr: string) => {
-    if (!isCreating || !creationStart) return;
-
-    // Only allow selection within the same campsite
-    if (campsiteId !== creationStart.campsiteId) return;
-
-    setCreationEnd({ campsiteId, date: dateStr });
-  };
-
-  const handleCellMouseUp = () => {
-    if (!isCreating || !creationStart || !creationEnd) return;
-
-    setIsCreating(false);
-    setShowCreationDialog(true);
   };
 
   // Auto-scroll during creation drag
@@ -712,16 +285,6 @@ export default function CalendarGrid({
     }
   };
 
-  const getSelectionRange = () => {
-    if (!creationStart || !creationEnd) return null;
-    let start = creationStart.date;
-    let end = creationEnd.date;
-    if (start > end) [start, end] = [end, start];
-    return { start, end, campsiteId: creationStart.campsiteId };
-  };
-
-  const selection = getSelectionRange();
-
   return (
     <div className="flex flex-col admin-card relative select-none">
       <InstructionalOverlay />
@@ -732,8 +295,7 @@ export default function CalendarGrid({
           isOpen={showCreationDialog}
           onClose={() => {
             setShowCreationDialog(false);
-            setCreationStart(null);
-            setCreationEnd(null);
+            clearSelection();
           }}
           startDate={selection.start}
           endDate={selection.end}
@@ -796,9 +358,7 @@ export default function CalendarGrid({
         onMouseUp={handleCellMouseUp}
         onMouseLeave={() => {
            if (isCreating) {
-             setIsCreating(false);
-             setCreationStart(null);
-             setCreationEnd(null);
+             clearSelection();
              stopAutoScroll(); // Stop scrolling when mouse leaves
            }
         }}
@@ -853,28 +413,26 @@ export default function CalendarGrid({
                   <div className="flex relative">
                     {days.map((day) => {
                       const dayStr = format(day, "yyyy-MM-dd");
-                      const isHovered = dragPreview?.campsiteId === 'UNASSIGNED' && dragPreview?.startDate === dayStr;
+                      const isInSelection = isCreating && selection?.campsiteId === 'UNASSIGNED' && dayStr >= selection.start && dayStr <= selection.end;
+                      const isDragHovered = isDragging && dragPreview?.campsiteId === 'UNASSIGNED' && dragPreview?.startDate === dayStr;
 
                       return (
-                        <div
+                        <CalendarCell
                           key={day.toString()}
-                          data-date={dayStr}
-                          className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface bg-[var(--color-status-pending-bg)]/50 ${
-                            isDragging && isHovered
-                              ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
-                              : ''
-                          } ${
-                            isCreating && selection?.campsiteId === 'UNASSIGNED' && dayStr >= selection.start && dayStr <= selection.end
-                            ? 'bg-[var(--color-accent-gold)]/20'
-                            : ''
-                          }`}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            handleDragOverCell('UNASSIGNED', dayStr);
-                          }}
+                          date={day}
+                          resourceId="UNASSIGNED"
+                          isWeekend={isWeekend(day)}
+                          isToday={isToday(day)}
+                          isOccupied={false}
+                          isInSelection={isInSelection}
+                          isDragHovered={isDragHovered}
+                          showAvailability={showAvailability}
+                          validationError={validationError}
+                          baseBackgroundClass="bg-[var(--color-status-pending-bg)]/50"
+                          onDragOver={handleDragOverCell}
                           onDrop={handleDrop}
-                          onMouseDown={() => handleCellMouseDown('UNASSIGNED', dayStr)}
-                          onMouseEnter={() => handleCellMouseEnter('UNASSIGNED', dayStr)}
+                          onMouseDown={handleCellMouseDown}
+                          onMouseEnter={handleCellMouseEnter}
                         />
                       );
                     })}
@@ -890,44 +448,19 @@ export default function CalendarGrid({
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                         onResizeStart={handleResizeStart}
-                        isDragging={draggedReservation?.id === res.id}
-                        isResizing={resizeState?.reservation.id === res.id}
+                        isDragging={draggedItem?.id === res.id}
+                        isResizing={resizeState?.item.id === res.id}
                       />
                     ))}
 
-                    {/* Drag Ghost Preview */}
-                    {dragPreview && dragPreview.campsiteId === 'UNASSIGNED' && (
-                      <div
-                        className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-success)]/20 border-[var(--color-success)]'
-                        } opacity-50 z-50 pointer-events-none`}
-                        style={{
-                          left: `${(differenceInDays(parseISO(dragPreview.startDate), monthStart) / days.length) * 100}%`,
-                          width: `${(differenceInDays(parseISO(dragPreview.endDate), parseISO(dragPreview.startDate)) / days.length) * 100}%`,
-                        }}
-                      >
-                        <div className="text-xs truncate">
-                          Unassigned • {format(parseISO(dragPreview.startDate), 'MMM d')} → {format(parseISO(dragPreview.endDate), 'MMM d')}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Resize Ghost Preview */}
-                    {resizeState && (resizeState.reservation.campsite_id === null || resizeState.reservation.campsite_id === undefined) && (
-                      <div
-                        className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-status-active)]/20 border-[var(--color-status-active)]'
-                        } opacity-50 z-50 pointer-events-none`}
-                        style={{
-                          left: `${(differenceInDays(parseISO(resizeState.newCheckIn), monthStart) / days.length) * 100}%`,
-                          width: `${(differenceInDays(parseISO(resizeState.newCheckOut), parseISO(resizeState.newCheckIn)) / days.length) * 100}%`,
-                        }}
-                      >
-                        <div className="text-xs truncate">
-                          {differenceInDays(parseISO(resizeState.newCheckOut), parseISO(resizeState.newCheckIn))} nights
-                        </div>
-                      </div>
-                    )}
+                    {/* Unified Ghost Preview */}
+                    <GhostPreview
+                      ghost={getGhost('UNASSIGNED')}
+                      monthStart={monthStart}
+                      monthEnd={monthEnd}
+                      totalDays={totalDays}
+                      label="Unassigned"
+                    />
                   </div>
                 </div>
               );
@@ -968,44 +501,31 @@ export default function CalendarGrid({
                     {days.map((day) => {
                       // Check if day is occupied
                       const dayStr = format(day, "yyyy-MM-dd");
-                      const isOccupied = siteReservations.some(res => 
+                      const isOccupied = siteReservations.some(res =>
                         dayStr >= res.check_in && dayStr < res.check_out // standard occupation logic
                       );
 
-                      let bgClass = "";
-                      if (showAvailability) {
-                         if (!isOccupied) {
-                           bgClass = "bg-[var(--color-success)]/10";
-                         } else {
-                           // Occupied
-                         }
-                      } else {
-                         if (isWeekend(day)) bgClass = "bg-[var(--color-surface-elevated)]/30";
-                         if (isToday(day)) bgClass = "bg-[var(--color-status-active)]/15";
-                      }
+                      // Check if this cell is in the creation selection range
+                      const isInSelection = isCreating && selection?.campsiteId === campsite.id && dayStr >= selection.start && dayStr <= selection.end;
 
-                      const isHovered = dragPreview?.campsiteId === campsite.id && dragPreview?.startDate === dayStr;
+                      const isDragHovered = isDragging && dragPreview?.campsiteId === campsite.id && dragPreview?.startDate === dayStr;
 
                       return (
-                        <div
+                        <CalendarCell
                           key={day.toString()}
-                          data-date={dayStr}
-                          className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${
-                            isDragging && isHovered
-                              ? validationError ? 'bg-[var(--color-error)]/10 border-[var(--color-error)]' : 'bg-[var(--color-success)]/10 border-[var(--color-success)]'
-                              : ''
-                          } ${
-                            isCreating && selection?.campsiteId === campsite.id && dayStr >= selection.start && dayStr <= selection.end
-                            ? 'bg-[var(--color-accent-gold)]/20'
-                            : ''
-                          }`}
-                          onDragOver={(e) => {
-                            e.preventDefault();
-                            handleDragOverCell(campsite.id, dayStr);
-                          }}
+                          date={day}
+                          resourceId={campsite.id}
+                          isWeekend={isWeekend(day)}
+                          isToday={isToday(day)}
+                          isOccupied={isOccupied}
+                          isInSelection={isInSelection}
+                          isDragHovered={isDragHovered}
+                          showAvailability={showAvailability}
+                          validationError={validationError}
+                          onDragOver={handleDragOverCell}
                           onDrop={handleDrop}
-                          onMouseDown={() => handleCellMouseDown(campsite.id, dayStr)}
-                          onMouseEnter={() => handleCellMouseEnter(campsite.id, dayStr)}
+                          onMouseDown={handleCellMouseDown}
+                          onMouseEnter={handleCellMouseEnter}
                         />
                       );
                     })}
@@ -1021,75 +541,35 @@ export default function CalendarGrid({
                         onDragStart={handleDragStart}
                         onDragEnd={handleDragEnd}
                         onResizeStart={handleResizeStart}
-                        isDragging={draggedReservation?.id === res.id}
-                        isResizing={resizeState?.reservation.id === res.id}
+                        isDragging={draggedItem?.id === res.id}
+                        isResizing={resizeState?.item.id === res.id}
                       />
                     ))}
 
-                    {/* Blackout Dates Overlays */}
-                    {siteBlackouts.map((blackout) => {
-                        const start = blackout.start_date < format(monthStart, 'yyyy-MM-dd') ? format(monthStart, 'yyyy-MM-dd') : blackout.start_date;
-                        const end = blackout.end_date > format(monthEnd, 'yyyy-MM-dd') ? format(monthEnd, 'yyyy-MM-dd') : blackout.end_date;
-                        
-                        // Check if visible
-                        if (start > end) return null;
+                    {/* Blackout Dates as Interactive Blocks */}
+                    {siteBlackouts.map((blackout) => (
+                      <BlackoutBlock
+                        key={blackout.id}
+                        blackout={blackout}
+                        monthStart={monthStart}
+                        monthEnd={monthEnd}
+                        onSelect={handleBlackoutClick}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                        onResizeStart={handleResizeStart}
+                        isDragging={draggedItem?.id === blackout.id}
+                        isResizing={resizeState?.item.id === blackout.id}
+                      />
+                    ))}
 
-                        const duration = differenceInDays(parseISO(end), parseISO(start)) + 1; // Inclusive
-                        const offset = differenceInDays(parseISO(start), monthStart);
-                        
-                        return (
-                          <div
-                            key={blackout.id}
-                            className="absolute top-1 bottom-1 bg-red-500/10 border-2 border-red-500/30 w-full z-10 flex items-center justify-center overflow-hidden pointer-events-none rounded-md"
-                            style={{
-                              left: `${(offset / days.length) * 100}%`,
-                              width: `${(duration / days.length) * 100}%`,
-                            }}
-                            title={`Blackout: ${blackout.reason || 'Unavailable'}`}
-                          >
-                            <div className="flex items-center gap-1.5 px-2 overflow-hidden w-full justify-center">
-                                <Ban className="text-red-500/50 w-3.5 h-3.5 flex-shrink-0" />
-                                <span className="text-[10px] sm:text-xs font-medium text-red-600/70 truncate uppercase tracking-wide">
-                                    {blackout.reason || "Unavailable"}
-                                </span>
-                            </div>
-                          </div>
-                        );
-                    })}
-
-                    {/* Ghost Preview */}
-                    {dragPreview && dragPreview.campsiteId === campsite.id && (
-                      <div
-                        className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-success)]/20 border-[var(--color-success)]'
-                        } opacity-50 z-50 pointer-events-none`}
-                        style={{
-                          left: `${(differenceInDays(parseISO(dragPreview.startDate), monthStart) / days.length) * 100}%`,
-                          width: `${(differenceInDays(parseISO(dragPreview.endDate), parseISO(dragPreview.startDate)) / days.length) * 100}%`,
-                        }}
-                      >
-                        <div className="text-xs truncate">
-                          {campsite.code} • {format(parseISO(dragPreview.startDate), 'MMM d')} → {format(parseISO(dragPreview.endDate), 'MMM d')}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Resize Ghost Preview */}
-                    {resizeState && resizeState.reservation.campsite_id === campsite.id && (
-                      <div
-                        className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${
-                          validationError ? 'bg-[var(--color-error)]/20 border-[var(--color-error)]' : 'bg-[var(--color-status-active)]/20 border-[var(--color-status-active)]'
-                        } opacity-50 z-50 pointer-events-none`}
-                        style={{
-                          left: `${(differenceInDays(parseISO(resizeState.newCheckIn), monthStart) / days.length) * 100}%`,
-                          width: `${(differenceInDays(parseISO(resizeState.newCheckOut), parseISO(resizeState.newCheckIn)) / days.length) * 100}%`,
-                        }}
-                      >
-                        <div className="text-xs truncate">
-                          {differenceInDays(parseISO(resizeState.newCheckOut), parseISO(resizeState.newCheckIn))} nights
-                        </div>
-                      </div>
-                    )}
+                    {/* Unified Ghost Preview */}
+                    <GhostPreview
+                      ghost={getGhost(campsite.id)}
+                      monthStart={monthStart}
+                      monthEnd={monthEnd}
+                      totalDays={totalDays}
+                      label={campsite.code}
+                    />
                   </div>
                 </div>
               );
@@ -1125,10 +605,10 @@ export default function CalendarGrid({
         onCancel={() => {
           setShowConfirmDialog(false);
           setPendingMove(null);
-          setValidationError(null);
+          setConfirmDialogError(null);
         }}
         isSubmitting={isSubmitting}
-        validationError={validationError}
+        validationError={confirmDialogError}
       />
     </div>
   );
