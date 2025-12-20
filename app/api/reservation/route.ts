@@ -41,6 +41,9 @@ const reservationFormSchema = z.object({
         price: z.number()
     })).optional().default([]),
     campsiteId: z.string().optional() // Essential for locking the specific site selected at checkout
+}).refine((data) => new Date(data.checkOut) > new Date(data.checkIn), {
+    message: "Check-out date must be after check-in date",
+    path: ["checkOut"],
 });
 
 // Helpers
