@@ -214,5 +214,5 @@ export async function createReservationRecord(
         }
     }
 
-    return reservation;
+    return { reservation, rawToken };
 }

@@ -22,31 +22,31 @@ function ManageReservationContent() {
             return;
         }
 
+        async function fetchReservation() {
+            try {
+                setLoading(true);
+                const response = await fetch('/api/public/manage-reservation', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ reservation_id: rid, token }),
+                });
+
+                if (!response.ok) {
+                    const { error } = await response.json();
+                    throw new Error(error || 'Failed to load reservation');
+                }
+
+                const { reservation } = await response.json();
+                setReservation(reservation);
+            } catch (err: any) {
+                setError(err.message || 'Failed to load reservation');
+            } finally {
+                setLoading(false);
+            }
+        }
+
         fetchReservation();
     }, [rid, token]);
-
-    async function fetchReservation() {
-        try {
-            setLoading(true);
-            const response = await fetch('/api/public/manage-reservation', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reservation_id: rid, token }),
-            });
-
-            if (!response.ok) {
-                const { error } = await response.json();
-                throw new Error(error || 'Failed to load reservation');
-            }
-
-            const { reservation } = await response.json();
-            setReservation(reservation);
-        } catch (err: any) {
-            setError(err.message || 'Failed to load reservation');
-        } finally {
-            setLoading(false);
-        }
-    }
 
     async function handleCancel() {
         if (!rid || !token) return;
