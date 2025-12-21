@@ -1,47 +1,16 @@
 
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import Container from "@/components/Container";
 import CalendarGrid from "@/components/admin/calendar/CalendarGrid";
-import { Campsite, Reservation, BlackoutDate } from "@/lib/supabase";
-import { format } from "date-fns";
+import { useCalendarData } from "@/hooks/useCalendarData";
 
 export default function CalendarPage() {
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [reservations, setReservations] = useState<Reservation[]>([]);
-  const [campsites, setCampsites] = useState<Campsite[]>([]);
-  const [blackoutDates, setBlackoutDates] = useState<BlackoutDate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { data, isLoading, error, mutate } = useCalendarData(currentDate);
 
-  useEffect(() => {
-    fetchData(currentDate);
-  }, [currentDate]);
-
-  async function fetchData(date: Date) {
-    try {
-      setLoading(true);
-      const monthStr = format(date, "yyyy-MM");
-      const response = await fetch(`/api/admin/calendar?month=${monthStr}`);
-      
-      if (!response.ok) {
-        throw new Error("Failed to fetch calendar data");
-      }
-
-      const { reservations, campsites, blackoutDates } = await response.json();
-      setReservations(reservations);
-      setCampsites(campsites);
-      setBlackoutDates(blackoutDates || []);
-    } catch (err) {
-      console.error(err);
-      setError("Failed to load calendar data");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  if (loading && campsites.length === 0) {
+  if (isLoading && !data) {
     return (
       <div className="min-h-screen bg-[var(--color-surface-elevated)] pt-8 pb-12">
         <Container>
@@ -58,7 +27,7 @@ export default function CalendarPage() {
       <div className="min-h-screen bg-[var(--color-surface-elevated)] pt-8 pb-12">
         <Container>
           <div className="error-message">
-            {error}
+            {error.message || 'Failed to load calendar data'}
           </div>
         </Container>
       </div>
@@ -78,11 +47,12 @@ export default function CalendarPage() {
         </div>
 
         <CalendarGrid
-          campsites={campsites}
-          reservations={reservations}
+          campsites={data?.campsites || []}
+          reservations={data?.reservations || []}
           date={currentDate}
           onDateChange={setCurrentDate}
-          blackoutDates={blackoutDates}
+          blackoutDates={data?.blackoutDates || []}
+          onDataMutate={mutate}
         />
       </div>
     </div>
