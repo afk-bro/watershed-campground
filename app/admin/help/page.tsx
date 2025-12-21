@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useMemo } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import HelpCenter from "@/components/admin/help/HelpCenter";
@@ -10,19 +10,12 @@ import { getArticleBySlug, HelpArticle } from "@/lib/help-content";
 export default function AdminHelpPage() {
     const searchParams = useSearchParams();
     const router = useRouter();
-    const [currentArticle, setCurrentArticle] = useState<HelpArticle | null>(null);
 
-    // Sync state with URL
-    useEffect(() => {
+    // Derive currentArticle from URL instead of storing in state
+    const currentArticle = useMemo(() => {
         const slug = searchParams.get("article");
-        if (slug) {
-            const article = getArticleBySlug(slug);
-            if (article) {
-                setCurrentArticle(article);
-            }
-        } else {
-            setCurrentArticle(null);
-        }
+        if (!slug) return null;
+        return getArticleBySlug(slug) ?? null;
     }, [searchParams]);
 
     const handleSelectArticle = (article: HelpArticle) => {

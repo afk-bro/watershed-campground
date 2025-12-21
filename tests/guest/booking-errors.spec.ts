@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { format, addDays, subDays } from 'date-fns';
 import { supabaseAdmin } from '../helpers/test-supabase';
+import type { Page } from '@playwright/test';
 
 /**
  * Guest Booking - Error Handling & Edge Cases
@@ -11,7 +12,7 @@ test.describe('Guest Booking - Error Handling', () => {
     test.use({ storageState: { cookies: [], origins: [] } }); // Unauthenticated user
 
     // Helper to navigate through wizard to payment step
-    async function navigateToPayment(page: any) {
+    async function navigateToPayment(page: Page) {
         await page.goto('/make-a-reservation');
 
         const tomorrow = addDays(new Date(), 1);
@@ -285,7 +286,7 @@ test.describe('Guest Booking - Error Handling', () => {
                 .eq('is_active', true);
 
             // Create reservations for all RV sites
-            const reservations = rvSites!.map((site: any) => ({
+            const reservations = rvSites!.map((site: unknown) => ({
                 first_name: 'Blocker',
                 last_name: 'Test',
                 email: 'blocker@test.com',
@@ -309,7 +310,7 @@ test.describe('Guest Booking - Error Handling', () => {
                 .insert(reservations)
                 .select('id');
 
-            const reservationIds = createdReservations!.map((r: any) => r.id);
+            const reservationIds = createdReservations!.map((r: unknown) => (r as Record<string, unknown>).id);
 
             try {
                 // Now try to book during the same period

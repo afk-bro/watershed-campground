@@ -9,7 +9,7 @@ import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/res
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: "2025-11-17.clover" as any,
+    apiVersion: "2025-11-17.clover" as const,
 });
 
 export async function POST(request: Request) {
@@ -82,12 +82,12 @@ export async function POST(request: Request) {
 
         // Verify Add-on Prices
         let addonsTotal = 0;
-        let validAddons: any[] = [];
+        let validAddons: Array<{ id: string; quantity: number; price: number }> = [];
         if (formData.addons.length > 0) {
-            const { data: dbAddons } = await supabaseAdmin.from('addons').select('id, price').in('id', formData.addons.map(a => a.id));
+            const { data: dbAddons } = await supabaseAdmin.from('addons').select('id, price').in('id', formData.addons.map((a: { id: string; quantity: number }) => a.id));
             if (dbAddons) {
-                validAddons = formData.addons.map(item => {
-                    const dbItem = dbAddons.find(d => d.id === item.id);
+                validAddons = formData.addons.map((item: { id: string; quantity: number }) => {
+                    const dbItem = dbAddons.find((d: { id: string; price: number }) => d.id === item.id);
                     return dbItem ? { ...item, price: dbItem.price } : null;
                 }).filter(Boolean);
                 addonsTotal = validAddons.reduce((sum, item) => sum + (item.price * item.quantity), 0);

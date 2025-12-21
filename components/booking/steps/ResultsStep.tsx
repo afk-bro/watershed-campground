@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Campsite } from "@/lib/supabase";
-import { Check, Loader2, MapPin, Tent } from "lucide-react";
+import { Loader2, Tent } from "lucide-react";
 
 interface ResultsStepProps {
-    searchParams: any;
+    searchParams: Record<string, unknown>;
     onSelectSite: (site: Campsite) => void;
 }
 

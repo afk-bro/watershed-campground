@@ -44,10 +44,19 @@ export async function POST(request: Request) {
         }
 
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-            apiVersion: "2025-11-17.clover" as any, // Cast to any to avoid strict type mismatch if needed, or use the suggested version
+            apiVersion: "2025-11-17.clover" as const,
         });
 
-        const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json();
+        const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json() as {
+            checkIn: string;
+            checkOut: string;
+            adults: number;
+            children: number;
+            addons: Array<{ id: string; quantity: number; price?: number }>;
+            campsiteId: string;
+            paymentMethod: string;
+            customDepositAmount?: number;
+        };
 
         if (!checkIn || !checkOut) {
             return NextResponse.json(
@@ -93,12 +102,12 @@ export async function POST(request: Request) {
         // For Tier 3 Speed, we will trust but preferably verify. 
         // Let's quickly verify prices if addons exist.
         if (addons.length > 0) {
-            const addonIds = addons.map((a: any) => a.id);
+            const addonIds = addons.map((a: { id: string; quantity: number; price?: number }) => a.id);
             const { data: dbAddons } = await supabaseAdmin.from('addons').select('id, price').in('id', addonIds);
 
             if (dbAddons) {
-                addonsTotal = addons.reduce((sum: number, item: any) => {
-                    const dbItem = dbAddons.find((d: any) => d.id === item.id);
+                addonsTotal = addons.reduce((sum: number, item: { id: string; quantity: number; price?: number }) => {
+                    const dbItem = dbAddons.find((d: { id: string; price: number }) => d.id === item.id);
                     return sum + ((dbItem?.price || 0) * (item.quantity || 1));
                 }, 0);
             }

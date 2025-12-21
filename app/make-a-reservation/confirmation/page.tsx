@@ -17,15 +17,14 @@ function ConfirmationContent() {
   const searchParams = useSearchParams();
   const paymentIntentId = searchParams.get("payment_intent");
   const clientSecret = searchParams.get("payment_intent_client_secret");
-  const redirectStatus = searchParams.get("redirect_status");
 
-  const [status, setStatus] = useState<"loading" | "success" | "error">("loading");
-  const [message, setMessage] = useState("Verifying payment...");
+  // Derive initial status from query params instead of setting in effect
+  const isInvalidPayment = !paymentIntentId || !clientSecret;
+  const [status, setStatus] = useState<"loading" | "success" | "error">(isInvalidPayment ? "error" : "loading");
+  const [message, setMessage] = useState(isInvalidPayment ? "Invalid payment link." : "Verifying payment...");
 
   useEffect(() => {
-    if (!paymentIntentId || !clientSecret) {
-      setStatus("error");
-      setMessage("Invalid payment link.");
+    if (isInvalidPayment) {
       return;
     }
 
@@ -48,10 +47,16 @@ function ConfirmationContent() {
                 // Reconstruct payload
                 // Need to map selectedAddons back to array format
                 const addonsPayload = Object.entries(selectedAddons)
-                  .filter(([_, qty]) => (qty as number) > 0)
+                  .filter(([, qty]) => (qty as number) > 0)
                   .map(([id, qty]) => {
-                      const addon = availableAddons.find((a: any) => a.id === id);
-                      return { id, quantity: qty, price: addon?.price || 0 };
+                      const addon = availableAddons.find((a: unknown) => {
+                        if (a && typeof a === 'object' && 'id' in a) {
+                          return (a as { id: string }).id === id;
+                        }
+                        return false;
+                      });
+                      const addonPrice = addon && typeof addon === 'object' && 'price' in addon ? (addon as { price: number }).price : 0;
+                      return { id, quantity: qty, price: addonPrice };
                   });
 
                 const response = await fetch("/api/reservation", {
@@ -92,15 +97,15 @@ function ConfirmationContent() {
           setStatus("error");
           setMessage("Payment verification failed. Status: " + paymentIntent?.status);
         }
-      } catch (err) {
+      } catch (err: unknown) {
         console.error(err);
         setStatus("error");
         setMessage("An error occurred verifying your reservation.");
       }
     };
 
-    finalizeReservation();
-  }, [paymentIntentId, clientSecret]);
+    void finalizeReservation();
+  }, [paymentIntentId, clientSecret, isInvalidPayment]);
 
   if (status === "loading") {
     return (

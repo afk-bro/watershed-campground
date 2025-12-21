@@ -26,7 +26,7 @@ interface CalendarRowProps {
   isCreating: boolean;
   selection: SelectionRange | null;
   isDragging: boolean;
-  dragPreview: any; // Using any for DragPreview to avoid circular deps or complex imports, can define proper type if needed
+  dragPreview: unknown; // Using unknown for DragPreview to avoid circular deps or complex imports, can define proper type if needed
   draggedItem: DragResizeItem | null;
   resizeState: ResizeState | null;
   showAvailability: boolean;

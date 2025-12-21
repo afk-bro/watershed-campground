@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Addon, PaymentBreakdown, PaymentMethod, FormData } from "@/lib/booking/booking-types";
 
 interface UseReservationFlowProps {
@@ -56,7 +56,7 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
             .catch(err => console.error("Failed to load addons", err));
     }, []);
 
-    const handleWizardComplete = (data: any) => {
+    const handleWizardComplete = (data: unknown) => {
         setFormData(prev => ({
             ...prev,
             checkIn: data.checkIn,
@@ -142,7 +142,7 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
             }
 
             const addonsPayload = Object.entries(selectedAddons)
-                .filter(([_, qty]) => qty > 0)
+                .filter(([, qty]) => qty > 0)
                 .map(([id, qty]) => {
                     const addon = availableAddons.find(a => a.id === id);
                     return { id, quantity: qty, price: addon?.price || 0 };
@@ -193,7 +193,7 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
         setStatus("loading");
         try {
             const addonsPayload = Object.entries(selectedAddons)
-                .filter(([_, qty]) => qty > 0)
+                .filter(([, qty]) => qty > 0)
                 .map(([id, qty]) => {
                     const addon = availableAddons.find(a => a.id === id);
                     return { id, quantity: qty, price: addon?.price || 0 };

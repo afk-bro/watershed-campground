@@ -16,7 +16,7 @@ function escapeHtml(unsafe: string) {
 }
 
 // Helper to send confirmation email
-async function sendConfirmationEmail(reservation: any) {
+async function sendConfirmationEmail(reservation: unknown) {
     try {
         // Check if email was already sent (idempotency)
         if (reservation.email_sent_at) {
@@ -207,7 +207,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                 await supabase.from('webhook_events').update({ status: 'ignored' }).eq('id', event.id);
                 return { received: true, status: 'ignored' };
         }
-    } catch (err: any) {
+    } catch (err: unknown) {
         console.error(`Error handling event ${event.id}:`, err);
         await supabase.from('webhook_events').update({ status: 'failed' }).eq('id', event.id);
         throw err;

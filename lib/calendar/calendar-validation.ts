@@ -14,10 +14,6 @@ function isReservation(item: ValidatableItem): item is Reservation {
   return 'check_in' in item && 'check_out' in item;
 }
 
-function isBlackout(item: ValidatableItem): item is BlackoutDate {
-  return 'start_date' in item && 'end_date' in item;
-}
-
 // ============================================================================
 // Date Range Overlap Detection
 // ============================================================================

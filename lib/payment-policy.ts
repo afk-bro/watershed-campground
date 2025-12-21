@@ -1,6 +1,3 @@
-import { createClient } from "@supabase/supabase-js";
-import { differenceInCalendarDays } from "date-fns";
-
 // Types
 export type PaymentPolicyType = 'full' | 'deposit';
 export type DepositType = 'percent' | 'fixed';
@@ -44,7 +41,7 @@ const DEFAULT_POLICY: PaymentPolicy = {
  * 4. Default
  */
 export async function determinePaymentPolicy(
-    supabaseAdmin: any, // Pass client to avoid re-init
+    supabaseAdmin: unknown, // Pass client to avoid re-init
     campsiteId: string,
     campsiteType: string,
     checkInDate: Date
@@ -97,8 +94,8 @@ export async function determinePaymentPolicy(
     });
 
     const bestMatch = scoredPolicies
-        .filter((p: any) => p.match)
-        .sort((a: any, b: any) => b.score - a.score)[0];
+        .filter((p: unknown) => (p as Record<string, unknown>).match)
+        .sort((a: unknown, b: unknown) => (b as Record<string, number>).score - (a as Record<string, number>).score)[0];
 
     return bestMatch ? bestMatch.policy : DEFAULT_POLICY;
 }

@@ -176,7 +176,7 @@ export default function RoadmapPage() {
             <div className="bg-brand-forest text-accent-beige p-8 rounded-2xl text-center shadow-xl">
                 <h3 className="text-2xl font-heading font-bold mb-4">Ready to shape the future?</h3>
                 <p className="opacity-90 max-w-2xl mx-auto mb-8">
-                    We're building the ultimate campground management system. The "Brutal Focus" killer combo is almost complete.
+                    We&apos;re building the ultimate campground management system. The &quot;Brutal Focus&quot; killer combo is almost complete.
                 </p>
                 <a href="/contact" className="inline-flex items-center gap-2 bg-accent-gold text-brand-forest font-bold py-3 px-6 rounded-lg hover:bg-white hover:scale-105 transition-all">
                     Get in Touch <ArrowRight className="w-5 h-5" />

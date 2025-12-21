@@ -1,4 +1,4 @@
-import { Reservation, BlackoutDate } from "@/lib/supabase";
+import { BlackoutDate } from "@/lib/supabase";
 
 export interface UpdateReservationParams {
   campsite_id: string | null;

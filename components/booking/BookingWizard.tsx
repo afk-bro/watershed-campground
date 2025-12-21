@@ -7,7 +7,7 @@ import ResultsStep from "./steps/ResultsStep";
 import ReservationSummary from "./ReservationSummary";
 
 interface BookingWizardProps {
-    onComplete: (data: any) => void;
+    onComplete: (data: unknown) => void;
 }
 
 export default function BookingWizard({ onComplete }: BookingWizardProps) {
@@ -18,11 +18,10 @@ export default function BookingWizard({ onComplete }: BookingWizardProps) {
         guests: 2,
         unitType: '',
         rvLength: 0,
-        selectedSite: null as any
+        selectedSite: null as unknown
     });
 
     const next = () => setStep(s => s + 1);
-    const back = () => setStep(s => s - 1);
     const goToStep = (stepNum: number) => setStep(stepNum);
 
     const handleDateSelection = (start: string, end: string) => {
@@ -30,7 +29,7 @@ export default function BookingWizard({ onComplete }: BookingWizardProps) {
         next();
     };
 
-    const handleSelectSite = (site: any) => {
+    const handleSelectSite = (site: unknown) => {
         const finalData = { ...bookingData, selectedSite: site };
         setBookingData(finalData);
         onComplete(finalData);

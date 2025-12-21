@@ -47,7 +47,7 @@ export interface PaymentContext {
     amountPaid: number;
     balanceDue: number;
     paymentType: string;
-    policySnapshot?: any;
+    policySnapshot?: unknown;
     remainderDueAt?: string | null;
 }
 

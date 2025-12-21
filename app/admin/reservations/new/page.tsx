@@ -118,9 +118,9 @@ function ReservationForm() {
 
             showToast("Reservation created successfully!", "success");
             router.push("/admin");
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error(err);
-            showToast(err.message, "error");
+            showToast(err instanceof Error ? err.message : "Unknown error", "error");
         } finally {
             setLoading(false);
         }
@@ -155,7 +155,7 @@ function ReservationForm() {
                                 <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
                             ))}
                         </select>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-1">Note: Does not auto-check availability. Using "Force" logic in API if ID provided? No, API still checks. Please check calendar first.</p>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-1">Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first.</p>
                     </div>
 
                     {/* Guests */}

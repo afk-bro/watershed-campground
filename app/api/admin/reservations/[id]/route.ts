@@ -261,9 +261,9 @@ export async function PATCH(
                     });
                     emailSent = true;
                 }
-            } catch (error: any) {
+            } catch (error: unknown) {
                 console.error("Error sending notification email:", error);
-                emailError = error.message || "Email sending failed";
+                emailError = error instanceof Error ? error.message : "Email sending failed";
                 // Don't fail the request - email is best-effort
             }
         }

@@ -161,9 +161,9 @@ export default function CalendarGrid({
 
         showToast('Blackout date updated successfully', 'success');
         window.location.reload();
-      } catch (error: any) {
+      } catch (error: unknown) {
         console.error('[BLACKOUT MOVE ERROR]', error);
-        showToast(error.message || 'Failed to update blackout date', 'error');
+        showToast(error instanceof Error ? error.message : 'Failed to update blackout date', 'error');
       }
       return;
     }
@@ -230,9 +230,9 @@ export default function CalendarGrid({
       );
 
       showToast('Blackout date updated successfully', 'success');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('[BLACKOUT MOVE ERROR]', error);
-      showToast(error.message || 'Failed to update blackout date', 'error');
+      showToast(error instanceof Error ? error.message : 'Failed to update blackout date', 'error');
       // SWR automatically rolls back on error
     }
   }, [onDataMutate, showToast]);
@@ -338,10 +338,10 @@ export default function CalendarGrid({
         window.location.reload();
       }, 1500);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Reschedule error:', error);
       // Show error in dialog, keep it open for retry
-      setConfirmDialogError(error.message);
+      setConfirmDialogError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
       setIsSubmitting(false);
     }
