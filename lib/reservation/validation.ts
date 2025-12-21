@@ -37,3 +37,60 @@ export const reservationFormSchema = z.object({
 });
 
 export type ReservationFormData = z.infer<typeof reservationFormSchema>;
+
+/**
+ * Schema for validating reservation data from the database.
+ * Uses snake_case field names to match database schema.
+ * Provides runtime safety for data integrity issues.
+ */
+export const databaseReservationSchema = z.object({
+    id: z.string().uuid("Invalid reservation ID"),
+    created_at: z.string().optional(),
+    updated_at: z.string().optional(),
+
+    // Guest Information (required)
+    first_name: z.string().min(1, "First name is missing"),
+    last_name: z.string().min(1, "Last name is missing"),
+    email: z.string().email("Invalid email in database"),
+    phone: z.string().min(1, "Phone number is missing"),
+    address1: z.string().min(1, "Address is missing"),
+    city: z.string().min(1, "City is missing"),
+    postal_code: z.string().min(1, "Postal code is missing"),
+
+    // Guest Information (optional)
+    address2: z.string().nullable().optional(),
+    rv_year: z.string().nullable().optional(),
+    hear_about: z.string().nullable().optional(),
+    comments: z.string().nullable().optional(),
+
+    // Booking Details (required)
+    check_in: z.string().refine((date) => !isNaN(Date.parse(date)), {
+        message: "Invalid check-in date in database",
+    }),
+    check_out: z.string().refine((date) => !isNaN(Date.parse(date)), {
+        message: "Invalid check-out date in database",
+    }),
+    adults: z.number().int().min(1, "Invalid adult count"),
+    children: z.number().int().min(0, "Invalid children count"),
+    rv_length: z.string().min(1, "RV length is missing"),
+    camping_unit: z.string().min(1, "Camping unit type is missing"),
+    contact_method: z.enum(["Phone", "Email", "Either"], {
+        message: "Invalid contact method in database"
+    }),
+    status: z.enum(['pending', 'confirmed', 'cancelled', 'checked_in', 'checked_out', 'no_show'], {
+        message: "Invalid reservation status"
+    }),
+
+    // Payment Information
+    payment_status: z.string().optional().default('pending'),
+    amount_paid: z.number().min(0).optional().default(0),
+    balance_due: z.number().min(0).optional().default(0),
+    payment_policy_snapshot: z.any().optional(), // JSONB field
+    remainder_due_at: z.string().nullable().optional(),
+
+    // References
+    campsite_id: z.string().uuid().nullable().optional(),
+    public_edit_token_hash: z.string().nullable().optional(),
+});
+
+export type DatabaseReservation = z.infer<typeof databaseReservationSchema>;
