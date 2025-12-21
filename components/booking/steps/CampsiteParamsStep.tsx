@@ -1,20 +1,21 @@
 "use client";
-
-import { useState } from "react";
 import { Users, Truck } from "lucide-react";
 
 interface CampsiteParamsStepProps {
-    formData: any;
-    onChange: (data: any) => void;
+    formData: Record<string, unknown>;
+    onChange: (data: Record<string, unknown>) => void;
     onNext: () => void;
 }
 
 export default function CampsiteParamsStep({ formData, onChange, onNext }: CampsiteParamsStepProps) {
-    const handleChange = (field: string, value: any) => {
+    const handleChange = (field: string, value: unknown) => {
         onChange({ ...formData, [field]: value });
     };
 
-    const isValid = formData.guests > 0 && formData.unitType;
+    const fd = formData as { guests?: number; unitType?: string; rvLength?: number };
+    const guests = Number(fd.guests ?? 0);
+    const unitType = fd.unitType as unknown;
+    const isValid = Number.isFinite(guests) && guests > 0 && typeof unitType === 'string' && unitType.length > 0;
 
     return (
         <div className="max-w-xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -32,15 +33,15 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                     <div className="flex items-center gap-4">
                         <button 
                             type="button"
-                            onClick={() => handleChange('guests', Math.max(1, formData.guests - 1))}
+                            onClick={() => handleChange('guests', Math.max(1, (fd.guests ?? 0) - 1))}
                             className="w-12 h-12 rounded-full border border-[var(--color-border-default)] hover:bg-[var(--color-surface-hover)] text-xl transition-colors"
                         >
                             -
                         </button>
-                        <span className="text-2xl font-bold w-12 text-center">{formData.guests}</span>
+                        <span className="text-2xl font-bold w-12 text-center">{fd.guests ?? 0}</span>
                         <button 
                              type="button"
-                             onClick={() => handleChange('guests', formData.guests + 1)}
+                             onClick={() => handleChange('guests', (fd.guests ?? 0) + 1)}
                              className="w-12 h-12 rounded-full bg-[var(--color-brand-forest-light)] text-[var(--color-text-inverse)] hover:brightness-110 text-xl transition-all shadow-lg"
                         >
                             +
@@ -62,7 +63,7 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                                 type="button"
                                 onClick={() => handleChange('unitType', type)}
                                 className={`p-4 rounded-lg border text-left transition-all ${
-                                    formData.unitType === type 
+                                    fd.unitType === type 
                                     ? 'border-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]' 
                                     : 'border-[var(--color-border-default)] hover:border-[var(--color-border-strong)] text-[var(--color-text-secondary)]'
                                 }`}
@@ -74,7 +75,7 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                  </div>
 
                  {/* RV Length - Conditional */}
-                 {(formData.unitType === 'RV / Trailer' || formData.unitType === 'Camper Van') && (
+                 {(fd.unitType === 'RV / Trailer' || fd.unitType === 'Camper Van') && (
                      <div className="animate-in fade-in slide-in-from-top-2 space-y-6">
                         <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
                             Vehicle Length
@@ -84,7 +85,7 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                         <div className="flex justify-center">
                             <div className="bg-[var(--color-accent-gold)] text-[var(--color-brand-forest)] px-6 py-3 rounded-xl shadow-lg">
                                 <div className="text-3xl font-bold tabular-nums">
-                                    {formData.rvLength || 0}<span className="text-xl ml-1">ft</span>
+                                    {fd.rvLength || 0}<span className="text-xl ml-1">ft</span>
                                 </div>
                             </div>
                         </div>
@@ -109,7 +110,7 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                                 min="0"
                                 max="50"
                                 step="2"
-                                value={formData.rvLength || 0}
+                                value={fd.rvLength || 0}
                                 onChange={(e) => handleChange('rvLength', parseInt(e.target.value))}
                                 className="w-full h-2 bg-[var(--color-surface-primary)] rounded-lg appearance-none cursor-pointer
                                     [&::-webkit-slider-thumb]:appearance-none
@@ -137,8 +138,8 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                                 style={{
                                     background: `linear-gradient(to right,
                                         var(--color-accent-gold) 0%,
-                                        var(--color-accent-gold) ${((formData.rvLength || 0) / 50) * 100}%,
-                                        var(--color-surface-primary) ${((formData.rvLength || 0) / 50) * 100}%,
+                                        var(--color-accent-gold) ${((fd.rvLength || 0) / 50) * 100}%,
+                                        var(--color-surface-primary) ${((fd.rvLength || 0) / 50) * 100}%,
                                         var(--color-surface-primary) 100%)`
                                 }}
                             />

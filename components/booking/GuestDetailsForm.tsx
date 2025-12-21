@@ -27,7 +27,7 @@ export default function GuestDetailsForm({
   };
 
   return (
-    <form onSubmit={onSubmit} className="max-w-3xl mx-auto">
+    <form onSubmit={onSubmit} noValidate className="max-w-3xl mx-auto">
       <div className="bg-gradient-to-b from-brand-forest/40 to-brand-forest/60 border border-accent-gold/25 rounded-xl shadow-2xl p-6 sm:p-10 space-y-12">
 
         {/* Summary of Selection */}
@@ -48,16 +48,21 @@ export default function GuestDetailsForm({
 
         {/* Validation Error Summary */}
         {Object.keys(fieldErrors).length > 0 && (
-            <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3">
-                <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                <div>
-                    <p className="text-red-200 font-medium text-sm">
-                        Please fix the highlighted fields to continue
-                    </p>
-                </div>
+          <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-4 flex items-start gap-3" role="alert" aria-live="polite">
+            <svg className="w-5 h-5 text-red-400 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+            <div>
+              <p className="text-red-200 font-medium text-sm">
+                Please fix the highlighted fields to continue
+              </p>
+              <ul className="mt-2 text-red-200/90 text-sm list-disc list-inside" aria-label="Validation Summary">
+                {Array.from(new Set(Object.values(fieldErrors))).map((msg, idx) => (
+                  <li key={idx}>{msg}</li>
+                ))}
+              </ul>
             </div>
+          </div>
         )}
         
         {/* Personal Information */}

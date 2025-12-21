@@ -13,14 +13,15 @@ export default function OnboardingChecklist() {
     pricingSet: false,
   });
   const [loading, setLoading] = useState(true);
-  const [dismissed, setDismissed] = useState(false);
+  const [dismissed, setDismissed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return localStorage.getItem("onboarding_dismissed") === "true";
+  });
 
   useEffect(() => {
-    // Check local storage for dismissal
-    const isDismissed = localStorage.getItem("onboarding_dismissed");
-    if (isDismissed) {
-        setDismissed(true);
-        return; 
+    // If already dismissed, skip the check
+    if (dismissed) {
+      return;
     }
 
     async function checkStatus() {
@@ -57,7 +58,9 @@ export default function OnboardingChecklist() {
     }
 
     checkStatus();
-  }, []);
+  }, [dismissed]);
+
+  // Note: dismiss control handled by localStorage flag; no local handler needed
 
   if (dismissed) return null;
   if (loading) return (

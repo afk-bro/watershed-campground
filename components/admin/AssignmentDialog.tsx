@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { supabase } from '@/lib/supabase'; // Or use API
 import { X, Tent, Check } from 'lucide-react';
 import type { Reservation } from '@/lib/supabase';
@@ -26,13 +26,7 @@ export default function AssignmentDialog({ reservation, isOpen, onClose, onAssig
     const [error, setError] = useState<string | null>(null);
     const [assigningId, setAssigningId] = useState<string | null>(null);
 
-    useEffect(() => {
-        if (isOpen && reservation) {
-            fetchAvailability();
-        }
-    }, [isOpen, reservation]);
-
-    const fetchAvailability = async () => {
+    const fetchAvailability = useCallback(async () => {
         if (!reservation) return;
         setLoading(true);
         setError(null);
@@ -60,7 +54,13 @@ export default function AssignmentDialog({ reservation, isOpen, onClose, onAssig
         } finally {
             setLoading(false);
         }
-    };
+    }, [reservation]);
+
+    useEffect(() => {
+        if (isOpen && reservation) {
+            void fetchAvailability();
+        }
+    }, [isOpen, reservation, fetchAvailability]);
 
     const handleAssign = async (campsiteId: string) => {
         if (!reservation) return;

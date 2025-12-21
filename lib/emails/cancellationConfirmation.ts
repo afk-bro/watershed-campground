@@ -1,5 +1,5 @@
 import { escapeHtml } from "../htmlEscape";
-import { format, parseISO, differenceInDays } from "date-fns";
+import { format, parseISO } from "date-fns";
 
 type CancellationEmailParams = {
     guestFirstName: string;
@@ -26,7 +26,7 @@ export function generateCancellationEmail(params: CancellationEmailParams): {
         try {
             if (!dateStr) return 'N/A';
             return format(parseISO(dateStr), "EEE, MMM d, yyyy");
-        } catch (e) {
+        } catch {
             return dateStr;
         }
     };

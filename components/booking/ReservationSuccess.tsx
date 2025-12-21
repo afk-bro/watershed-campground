@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { FormData, PaymentMethod } from "@/lib/booking/booking-types";
 
 interface ReservationSuccessProps {
@@ -30,11 +31,11 @@ export default function ReservationSuccess({
         <p className="text-accent-beige/70 text-sm max-w-lg mx-auto">
             A confirmation email has been sent to {formData.email}
         </p>
-        <div className="pt-8">
-             <a href="/" className="inline-block bg-brand-forest hover:bg-brand-forest-light border border-accent-gold/30 text-accent-beige px-8 py-3 rounded-lg transition-colors">
-                Return Home
-             </a>
-        </div>
+          <div className="pt-8">
+             <Link href="/" className="inline-block bg-brand-forest hover:bg-brand-forest-light border border-accent-gold/30 text-accent-beige px-8 py-3 rounded-lg transition-colors">
+               Return Home
+             </Link>
+          </div>
     </div>
   );
 }

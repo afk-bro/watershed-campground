@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, isSameMonth, isSameDay, isWithinInterval, parseISO } from "date-fns";
-import { ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
+import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from "date-fns";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayStatus } from "@/lib/availability/engine";
 
 interface DateStepProps {
@@ -23,11 +23,7 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
     // Hover preview state for range selection
     const [hoverDate, setHoverDate] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetchAvailability();
-    }, [currentMonth]);
-
-    const fetchAvailability = async () => {
+    const fetchAvailability = useCallback(async () => {
         setLoading(true);
         try {
             const res = await fetch(`/api/availability/calendar?month=${format(currentMonth, 'yyyy-MM')}`);
@@ -40,7 +36,11 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
         } finally {
             setLoading(false);
         }
-    };
+    }, [currentMonth]);
+
+    useEffect(() => {
+        void fetchAvailability();
+    }, [fetchAvailability]);
 
     const handleDayClick = (dateStr: string, status: string) => {
         if (status === 'sold-out' || status === 'blackout') return;

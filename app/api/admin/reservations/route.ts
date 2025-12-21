@@ -88,16 +88,18 @@ export async function GET() {
         }));
 
         // Combine and sort by start date (check_in for reservations, start_date for blocking)
-        const items = [...reservationItems, ...blockingItems].sort((a: any, b: any) => {
-            const dateA = a.type === 'reservation' ? a.check_in : a.start_date;
-            const dateB = b.type === 'reservation' ? b.check_in : b.start_date;
+        const items = [...reservationItems, ...blockingItems].sort((a: unknown, b: unknown) => {
+            const aItem = a as { type: 'reservation' | 'blocking', check_in?: string, start_date?: string };
+            const bItem = b as { type: 'reservation' | 'blocking', check_in?: string, start_date?: string };
+            const dateA = aItem.type === 'reservation' ? aItem.check_in : aItem.start_date;
+            const dateB = bItem.type === 'reservation' ? bItem.check_in : bItem.start_date;
 
             // Sort by date descending (newest first)
-            const dateComparison = new Date(dateB).getTime() - new Date(dateA).getTime();
+            const dateComparison = new Date(dateB!).getTime() - new Date(dateA!).getTime();
 
             // If dates are equal, sort by type (reservations before blocking events)
             if (dateComparison === 0) {
-                return a.type === 'reservation' ? -1 : 1;
+                return aItem.type === 'reservation' ? -1 : 1;
             }
 
             return dateComparison;

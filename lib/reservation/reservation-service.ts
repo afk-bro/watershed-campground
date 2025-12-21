@@ -1,7 +1,7 @@
 import { ReservationFormData } from "./validation";
 import crypto from 'crypto';
 import { SupabaseClient } from "@supabase/supabase-js";
-import type { Database } from "@/lib/database.types";
+import type { Database, Json } from "@/lib/database.types";
 
 // Use Supabase-generated types - TypeScript will enforce alignment with actual DB schema
 type ReservationInsert = Database["public"]["Tables"]["reservations"]["Insert"];
@@ -47,7 +47,7 @@ export interface PaymentContext {
     amountPaid: number;
     balanceDue: number;
     paymentType: string;
-    policySnapshot?: any;
+    policySnapshot?: Json | null;
     remainderDueAt?: string | null;
 }
 

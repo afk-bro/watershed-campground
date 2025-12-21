@@ -38,8 +38,8 @@ function ManageReservationContent() {
 
                 const { reservation } = await response.json();
                 setReservation(reservation);
-            } catch (err: any) {
-                setError(err.message || 'Failed to load reservation');
+            } catch (err: unknown) {
+                setError(err instanceof Error ? err.message : 'Failed to load reservation');
             } finally {
                 setLoading(false);
             }
@@ -70,8 +70,8 @@ function ManageReservationContent() {
             const { reservation } = await response.json();
             setReservation(reservation);
             alert('Your reservation has been cancelled successfully.');
-        } catch (err: any) {
-            alert(err.message || 'Failed to cancel reservation');
+        } catch (err: unknown) {
+            alert(err instanceof Error ? err.message : 'Failed to cancel reservation');
         } finally {
             setCancelling(false);
         }

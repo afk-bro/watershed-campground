@@ -448,7 +448,11 @@ test.describe('Admin Blackout Dates', () => {
                 .insert(blackouts)
                 .select();
 
-            testBlackoutIds = data!.map((b: any) => b.id);
+            testBlackoutIds = data!
+                .filter((b: unknown): b is { id: string } => {
+                    return !!b && typeof b === 'object' && 'id' in (b as Record<string, unknown>) && typeof (b as Record<string, unknown>).id === 'string';
+                })
+                .map((b) => b.id);
         });
 
         test.afterEach(async () => {
@@ -471,9 +475,11 @@ test.describe('Admin Blackout Dates', () => {
             expect(data!.length).toBeGreaterThanOrEqual(2);
 
             // Should include our test blackouts
-            const testBlackouts = data!.filter((b: any) =>
-                testBlackoutIds.includes(b.id)
-            );
+            const testBlackouts = data!.filter((b: unknown) => {
+                if (!b || typeof b !== 'object') return false;
+                const id = (b as Record<string, unknown>).id;
+                return typeof id === 'string' && testBlackoutIds.includes(id);
+            });
             expect(testBlackouts.length).toBe(2);
         });
 

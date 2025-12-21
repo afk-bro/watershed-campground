@@ -95,9 +95,9 @@ export default function NewCampsitePage() {
 
             // Success - redirect to campsites list
             router.push('/admin/campsites');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error creating campsite:', err);
-            setError(err.message || 'Failed to create campsite');
+            setError(err instanceof Error ? err.message : 'Failed to create campsite');
             setLoading(false);
         }
     }

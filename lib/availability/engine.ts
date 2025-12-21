@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, addDays, isSameDay } from "date-fns";
+import { startOfMonth, endOfMonth, eachDayOfInterval, format } from "date-fns";
 
 export type DayStatus = {
     date: string; // YYYY-MM-DD
@@ -11,7 +11,7 @@ export type SearchParams = {
     checkOut: string;
     guestCount: number;
     rvLength?: number;
-    unitType?: string;
+    unitType?: 'Tent' | 'RV / Trailer' | 'Camper Van' | 'Cabin' | '';
 };
 
 /**
@@ -34,7 +34,6 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
     }
 
     const totalSites = allCampsites.length;
-    const allSiteIds = new Set(allCampsites.map(c => c.id));
 
     // 2. Get all reservations in this month
     // Overlap: existing.start <= monthEnd AND existing.end >= monthStart
@@ -74,16 +73,6 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
         // BUT for *arrival* availability, if I arrive on 12th, I need 12th to be free.
         // If I arrive on 14th, I need 14th to be free.
         // So a reservation 12-14 blocks arrivals on 12 and 13. It does NOT block arrival on 14.
-
-        const reservedCount = reservations?.filter(r =>
-            r.check_in <= dateStr && r.check_out > dateStr && r.campsite_id
-        ).length || 0;
-
-        const siteBlackoutCount = blackouts?.filter(b =>
-            b.campsite_id !== null &&
-            b.start_date <= dateStr &&
-            b.end_date >= dateStr
-        ).length || 0;
 
         // This is a rough heuristic. 
         // Ideally we check *distinct* site IDs blocked.
@@ -146,12 +135,20 @@ export async function searchCampsites(params: SearchParams) {
     ].filter(id => id !== null) as string[]);
 
     // 2. Query available sites
-    let query = supabaseAdmin
+    const query = supabaseAdmin
         .from('campsites')
         .select('*')
         .eq('is_active', true)
         .gte('max_guests', guestCount)
         .order('sort_order', { ascending: true });
+
+    // Apply unit type filter for determinism (e.g., RV vs Tent)
+    const normalizedUnit = (unitType || '').toLowerCase();
+    if (normalizedUnit.includes('rv')) {
+        query.eq('type', 'rv');
+    } else if (normalizedUnit.includes('tent')) {
+        query.eq('type', 'tent');
+    }
 
     // Note: We don't filter RV length / unit type in SQL yet because schema might vary,
     // assuming we filter in memory or they are simple columns.
@@ -169,8 +166,11 @@ export async function searchCampsites(params: SearchParams) {
             return false;
         }
 
-        // Filter by Unit Type (if logic exists - conventionally checked against site type)
-        // For MVP, we ignore strict Unit Type matching unless site.type is incompatible.
+        // If unit type was specified, ensure site type matches to avoid cross-type suggestions
+        if (normalizedUnit) {
+            if (normalizedUnit.includes('rv') && site.type !== 'rv') return false;
+            if (normalizedUnit.includes('tent') && site.type !== 'tent') return false;
+        }
 
         return true;
     });

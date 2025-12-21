@@ -3,10 +3,10 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { Campsite } from "@/lib/supabase";
-import { Check, Loader2, MapPin, Tent } from "lucide-react";
+import { Loader2, Tent } from "lucide-react";
 
 interface ResultsStepProps {
-    searchParams: any;
+    searchParams: Record<string, unknown>;
     onSelectSite: (site: Campsite) => void;
 }
 
@@ -21,11 +21,12 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
                  const res = await fetch('/api/availability/search', {
                      method: 'POST',
                      headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({
+                         body: JSON.stringify({
                          checkIn: searchParams.checkIn,
                          checkOut: searchParams.checkOut,
                          guestCount: searchParams.guests,
-                         rvLength: searchParams.rvLength
+                         rvLength: searchParams.rvLength,
+                         unitType: searchParams.unitType
                      })
                  });
                  if (res.ok) {
