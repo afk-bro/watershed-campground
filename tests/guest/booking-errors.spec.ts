@@ -310,7 +310,12 @@ test.describe('Guest Booking - Error Handling', () => {
                 .insert(reservations)
                 .select('id');
 
-            const reservationIds = createdReservations!.map((r: unknown) => (r as Record<string, unknown>).id);
+            const reservationIds = createdReservations!.map((r: unknown) => {
+                if (r && typeof r === 'object' && 'id' in r) {
+                    return (r as { id: string }).id;
+                }
+                throw new Error('Invalid reservation structure');
+            });
 
             try {
                 // Now try to book during the same period

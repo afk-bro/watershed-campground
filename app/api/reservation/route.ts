@@ -86,10 +86,16 @@ export async function POST(request: Request) {
         if (formData.addons.length > 0) {
             const { data: dbAddons } = await supabaseAdmin.from('addons').select('id, price').in('id', formData.addons.map((a: { id: string; quantity: number }) => a.id));
             if (dbAddons) {
-                validAddons = formData.addons.map((item: { id: string; quantity: number }) => {
-                    const dbItem = dbAddons.find((d: { id: string; price: number }) => d.id === item.id);
-                    return dbItem ? { ...item, price: dbItem.price } : null;
-                }).filter(Boolean);
+                validAddons = formData.addons.reduce<Array<{ id: string; quantity: number; price: number }>>(
+                    (acc, item: { id: string; quantity: number }) => {
+                        const dbItem = dbAddons.find((d: { id: string; price: number }) => d.id === item.id);
+                        if (dbItem) {
+                            acc.push({ ...item, price: dbItem.price });
+                        }
+                        return acc;
+                    },
+                    []
+                );
                 addonsTotal = validAddons.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             }
         }

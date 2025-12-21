@@ -448,7 +448,12 @@ test.describe('Admin Blackout Dates', () => {
                 .insert(blackouts)
                 .select();
 
-            testBlackoutIds = data!.map((b: unknown) => (b as Record<string, unknown>).id);
+            testBlackoutIds = data!.map((b: unknown) => {
+                if (b && typeof b === 'object' && 'id' in b) {
+                    return (b as { id: string }).id;
+                }
+                throw new Error('Invalid blackout date structure');
+            });
         });
 
         test.afterEach(async () => {
@@ -471,9 +476,12 @@ test.describe('Admin Blackout Dates', () => {
             expect(data!.length).toBeGreaterThanOrEqual(2);
 
             // Should include our test blackouts
-            const testBlackouts = data!.filter((b: unknown) =>
-                testBlackoutIds.includes(b.id)
-            );
+            const testBlackouts = data!.filter((b: unknown) => {
+                if (b && typeof b === 'object' && 'id' in b) {
+                    return testBlackoutIds.includes((b as { id: string }).id);
+                }
+                return false;
+            });
             expect(testBlackouts.length).toBe(2);
         });
 

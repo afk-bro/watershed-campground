@@ -15,8 +15,48 @@ function escapeHtml(unsafe: string) {
         .replace(/'/g, "&#039;");
 }
 
+// Type guard for reservation object
+interface ReservationEmailData {
+    id: string;
+    email: string;
+    email_sent_at: string | null;
+    first_name: string;
+    last_name: string;
+    check_in: string;
+    check_out: string;
+    payment_status: string;
+    amount_paid?: number;
+    balance_due?: number;
+    adults: number;
+    children: number;
+    camping_unit: string;
+}
+
+function isReservationEmailData(obj: unknown): obj is ReservationEmailData {
+    if (!obj || typeof obj !== 'object') return false;
+    const r = obj as Record<string, unknown>;
+    return (
+        typeof r.id === 'string' &&
+        typeof r.email === 'string' &&
+        (r.email_sent_at === null || typeof r.email_sent_at === 'string') &&
+        typeof r.first_name === 'string' &&
+        typeof r.last_name === 'string' &&
+        typeof r.check_in === 'string' &&
+        typeof r.check_out === 'string' &&
+        typeof r.payment_status === 'string' &&
+        typeof r.adults === 'number' &&
+        typeof r.children === 'number' &&
+        typeof r.camping_unit === 'string'
+    );
+}
+
 // Helper to send confirmation email
 async function sendConfirmationEmail(reservation: unknown) {
+    if (!isReservationEmailData(reservation)) {
+        console.error('Invalid reservation data structure');
+        return { sent: false, error: 'Invalid reservation data' };
+    }
+
     try {
         // Check if email was already sent (idempotency)
         if (reservation.email_sent_at) {

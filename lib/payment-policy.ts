@@ -93,9 +93,26 @@ export async function determinePaymentPolicy(
         return { policy: p, score, match };
     });
 
+    // Type guard for scored policy
+    interface ScoredPolicy {
+        policy: PaymentPolicy;
+        score: number;
+        match: boolean;
+    }
+
+    function isScoredPolicy(obj: unknown): obj is ScoredPolicy {
+        if (!obj || typeof obj !== 'object') return false;
+        const sp = obj as Record<string, unknown>;
+        return (
+            typeof sp.score === 'number' &&
+            typeof sp.match === 'boolean' &&
+            sp.policy !== undefined
+        );
+    }
+
     const bestMatch = scoredPolicies
-        .filter((p: unknown) => (p as Record<string, unknown>).match)
-        .sort((a: unknown, b: unknown) => (b as Record<string, number>).score - (a as Record<string, number>).score)[0];
+        .filter((p: unknown): p is ScoredPolicy => isScoredPolicy(p) && p.match)
+        .sort((a, b) => b.score - a.score)[0];
 
     return bestMatch ? bestMatch.policy : DEFAULT_POLICY;
 }

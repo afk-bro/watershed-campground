@@ -13,17 +13,39 @@ if (!stripeKey) {
   console.error("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in environment variables.");
 }
 
+// Type guard for addon structure
+interface AddonWithPrice {
+  id: string;
+  price: number;
+}
+
+function isAddonWithPrice(obj: unknown): obj is AddonWithPrice {
+  return (
+    obj !== null &&
+    typeof obj === 'object' &&
+    'id' in obj &&
+    'price' in obj &&
+    typeof (obj as AddonWithPrice).price === 'number'
+  );
+}
+
 function ConfirmationContent() {
   const searchParams = useSearchParams();
   const paymentIntentId = searchParams.get("payment_intent");
   const clientSecret = searchParams.get("payment_intent_client_secret");
 
-  // Derive initial status from query params instead of setting in effect
-  const isInvalidPayment = !paymentIntentId || !clientSecret;
-  const [status, setStatus] = useState<"loading" | "success" | "error">(isInvalidPayment ? "error" : "loading");
-  const [message, setMessage] = useState(isInvalidPayment ? "Invalid payment link." : "Verifying payment...");
+  // Use lazy initializer to safely derive initial status
+  const [status, setStatus] = useState<"loading" | "success" | "error">(() => {
+    const isInvalid = !paymentIntentId || !clientSecret;
+    return isInvalid ? "error" : "loading";
+  });
+  const [message, setMessage] = useState(() => {
+    const isInvalid = !paymentIntentId || !clientSecret;
+    return isInvalid ? "Invalid payment link." : "Verifying payment...";
+  });
 
   useEffect(() => {
+    const isInvalidPayment = !paymentIntentId || !clientSecret;
     if (isInvalidPayment) {
       return;
     }
@@ -49,13 +71,8 @@ function ConfirmationContent() {
                 const addonsPayload = Object.entries(selectedAddons)
                   .filter(([, qty]) => (qty as number) > 0)
                   .map(([id, qty]) => {
-                      const addon = availableAddons.find((a: unknown) => {
-                        if (a && typeof a === 'object' && 'id' in a) {
-                          return (a as { id: string }).id === id;
-                        }
-                        return false;
-                      });
-                      const addonPrice = addon && typeof addon === 'object' && 'price' in addon ? (addon as { price: number }).price : 0;
+                      const addon = availableAddons.find((a: unknown) => isAddonWithPrice(a) && a.id === id);
+                      const addonPrice = addon && isAddonWithPrice(addon) ? addon.price : 0;
                       return { id, quantity: qty, price: addonPrice };
                   });
 
@@ -105,7 +122,7 @@ function ConfirmationContent() {
     };
 
     void finalizeReservation();
-  }, [paymentIntentId, clientSecret, isInvalidPayment]);
+  }, [paymentIntentId, clientSecret]);
 
   if (status === "loading") {
     return (

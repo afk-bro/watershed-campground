@@ -37,8 +37,8 @@ export default function AdminPage() {
             const filtered = showArchived
                 ? (data || []).filter((item: unknown): item is OverviewItem => {
                     if (!item || typeof item !== 'object') return false;
-                    const anyItem = item as Record<string, unknown>;
-                    return anyItem.type === 'reservation' && anyItem.archived_at != null;
+                    const overviewLike = item as { type?: unknown; archived_at?: unknown };
+                    return overviewLike.type === 'reservation' && overviewLike.archived_at != null;
                   })
                 : data || [];
 
