@@ -13,11 +13,11 @@ export default function AdminLayout({
 }) {
     const router = useRouter();
     const pathname = usePathname();
-    const supabase = createClient();
     const [user, setUser] = useState<User | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        const supabase = createClient();
         const getUser = async () => {
             const { data: { user } } = await supabase.auth.getUser();
             setUser(user);
@@ -30,9 +30,10 @@ export default function AdminLayout({
             }
         };
         getUser();
-    }, [supabase, router, pathname]);
+    }, [router, pathname]);
 
     async function handleLogout() {
+        const supabase = createClient();
         await supabase.auth.signOut();
         router.push("/admin/login");
         router.refresh();
