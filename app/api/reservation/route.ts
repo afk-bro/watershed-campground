@@ -5,7 +5,7 @@ import { checkAvailability } from "@/lib/availability";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { reservationFormSchema } from "@/lib/reservation/validation";
-import { createReservationRecord, PaymentContext } from "@/lib/reservation/reservation-service";
+import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
@@ -125,13 +125,20 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Payment method required" }, { status: 400 });
         }
 
-        // 5. Create Reservation
+        // 5. Create Reservation with audit context
+        const auditContext: AuditContext = {
+            source: 'web',
+            userAgent: request.headers.get('user-agent') || undefined,
+            // Note: IP hash could be added here with req.headers.get('x-forwarded-for') if needed
+        };
+
         const reservation = await createReservationRecord(
             { supabase: supabaseAdmin },
             formData,
             recommendedSiteId,
             { siteTotal, addonsTotal, totalAmount },
-            paymentContext
+            paymentContext,
+            auditContext
         );
 
         // 6. Send Emails (Async, don't block response)

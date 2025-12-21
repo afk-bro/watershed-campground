@@ -35,7 +35,9 @@ export default async function ConfirmationPage({ searchParams }: PageProps) {
   // Validate reservation data for integrity
   const validationResult = databaseReservationSchema.safeParse(reservation);
   if (!validationResult.success) {
-    console.error(`Data validation failed for reservation ${id}:`, validationResult.error.format());
+    console.error(`Data validation failed for reservation ${id}:`);
+    console.error('Validation errors:', JSON.stringify(validationResult.error.issues, null, 2));
+    console.error('Raw reservation data:', JSON.stringify(reservation, null, 2));
     return (
       <main>
         <div className="py-12 px-4">
@@ -82,7 +84,7 @@ export default async function ConfirmationPage({ searchParams }: PageProps) {
     checkOut: validatedReservation.check_out,
     adults: validatedReservation.adults.toString(),
     children: validatedReservation.children.toString(),
-    rvLength: validatedReservation.rv_length,
+    rvLength: validatedReservation.rv_length || "0",
     rvYear: validatedReservation.rv_year || "",
     campingUnit: validatedReservation.camping_unit,
     hearAbout: validatedReservation.hear_about || "",

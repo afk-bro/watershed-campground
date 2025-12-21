@@ -141,7 +141,7 @@ INSERT INTO public.reservations (
     2,
     0,
     'tent',
-    '0',
+    NULL,
     'email',
     'confirmed',
     60.00,

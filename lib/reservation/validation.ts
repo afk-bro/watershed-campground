@@ -70,10 +70,10 @@ export const databaseReservationSchema = z.object({
     check_out: z.string().refine((date) => !isNaN(Date.parse(date)), {
         message: "Invalid check-out date in database",
     }),
-    adults: z.number().int().min(1, "Invalid adult count"),
-    children: z.number().int().min(0, "Invalid children count"),
-    rv_length: z.union([z.string(), z.number()]).transform(val => String(val)).default("0"),
-    camping_unit: z.string().min(1, "Camping unit type is missing"),
+    adults: z.coerce.number().int().min(1, "Invalid adult count"),
+    children: z.coerce.number().int().min(0, "Invalid children count"),
+    rv_length: z.union([z.string(), z.number(), z.null()]).transform(val => val === null ? null : String(val)).nullable(),
+    camping_unit: z.string().min(1, "Camping unit is missing"),
     contact_method: z.enum(["Phone", "Email", "Either"], {
         message: "Invalid contact method in database"
     }),
@@ -91,6 +91,10 @@ export const databaseReservationSchema = z.object({
     // References
     campsite_id: z.string().uuid().nullable().optional(),
     public_edit_token_hash: z.string().nullable().optional(),
-});
+
+    // Allow timestamps and other DB-managed fields
+    email_sent_at: z.string().nullable().optional(),
+    archived_at: z.string().nullable().optional(),
+}).strict(); // Enforce exact schema - no extra fields allowed
 
 export type DatabaseReservation = z.infer<typeof databaseReservationSchema>;
