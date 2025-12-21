@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { AlertTriangle, X, Wrench } from "lucide-react";
-import { supabase, type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
+import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
 import StatusPill from "@/components/admin/StatusPill";
 import RowActions from "@/components/admin/RowActions";
 import ReservationDrawer from "@/components/admin/calendar/ReservationDrawer";
@@ -37,18 +37,22 @@ export default function AdminPage() {
     }, []);
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
-        const { error } = await supabase
-            .from('reservations')
-            .update({ status })
-            .eq('id', id);
+        try {
+            const response = await fetch(`/api/admin/reservations/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ status })
+            });
 
-        if (error) {
+            if (!response.ok) {
+                throw new Error('Failed to update status');
+            }
+
+            fetchReservations();
+        } catch (error) {
             console.error('Error updating status:', error);
             alert('Failed to update status');
-            return;
         }
-
-        fetchReservations();
     };
 
     const fetchReservations = async () => {

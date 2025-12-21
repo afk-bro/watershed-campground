@@ -12,10 +12,22 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
     apiVersion: "2025-11-17.clover" as any,
 });
 
-const manageUrl = process.env.NEXT_PUBLIC_BASE_URL ? `${process.env.NEXT_PUBLIC_BASE_URL}/manage-reservation` : 'http://localhost:3000/manage-reservation';
-
 export async function POST(request: Request) {
     try {
+        // Validate NEXT_PUBLIC_BASE_URL in production
+        let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
+        if (!baseUrl) {
+            if (process.env.NODE_ENV === 'production') {
+                console.error("ERROR: NEXT_PUBLIC_BASE_URL environment variable must be set in production.");
+                return NextResponse.json(
+                    { error: "Server misconfiguration: NEXT_PUBLIC_BASE_URL is required in production." },
+                    { status: 500 }
+                );
+            }
+            baseUrl = 'http://localhost:3000';
+        }
+        const manageUrl = `${baseUrl}/manage-reservation`;
+
         const body = await request.json();
         const { paymentIntentId, paymentMethod, ...formDataRaw } = body;
 
@@ -132,7 +144,7 @@ export async function POST(request: Request) {
             // Note: IP hash could be added here with req.headers.get('x-forwarded-for') if needed
         };
 
-        const reservation = await createReservationRecord(
+        const { reservation, rawToken } = await createReservationRecord(
             { supabase: supabaseAdmin },
             formData,
             recommendedSiteId,
@@ -141,34 +153,44 @@ export async function POST(request: Request) {
             auditContext
         );
 
+        // Construct magic link with properly encoded query parameters
+        const magicLinkUrl = `${manageUrl}?rid=${encodeURIComponent(reservation.id)}&t=${encodeURIComponent(rawToken)}`;
+
         // 6. Send Emails (Async, don't block response)
         // Only sending critical emails here. Stripe webhooks handle the rest usually, but keeping pay-in-person logic.
         if (paymentMethod === 'in-person') {
             const resend = new Resend(process.env.RESEND_API_KEY);
             const name = `${formData.firstName} ${formData.lastName}`;
 
-            // Admin Notification
-            await resend.emails.send({
-                from: "The Watershed Campground <onboarding@resend.dev>",
-                to: ["info@thewatershedcampground.com"],
-                replyTo: formData.email,
-                subject: `New Reservation Request: ${name}`,
-                html: generateAdminNotificationHtml({ ...formData, confirmationUrl: manageUrl }, name)
-            });
+            try {
+                // Admin Notification
+                await resend.emails.send({
+                    from: "The Watershed Campground <onboarding@resend.dev>",
+                    to: ["info@thewatershedcampground.com"],
+                    replyTo: formData.email,
+                    subject: `New Reservation Request: ${name}`,
+                    html: generateAdminNotificationHtml({ ...formData, confirmationUrl: magicLinkUrl }, name)
+                });
 
-            // Guest Confirmation
-            await resend.emails.send({
-                from: "The Watershed Campground <onboarding@resend.dev>",
-                to: [formData.email],
-                subject: "Reservation Confirmed",
-                html: generateGuestConfirmationHtml(
-                    { ...formData, confirmationUrl: manageUrl },
-                    formData.firstName,
-                    paymentContext.paymentStatus,
-                    paymentContext.amountPaid,
-                    paymentContext.balanceDue
-                )
-            });
+                // Guest Confirmation
+                await resend.emails.send({
+                    from: "The Watershed Campground <onboarding@resend.dev>",
+                    to: [formData.email],
+                    subject: "Reservation Confirmed",
+                    html: generateGuestConfirmationHtml(
+                        { ...formData, confirmationUrl: magicLinkUrl },
+                        formData.firstName,
+                        paymentContext.paymentStatus,
+                        paymentContext.amountPaid,
+                        paymentContext.balanceDue
+                    )
+                });
+            } catch (emailError) {
+                // Log email failure but don't fail the entire request
+                console.error("Failed to send reservation emails:", emailError);
+                // Note: The reservation was successfully created, but email failed
+                // Consider implementing a retry mechanism or background job
+            }
 
             // Update email sent status
             await supabaseAdmin.from('reservations').update({ email_sent_at: new Date().toISOString() }).eq('id', reservation.id);

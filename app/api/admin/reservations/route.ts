@@ -1,9 +1,39 @@
 import { NextResponse } from "next/server";
+import { createServerClient } from '@supabase/ssr';
+import { cookies } from 'next/headers';
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { OverviewItem, ReservationOverviewItem, BlockingEventOverviewItem } from "@/lib/supabase";
 
 export async function GET() {
     try {
+        // Server-side authentication check
+        const cookieStore = await cookies();
+        const supabase = createServerClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+            {
+                cookies: {
+                    getAll() {
+                        return cookieStore.getAll();
+                    },
+                    setAll(cookiesToSet) {
+                        cookiesToSet.forEach(({ name, value, options }) => {
+                            cookieStore.set(name, value, options);
+                        });
+                    },
+                },
+            }
+        );
+
+        const { data: { user }, error: authError } = await supabase.auth.getUser();
+        
+        if (authError || !user) {
+            return NextResponse.json(
+                { error: "Unauthorized: Authentication required" },
+                { status: 401 }
+            );
+        }
+
         // Fetch reservations
         const { data: reservations, error: reservationsError } = await supabaseAdmin
             .from('reservations')
