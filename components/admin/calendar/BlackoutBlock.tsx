@@ -22,6 +22,7 @@ interface BlackoutBlockProps {
   onResizeStart: (blackout: BlackoutDate, side: ResizeSide) => void;
   isDragging?: boolean;
   isResizing?: boolean;
+  isGlobalDragging?: boolean;
 }
 
 function BlackoutBlock({
@@ -34,6 +35,7 @@ function BlackoutBlock({
   onResizeStart,
   isDragging = false,
   isResizing = false,
+  isGlobalDragging = false,
 }: BlackoutBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -80,7 +82,9 @@ function BlackoutBlock({
     <div
       className={`absolute top-1 bottom-1 rounded-md text-xs font-medium px-2 py-1 flex items-center gap-1.5 shadow-sm border-2 truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${colorClass} ${
         isDragging ? 'opacity-40' : ''
-      } ${isResizing ? 'opacity-60' : ''}`}
+      } ${isResizing ? 'opacity-60' : ''} ${
+        isGlobalDragging && !isDragging ? 'pointer-events-none' : ''
+      }`}
       style={{
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,
@@ -98,6 +102,8 @@ function BlackoutBlock({
       onClick={() => onSelect(blackout)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      title={`${blackout.reason || "Unavailable"}
+${format(startDateObj, 'MMM d')} - ${format(endDateObj, 'MMM d')}`}
     >
       {/* Left Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
@@ -139,6 +145,7 @@ export default memo(BlackoutBlock, (prevProps, nextProps) => {
     prevProps.blackout.campsite_id === nextProps.blackout.campsite_id &&
     prevProps.isDragging === nextProps.isDragging &&
     prevProps.isResizing === nextProps.isResizing &&
+    prevProps.isGlobalDragging === nextProps.isGlobalDragging &&
     prevProps.monthStart.getTime() === nextProps.monthStart.getTime() &&
     prevProps.monthEnd.getTime() === nextProps.monthEnd.getTime()
   );

@@ -16,6 +16,7 @@ interface ReservationBlockProps {
   onResizeStart: (reservation: Reservation, side: ResizeSide) => void;
   isDragging?: boolean;
   isResizing?: boolean;
+  isGlobalDragging?: boolean;
 }
 
 function ReservationBlock({
@@ -28,6 +29,7 @@ function ReservationBlock({
   onResizeStart,
   isDragging = false,
   isResizing = false,
+  isGlobalDragging = false,
 }: ReservationBlockProps) {
   const [isHovered, setIsHovered] = useState(false);
 
@@ -96,13 +98,17 @@ function ReservationBlock({
     <div
       className={`absolute top-1 bottom-1 rounded-md text-xs font-medium px-2 py-1 flex items-center gap-1 shadow-sm border truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${colorClass} ${
         isDragging ? 'opacity-40' : ''
-      } ${isResizing ? 'opacity-60' : ''}`}
+      } ${isResizing ? 'opacity-60' : ''} ${
+        isGlobalDragging && !isDragging ? 'pointer-events-none' : ''
+      }`}
       style={{
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,
         cursor: isInteractive && !isResizing ? 'grab' : 'pointer',
       }}
       draggable={isInteractive && !isResizing}
+      data-reservation-id={reservation.id}
+      data-testid={`reservation-block-${reservation.id}`}
       onDragStart={(e) => {
         // Don't allow drag to start if we're resizing or hovering over handles
         if (isResizing || !isInteractive) {
@@ -115,6 +121,10 @@ function ReservationBlock({
       onClick={() => onSelect(reservation)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
+      title={`${reservation.last_name}, ${reservation.first_name}
+${format(checkIn, 'MMM d')} - ${format(checkOut, 'MMM d')}
+${reservation.status}
+${reservation.camping_unit || 'No equipment'}`}
     >
       {/* Left Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
@@ -122,6 +132,7 @@ function ReservationBlock({
           className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-1/2 w-2 h-8 bg-[var(--color-surface-card)]/80 border border-[var(--color-border-strong)] rounded-full cursor-ew-resize hover:bg-[var(--color-surface-card)] hover:border-[var(--color-border-strong)] transition-surface z-20"
           onPointerDown={handleLeftResizeStart}
           style={{ touchAction: 'none' }}
+          data-testid="resize-handle-left"
         />
       )}
 
@@ -140,6 +151,7 @@ function ReservationBlock({
           className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-1/2 w-2 h-8 bg-[var(--color-surface-card)]/80 border border-[var(--color-border-strong)] rounded-full cursor-ew-resize hover:bg-[var(--color-surface-card)] hover:border-[var(--color-border-strong)] transition-surface z-20"
           onPointerDown={handleRightResizeStart}
           style={{ touchAction: 'none' }}
+          data-testid="resize-handle-right"
         />
       )}
     </div>
@@ -157,6 +169,7 @@ export default memo(ReservationBlock, (prevProps, nextProps) => {
     prevProps.reservation.campsite_id === nextProps.reservation.campsite_id &&
     prevProps.isDragging === nextProps.isDragging &&
     prevProps.isResizing === nextProps.isResizing &&
+    prevProps.isGlobalDragging === nextProps.isGlobalDragging &&
     prevProps.monthStart.getTime() === nextProps.monthStart.getTime() &&
     prevProps.monthEnd.getTime() === nextProps.monthEnd.getTime()
   );

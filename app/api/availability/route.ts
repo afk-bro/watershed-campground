@@ -29,7 +29,7 @@ export async function POST(request: Request) {
 
         const body = await request.json();
 
-        const { checkIn, checkOut, guestCount } = body;
+        const { checkIn, checkOut, guestCount, campsiteId } = body;
 
         // Validate required fields
         if (!checkIn || !checkOut || !guestCount) {
@@ -51,6 +51,7 @@ export async function POST(request: Request) {
             checkIn,
             checkOut,
             guestCount: Number(guestCount),
+            campsiteId, // Pass campsiteId if provided
         });
 
         // Return availability result with rate limit headers
