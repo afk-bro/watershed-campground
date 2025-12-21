@@ -11,7 +11,7 @@ export type SearchParams = {
     checkOut: string;
     guestCount: number;
     rvLength?: number;
-    unitType?: string;
+    unitType?: 'Tent' | 'RV / Trailer' | 'Camper Van' | 'Cabin' | '';
 };
 
 /**
@@ -109,7 +109,7 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
  * Searches for specific campsites matching criteria.
  */
 export async function searchCampsites(params: SearchParams) {
-    const { checkIn, checkOut, guestCount, rvLength } = params;
+    const { checkIn, checkOut, guestCount, rvLength, unitType } = params;
 
     // 1. Get all conflicting IDs (same logic as availability.ts)
     const { data: conflicting } = await supabaseAdmin
@@ -142,6 +142,14 @@ export async function searchCampsites(params: SearchParams) {
         .gte('max_guests', guestCount)
         .order('sort_order', { ascending: true });
 
+    // Apply unit type filter for determinism (e.g., RV vs Tent)
+    const normalizedUnit = (unitType || '').toLowerCase();
+    if (normalizedUnit.includes('rv')) {
+        query.eq('type', 'rv');
+    } else if (normalizedUnit.includes('tent')) {
+        query.eq('type', 'tent');
+    }
+
     // Note: We don't filter RV length / unit type in SQL yet because schema might vary,
     // assuming we filter in memory or they are simple columns.
     // Let's assume schema has 'max_rv_length'.
@@ -158,8 +166,11 @@ export async function searchCampsites(params: SearchParams) {
             return false;
         }
 
-        // Filter by Unit Type (if logic exists - conventionally checked against site type)
-        // For MVP, we ignore strict Unit Type matching unless site.type is incompatible.
+        // If unit type was specified, ensure site type matches to avoid cross-type suggestions
+        if (normalizedUnit) {
+            if (normalizedUnit.includes('rv') && site.type !== 'rv') return false;
+            if (normalizedUnit.includes('tent') && site.type !== 'tent') return false;
+        }
 
         return true;
     });

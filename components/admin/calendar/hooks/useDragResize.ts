@@ -89,16 +89,15 @@ export interface UseDragResizeReturn {
   };
 }
 
+type ThrottledDragPreview = ((campsiteId: string, dateStr: string) => void) & { cancel: () => void };
+type ThrottledResizePreview = ((e: PointerEvent) => void) & { cancel: () => void };
 
-
-type ThrottledFn<T extends (...args: unknown[]) => void> = ((...args: Parameters<T>) => void) & { cancel: () => void };
-
-function createThrottle<T extends (...args: unknown[]) => void>(fn: T, wait: number): ThrottledFn<T> {
+function createThrottleDrag(fn: (campsiteId: string, dateStr: string) => void, wait: number): ThrottledDragPreview {
   let timeout: ReturnType<typeof setTimeout> | null = null;
-  let lastArgs: Parameters<T> | null = null;
+  let lastArgs: [string, string] | null = null;
 
-  const throttled = (...args: Parameters<T>) => {
-    lastArgs = args;
+  const throttled = (campsiteId: string, dateStr: string) => {
+    lastArgs = [campsiteId, dateStr];
 
     if (!timeout) {
       timeout = setTimeout(() => {
@@ -122,6 +121,33 @@ function createThrottle<T extends (...args: unknown[]) => void>(fn: T, wait: num
   return throttled;
 }
 
+function createThrottleResize(fn: (e: PointerEvent) => void, wait: number): ThrottledResizePreview {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
+  let lastEvt: PointerEvent | null = null;
+
+  const throttled = (e: PointerEvent) => {
+    lastEvt = e;
+    if (!timeout) {
+      timeout = setTimeout(() => {
+        if (lastEvt) {
+          fn(lastEvt);
+        }
+        timeout = null;
+        lastEvt = null;
+      }, wait);
+    }
+  };
+
+  throttled.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = null;
+    lastEvt = null;
+  };
+
+  return throttled;
+}
 
 export interface UseDragResizeConfig {
   monthStart: Date;
@@ -179,8 +205,8 @@ export function useDragResize({
   const validationErrorRef = useRef<string | null>(null);
   const resizeStateRef = useRef<ResizeState | null>(null);
   const dragOffsetDaysRef = useRef<number>(0);
-  const throttledDragPreviewRef = useRef<ThrottledFn<(campsiteId: string, dateStr: string) => void> | null>(null);
-  const throttledResizePreviewRef = useRef<ThrottledFn<(e: PointerEvent) => void> | null>(null);
+  const throttledDragPreviewRef = useRef<ThrottledDragPreview | null>(null);
+  const throttledResizePreviewRef = useRef<ThrottledResizePreview | null>(null);
 
   // Sync refs with state
   useEffect(() => { draggedItemRef.current = draggedItem; }, [draggedItem]);
@@ -304,7 +330,7 @@ export function useDragResize({
 
   // Create throttled drag preview updater after render to avoid accessing refs during render
   useEffect(() => {
-    const fn = createThrottle((campsiteId: string, dateStr: string) => {
+    const fn = createThrottleDrag((campsiteId: string, dateStr: string) => {
       updateDragPreview(campsiteId, dateStr);
     }, 16);
 
@@ -462,7 +488,7 @@ export function useDragResize({
 
   // Throttled resize handler - 16ms for smooth ~60fps
   useEffect(() => {
-    const fn = createThrottle((e: PointerEvent) => {
+    const fn = createThrottleResize((e: PointerEvent) => {
       updateResizePreview(e);
     }, 16);
 

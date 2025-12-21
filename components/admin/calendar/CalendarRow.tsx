@@ -134,7 +134,12 @@ function CalendarRow({
           );
 
           const isInSelection = isCreating && selection?.campsiteId === resourceId && dayStr >= selection.start && dayStr <= selection.end;
-          const isDragHovered = isDragging && dragPreview?.campsiteId === resourceId && dragPreview?.startDate === dayStr;
+          const hasDragPreview = (p: unknown): p is { campsiteId: string; startDate: string } => {
+            if (!p || typeof p !== 'object') return false;
+            const o = p as Record<string, unknown>;
+            return typeof o.campsiteId === 'string' && typeof o.startDate === 'string';
+          };
+          const isDragHovered = isDragging && hasDragPreview(dragPreview) && dragPreview.campsiteId === resourceId && dragPreview.startDate === dayStr;
 
           return (
             <CalendarCell

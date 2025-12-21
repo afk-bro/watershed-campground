@@ -21,11 +21,12 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
                  const res = await fetch('/api/availability/search', {
                      method: 'POST',
                      headers: { 'Content-Type': 'application/json' },
-                     body: JSON.stringify({
+                         body: JSON.stringify({
                          checkIn: searchParams.checkIn,
                          checkOut: searchParams.checkOut,
                          guestCount: searchParams.guests,
-                         rvLength: searchParams.rvLength
+                         rvLength: searchParams.rvLength,
+                         unitType: searchParams.unitType
                      })
                  });
                  if (res.ok) {

@@ -83,13 +83,30 @@ export async function POST(request: Request) {
         // Verify Add-on Prices
         let addonsTotal = 0;
         let validAddons: Array<{ id: string; quantity: number; price: number }> = [];
-        if (formData.addons.length > 0) {
-            const { data: dbAddons } = await supabaseAdmin.from('addons').select('id, price').in('id', formData.addons.map((a: { id: string; quantity: number }) => a.id));
-            if (dbAddons) {
-                validAddons = formData.addons.map((item: { id: string; quantity: number }) => {
-                    const dbItem = dbAddons.find((d: { id: string; price: number }) => d.id === item.id);
-                    return dbItem ? { ...item, price: dbItem.price } : null;
-                }).filter(Boolean);
+        if (Array.isArray(formData.addons) && formData.addons.length > 0) {
+            type DbAddon = { id: string; price: number };
+            const addonIds = formData.addons
+                .filter((a: unknown): a is { id: string; quantity: number } => {
+                    return !!a && typeof a === 'object' && 'id' in (a as Record<string, unknown>) && 'quantity' in (a as Record<string, unknown>);
+                })
+                .map(a => a.id);
+
+            const { data: dbAddons } = await supabaseAdmin
+                .from('addons')
+                .select('id, price')
+                .in('id', addonIds);
+
+            if (Array.isArray(dbAddons)) {
+                const dbIndex = new Map<string, number>(dbAddons.map((d: DbAddon) => [d.id, d.price]));
+                validAddons = formData.addons
+                    .filter((item: unknown): item is { id: string; quantity: number } => {
+                        return !!item && typeof item === 'object' && 'id' in (item as Record<string, unknown>) && 'quantity' in (item as Record<string, unknown>);
+                    })
+                    .map((item) => {
+                        const price = dbIndex.get(item.id);
+                        return typeof price === 'number' ? { id: item.id, quantity: item.quantity, price } : null;
+                    })
+                    .filter((x): x is { id: string; quantity: number; price: number } => x !== null);
                 addonsTotal = validAddons.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             }
         }
