@@ -1,6 +1,7 @@
 "use client";
 
 import { useRouter, usePathname } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
@@ -62,13 +63,13 @@ export default function AdminLayout({
                         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                             <div className="flex items-center justify-between h-16">
                                 <div className="flex items-center gap-4">
-                                    <a
+                                    <Link
                                         href="/"
                                         className="text-accent-beige/60 hover:text-accent-beige text-xs transition-colors flex items-center gap-1"
                                         title="View public site"
                                     >
                                         ← Site
-                                    </a>
+                                    </Link>
                                     <div className="h-6 w-px bg-accent-beige/20"></div>
                                     <h1 className="text-xl font-heading font-bold text-accent-gold">
                                         Admin Panel

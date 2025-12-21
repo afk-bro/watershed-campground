@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Container from "@/components/Container";
 import Link from "next/link";
 import { format } from "date-fns";
@@ -19,11 +19,7 @@ export default function ReportsPage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
 
-    useEffect(() => {
-        fetchReport();
-    }, [month]);
-
-    const fetchReport = async () => {
+    const fetchReport = useCallback(async () => {
         setLoading(true);
         setError("");
         try {
@@ -37,7 +33,11 @@ export default function ReportsPage() {
         } finally {
             setLoading(false);
         }
-    };
+    }, [month]);
+
+    useEffect(() => {
+        void fetchReport();
+    }, [fetchReport]);
 
     return (
         <div className="py-12 bg-[var(--color-surface-elevated)] min-h-screen">

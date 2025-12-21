@@ -119,12 +119,12 @@ test.describe('Reservation Mapper Regression Tests', () => {
     const testCases = [
       {
         name: 'adults as string coerces to number',
-        input: { adults: "3" as any },
+        input: { adults: "3" as unknown },
         expected: { adults: 3 }
       },
       {
         name: 'children as string coerces to number',
-        input: { children: "2" as any },
+        input: { children: "2" as unknown },
         expected: { children: 2 }
       },
       {
@@ -144,7 +144,7 @@ test.describe('Reservation Mapper Regression Tests', () => {
       },
       {
         name: 'rv_length number becomes string',
-        input: { rvLength: 28 as any },
+        input: { rvLength: 28 as unknown },
         expected: { rv_length: "28" }
       },
       {

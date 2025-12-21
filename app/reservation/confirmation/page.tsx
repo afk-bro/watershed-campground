@@ -1,7 +1,8 @@
 import { createClient } from "@supabase/supabase-js";
 import { notFound } from "next/navigation";
+import Link from "next/link";
 import ReservationSuccess from "@/components/booking/ReservationSuccess";
-import { PaymentMethod, FormData, ContactMethod } from "@/lib/booking/booking-types";
+import { PaymentMethod, FormData } from "@/lib/booking/booking-types";
 import { databaseReservationSchema } from "@/lib/reservation/validation";
 
 // Admin client to fetch reservation details (bypassing RLS)
@@ -56,12 +57,12 @@ export default async function ConfirmationPage({ searchParams }: PageProps) {
                 Reservation ID: <span className="font-mono text-accent-gold">{id}</span>
               </p>
             </div>
-            <a
+            <Link
               href="/"
               className="inline-block bg-accent-gold hover:bg-accent-gold-dark text-brand-forest font-bold px-6 py-3 rounded-lg transition-colors"
             >
               Return Home
-            </a>
+            </Link>
           </div>
         </div>
       </main>

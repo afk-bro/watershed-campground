@@ -100,7 +100,7 @@ test.describe('Reservation Service', () => {
         const mockSupabase = {
             from: (table: string) => {
                 return {
-                    insert: (data: any[]) => {
+                    insert: (data: unknown[]) => {
                         return {
                             select: () => ({
                                 single: async () => {
@@ -115,9 +115,9 @@ test.describe('Reservation Service', () => {
                     }
                 };
             }
-        } as any;
+        } as unknown as { from: (table: string) => unknown };
 
-        const formData: any = {
+        const formData: Record<string, unknown> = {
             firstName: "Test", lastName: "User", email: "test@user.com",
             // ... other req fields simplified for test
             checkIn: "2024-01-01", checkOut: "2024-01-02",

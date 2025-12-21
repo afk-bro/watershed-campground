@@ -37,8 +37,8 @@ export default function AdminSettingsPage() {
             setMessage({ type: 'success', text: 'Password updated successfully!' });
             setNewPassword('');
             setConfirmPassword('');
-        } catch (err: any) {
-            setMessage({ type: 'error', text: err.message || 'Failed to update password' });
+        } catch (err: unknown) {
+            setMessage({ type: 'error', text: err instanceof Error ? err.message : 'Failed to update password' });
         } finally {
             setLoading(false);
         }

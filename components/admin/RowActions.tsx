@@ -1,27 +1,21 @@
 import { Check, X, LogIn, LogOut } from "lucide-react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
+import type { LucideIcon } from "lucide-react";
 
 type Props = {
     reservation: Reservation;
     updateStatus: (id: string, status: ReservationStatus) => void;
 };
 
-export default function RowActions({ reservation, updateStatus }: Props) {
-    const { id, status } = reservation;
+type ActionButtonProps = {
+    onClick: () => void;
+    icon: LucideIcon;
+    colorClass: string;
+    title: string;
+};
 
-    if (!id) return null;
-
-    const ActionButton = ({ 
-        onClick, 
-        icon: Icon, 
-        colorClass, 
-        title 
-    }: { 
-        onClick: () => void; 
-        icon: typeof Check; 
-        colorClass: string; 
-        title: string;
-    }) => (
+function ActionButton({ onClick, icon: Icon, colorClass, title }: ActionButtonProps) {
+    return (
         <button
             onClick={(e) => {
                 e.stopPropagation();
@@ -33,6 +27,12 @@ export default function RowActions({ reservation, updateStatus }: Props) {
             <Icon size={16} />
         </button>
     );
+}
+
+export default function RowActions({ reservation, updateStatus }: Props) {
+    const { id, status } = reservation;
+
+    if (!id) return null;
 
     if (status === 'pending') {
         return (

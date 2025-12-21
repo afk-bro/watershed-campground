@@ -9,7 +9,7 @@ import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/res
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: "2025-11-17.clover" as any,
+    apiVersion: "2025-11-17.clover" as const,
 });
 
 export async function POST(request: Request) {
@@ -82,14 +82,31 @@ export async function POST(request: Request) {
 
         // Verify Add-on Prices
         let addonsTotal = 0;
-        let validAddons: any[] = [];
-        if (formData.addons.length > 0) {
-            const { data: dbAddons } = await supabaseAdmin.from('addons').select('id, price').in('id', formData.addons.map(a => a.id));
-            if (dbAddons) {
-                validAddons = formData.addons.map(item => {
-                    const dbItem = dbAddons.find(d => d.id === item.id);
-                    return dbItem ? { ...item, price: dbItem.price } : null;
-                }).filter(Boolean);
+        let validAddons: Array<{ id: string; quantity: number; price: number }> = [];
+        if (Array.isArray(formData.addons) && formData.addons.length > 0) {
+            type DbAddon = { id: string; price: number };
+            const addonIds = formData.addons
+                .filter((a: unknown): a is { id: string; quantity: number } => {
+                    return !!a && typeof a === 'object' && 'id' in (a as Record<string, unknown>) && 'quantity' in (a as Record<string, unknown>);
+                })
+                .map(a => a.id);
+
+            const { data: dbAddons } = await supabaseAdmin
+                .from('addons')
+                .select('id, price')
+                .in('id', addonIds);
+
+            if (Array.isArray(dbAddons)) {
+                const dbIndex = new Map<string, number>(dbAddons.map((d: DbAddon) => [d.id, d.price]));
+                validAddons = formData.addons
+                    .filter((item: unknown): item is { id: string; quantity: number } => {
+                        return !!item && typeof item === 'object' && 'id' in (item as Record<string, unknown>) && 'quantity' in (item as Record<string, unknown>);
+                    })
+                    .map((item) => {
+                        const price = dbIndex.get(item.id);
+                        return typeof price === 'number' ? { id: item.id, quantity: item.quantity, price } : null;
+                    })
+                    .filter((x): x is { id: string; quantity: number; price: number } => x !== null);
                 addonsTotal = validAddons.reduce((sum, item) => sum + (item.price * item.quantity), 0);
             }
         }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Addon, PaymentBreakdown, PaymentMethod, FormData } from "@/lib/booking/booking-types";
 
 interface UseReservationFlowProps {
@@ -56,15 +56,23 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
             .catch(err => console.error("Failed to load addons", err));
     }, []);
 
-    const handleWizardComplete = (data: any) => {
+    const handleWizardComplete = (data: unknown) => {
+        const payload = (data ?? {}) as {
+            checkIn?: string;
+            checkOut?: string;
+            guests?: number;
+            rvLength?: number;
+            unitType?: string;
+            selectedSite?: { id?: string } | null;
+        };
         setFormData(prev => ({
             ...prev,
-            checkIn: data.checkIn,
-            checkOut: data.checkOut,
-            adults: data.guests,
-            rvLength: data.rvLength?.toString() || "",
-            campingUnit: data.unitType,
-            campsiteId: data.selectedSite?.id || ""
+            checkIn: payload.checkIn || prev.checkIn,
+            checkOut: payload.checkOut || prev.checkOut,
+            adults: String(payload.guests ?? prev.adults),
+            rvLength: (payload.rvLength ?? Number(prev.rvLength || 0)).toString(),
+            campingUnit: payload.unitType || prev.campingUnit || "Other",
+            campsiteId: payload.selectedSite?.id || prev.campsiteId || ""
         }));
         setView('form');
         // We assume the wizard handles its own scroll or the page will handle scroll on view change
@@ -99,8 +107,11 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
 
         if (!formData.phone.trim()) {
             errors.phone = "Phone number is required";
-        } else if (!/^[\d\s\(\)\-\+]+$/.test(formData.phone)) {
-            errors.phone = "Please enter a valid phone number";
+        } else {
+            const digitsOnly = formData.phone.replace(/\D/g, "");
+            if (digitsOnly.length < 10) {
+                errors.phone = "Phone number must be at least 10 digits";
+            }
         }
 
         if (!formData.email.trim()) {
@@ -142,7 +153,7 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
             }
 
             const addonsPayload = Object.entries(selectedAddons)
-                .filter(([_, qty]) => qty > 0)
+                .filter(([, qty]) => qty > 0)
                 .map(([id, qty]) => {
                     const addon = availableAddons.find(a => a.id === id);
                     return { id, quantity: qty, price: addon?.price || 0 };
@@ -193,7 +204,7 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
         setStatus("loading");
         try {
             const addonsPayload = Object.entries(selectedAddons)
-                .filter(([_, qty]) => qty > 0)
+                .filter(([, qty]) => qty > 0)
                 .map(([id, qty]) => {
                     const addon = availableAddons.find(a => a.id === id);
                     return { id, quantity: qty, price: addon?.price || 0 };
