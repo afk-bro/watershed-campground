@@ -60,6 +60,10 @@ export type Reservation = {
     contact_method: string;
     comments?: string;
     status: ReservationStatus;
+    /**
+     * Hash of the public edit token. Sensitive; do not expose to clients.
+     */
+    public_edit_token_hash?: string;
     campsite_id?: string;
     locked?: boolean;
     archived_at?: string | null;
