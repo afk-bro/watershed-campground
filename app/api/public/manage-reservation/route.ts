@@ -17,6 +17,13 @@ export async function POST(req: Request) {
             );
         }
 
+        // Validate token format: must be a 64-character hex string
+        if (!/^[a-f0-9]{64}$/.test(token)) {
+            return NextResponse.json(
+                { error: 'Invalid token format' },
+                { status: 400 }
+            );
+        }
         const tokenHash = hashToken(token);
 
         const { data, error } = await supabaseAdmin
