@@ -41,21 +41,34 @@ export default function BookingWizard({ onComplete }: BookingWizardProps) {
             {/* Progress Bar */}
             <div className="flex items-center justify-between mb-8 px-4 relative">
                 <div className="absolute top-1/2 left-0 w-full h-0.5 bg-[var(--color-border-subtle)] -z-10"></div>
-                
-                {[1, 2, 3].map(i => (
-                    <div key={i} className={`flex flex-col items-center gap-2 bg-[var(--color-background)] px-2 ${step >= i ? 'text-[var(--color-accent-gold)]' : 'text-[var(--color-text-muted)]'}`}>
-                         <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
-                             step >= i 
-                             ? 'bg-[var(--color-brand-forest)] border-[var(--color-accent-gold)]' 
-                             : 'bg-[var(--color-surface-elevated)] border-[var(--color-border-subtle)]'
-                         }`}>
-                             {step > i ? '✓' : i}
-                         </div>
-                         <span className="text-xs font-medium hidden sm:block">
-                             {i === 1 ? 'Dates' : i === 2 ? 'Details' : 'Select Site'}
-                         </span>
-                    </div>
-                ))}
+
+                {[1, 2, 3].map(i => {
+                    // Can navigate to step if: it's step 1, OR dates are selected, OR (step 3 and details filled)
+                    const canNavigate = i === 1 || (i === 2 && bookingData.checkIn && bookingData.checkOut) || (i === 3 && bookingData.checkIn && bookingData.unitType);
+                    const isClickable = canNavigate && i !== step;
+
+                    return (
+                        <button
+                            key={i}
+                            onClick={() => isClickable && goToStep(i)}
+                            disabled={!isClickable}
+                            className={`flex flex-col items-center gap-2 bg-[var(--color-background)] px-2 transition-all ${
+                                step >= i ? 'text-[var(--color-accent-gold)]' : 'text-[var(--color-text-muted)]'
+                            } ${isClickable ? 'cursor-pointer hover:scale-105' : step === i ? 'cursor-default' : 'cursor-not-allowed opacity-60'}`}
+                        >
+                             <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 transition-all ${
+                                 step >= i
+                                 ? 'bg-[var(--color-brand-forest)] border-[var(--color-accent-gold)]'
+                                 : 'bg-[var(--color-surface-elevated)] border-[var(--color-border-subtle)]'
+                             } ${isClickable ? 'hover:border-[var(--color-accent-gold)] hover:shadow-lg' : ''}`}>
+                                 {step > i ? '✓' : i}
+                             </div>
+                             <span className="text-xs font-medium hidden sm:block">
+                                 {i === 1 ? 'Dates' : i === 2 ? 'Details' : 'Select Site'}
+                             </span>
+                        </button>
+                    );
+                })}
             </div>
 
             {/* Content */}
