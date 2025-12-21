@@ -43,7 +43,7 @@ interface CalendarCellProps {
   onDragOver: (resourceId: string, dateStr: string) => void;
 
   /** Drop handler */
-  onDrop: (e: React.DragEvent) => void;
+  onDrop: (e: React.DragEvent, resourceId: string, dateStr: string) => void;
 
   /** Mouse down handler (start selection) */
   onMouseDown: (resourceId: string, dateStr: string) => void;
@@ -106,9 +106,13 @@ function CalendarCell({
       className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${dragHoverClass} ${selectionClass}`}
       onDragOver={(e) => {
         e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
         onDragOver(resourceId, dateStr);
       }}
-      onDrop={onDrop}
+      onDrop={(e) => {
+        console.log('[CELL DROP]', { dateStr, resourceId }); 
+        onDrop(e, resourceId, dateStr);
+      }}
       onMouseDown={() => onMouseDown(resourceId, dateStr)}
       onMouseEnter={() => onMouseEnter(resourceId, dateStr)}
     />

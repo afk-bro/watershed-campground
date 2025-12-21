@@ -9,62 +9,36 @@
  */
 
 import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
-import { format, parseISO, differenceInDays, addDays, subDays } from 'date-fns';
+import { format, parseISO } from 'date-fns';
 import type { Reservation, Campsite, BlackoutDate } from '@/lib/supabase';
 import type { GhostState } from '@/lib/calendar/calendar-types';
 import {
   isDateInMonthRange,
-  calculateNewEndDate,
   getDateFromPointer,
   calculateDragOffset,
 } from '@/lib/calendar/calendar-utils';
-import { validateMove } from '@/lib/calendar/calendar-validation';
+import {
+  computeDragDates,
+  computeResizeDates,
+  validateCandidate,
+  buildGhostState,
+  DragResizeItem,
+  getStartDate,
+  getEndDate
+} from './drag-helpers';
+
+// Re-export DragResizeItem for use in other components
+export type { DragResizeItem } from './drag-helpers';
 
 type ResizeSide = "left" | "right";
 
-// ============================================================================
-// Type Guards and Helpers
-// ============================================================================
-
-/**
- * Union type for items that can be dragged/resized
- */
-export type DragResizeItem = Reservation | BlackoutDate;
-
-/**
- * Type guard: Check if item is a reservation
- */
-function isReservation(item: DragResizeItem): item is Reservation {
-  return 'check_in' in item && 'check_out' in item;
-}
-
-/**
- * Type guard: Check if item is a blackout date
- */
-function isBlackout(item: DragResizeItem): item is BlackoutDate {
-  return 'start_date' in item && 'end_date' in item;
-}
-
-/**
- * Get start date from either reservation or blackout
- */
-function getStartDate(item: DragResizeItem): string {
-  return isReservation(item) ? item.check_in : item.start_date;
-}
-
-/**
- * Get end date from either reservation or blackout
- */
-function getEndDate(item: DragResizeItem): string {
-  return isReservation(item) ? item.check_out : item.end_date;
-}
-
-/**
- * Get campsite ID from either reservation or blackout
- */
 function getCampsiteId(item: DragResizeItem): string {
-  const id = isReservation(item) ? item.campsite_id : item.campsite_id;
+  const id = 'campsite_id' in item ? item.campsite_id : null;
   return id || 'UNASSIGNED';
+}
+
+function isReservation(item: DragResizeItem): item is Reservation {
+  return 'check_in' in item;
 }
 
 interface DragPreview {
@@ -74,7 +48,7 @@ interface DragPreview {
   itemType: 'reservation' | 'blackout';
 }
 
-interface ResizeState {
+export interface ResizeState {
   item: DragResizeItem;
   side: ResizeSide;
   originalStartDate: string;
@@ -98,7 +72,7 @@ export interface UseDragResizeReturn {
   // Drag handlers (overloaded)
   handleDragStart: (e: React.DragEvent, item: DragResizeItem) => void;
   handleDragOverCell: (campsiteId: string, dateStr: string) => void;
-  handleDrop: (e: React.DragEvent) => void;
+  handleDrop: (e: React.DragEvent, campsiteId: string, dateStr: string) => void;
   handleDragEnd: () => void;
 
   // Resize handlers (overloaded)
@@ -106,7 +80,16 @@ export interface UseDragResizeReturn {
 
   // Ghost preview
   getGhost: (resourceId: string) => GhostState | null;
+
+  // Access current ref state (safe for callbacks)
+  getDragState: () => {
+    draggedItem: DragResizeItem | null;
+    dragPreview: DragPreview | null;
+    validationError: string | null;
+  };
 }
+
+
 
 // Throttle utility for performance optimization
 function throttle<T extends (...args: any[]) => any>(
@@ -181,6 +164,48 @@ export function useDragResize({
   // Validation
   const [validationError, setValidationError] = useState<string | null>(null);
 
+  // Refs for stable access in event handlers (fixes stale closure issues in memoized cells)
+  const draggedItemRef = useRef<DragResizeItem | null>(null);
+  const dragPreviewRef = useRef<DragPreview | null>(null);
+  const validationErrorRef = useRef<string | null>(null);
+  const resizeStateRef = useRef<ResizeState | null>(null);
+  const dragOffsetDaysRef = useRef<number>(0);
+
+  // Sync refs with state
+  useEffect(() => { draggedItemRef.current = draggedItem; }, [draggedItem]);
+  useEffect(() => { dragPreviewRef.current = dragPreview; }, [dragPreview]);
+  useEffect(() => { validationErrorRef.current = validationError; }, [validationError]);
+  useEffect(() => { resizeStateRef.current = resizeState; }, [resizeState]);
+  useEffect(() => { dragOffsetDaysRef.current = dragOffsetDays; }, [dragOffsetDays]);
+
+  // Robust setters to keep ref and state in sync immediately
+  const setDraggedItemBoth = useCallback((item: DragResizeItem | null) => {
+    draggedItemRef.current = item;
+    setDraggedItem(item);
+  }, []);
+
+  const setDragPreviewBoth = useCallback((preview: DragPreview | null) => {
+    dragPreviewRef.current = preview;
+    setDragPreview(preview);
+  }, []);
+
+  const setValidationErrorBoth = useCallback((error: string | null) => {
+    validationErrorRef.current = error;
+    setValidationError(error);
+  }, []);
+
+  const setResizeStateBoth = useCallback((state: ResizeState | null) => {
+    resizeStateRef.current = state;
+    setResizeState(state);
+  }, []);
+
+  // Helper to get current state (useful for consumers if needed)
+  const getDragState = useCallback(() => ({
+    draggedItem: draggedItemRef.current,
+    dragPreview: dragPreviewRef.current,
+    validationError: validationErrorRef.current,
+  }), []);
+
   // ============================================================================
   // Drag Handlers
   // ============================================================================
@@ -189,67 +214,82 @@ export function useDragResize({
     const itemId = isReservation(item) ? item.id : item.id;
     const itemType = isReservation(item) ? 'reservation' : 'blackout';
     console.log('[DRAG START]', { itemId, itemType, isDragging: true });
+
+    // Manual ref sync for immediate access
+    draggedItemRef.current = item;
+
     setIsDragging(true);
     setDraggedItem(item);
     e.dataTransfer.effectAllowed = 'move';
+    // Essential for DnD to work in many browsers (e.g. Firefox)
+    e.dataTransfer.setData('text/plain', itemId || '');
 
     // Calculate drag offset using utility function
     const startDate = getStartDate(item);
     const offsetDays = calculateDragOffset(e.clientX, e.clientY, startDate);
+
     setDragOffsetDays(offsetDays);
+    dragOffsetDaysRef.current = offsetDays;
+
     console.log('[DRAG START] Offset:', offsetDays, 'days from start date');
   }, []);
 
   // Store the actual heavy logic separately
+  // Store the actual heavy logic separately
   const updateDragPreview = useCallback((campsiteId: string, dateStr: string) => {
-    if (!draggedItem) return;
+    // Read from refs to avoid stale closures in memoized cells
+    const currentDraggedItem = draggedItemRef.current;
+    const currentDragOffsetDays = dragOffsetDaysRef.current;
 
-    const itemType = isReservation(draggedItem) ? 'reservation' : 'blackout';
+    if (!currentDraggedItem) return;
 
-    // Adjust for drag offset
-    const cursorDate = parseISO(dateStr);
-    const adjustedStartDate = format(subDays(cursorDate, dragOffsetDays), 'yyyy-MM-dd');
+    const itemType = isReservation(currentDraggedItem) ? 'reservation' : 'blackout';
 
-    console.log('[DRAG PREVIEW]', {
-      cursorOn: dateStr,
-      offsetDays: dragOffsetDays,
-      adjustedStartDate,
-      itemType
-    });
+    // Use helper to calculate dates and initial validation
+    const result = computeDragDates(
+      currentDraggedItem,
+      currentDragOffsetDays,
+      dateStr,
+      monthStart,
+      monthEnd
+    );
 
-    // Check if adjusted date is out of current month range
-    if (!isDateInMonthRange(adjustedStartDate, monthStart, monthEnd)) {
-      setDragPreview({ campsiteId, startDate: adjustedStartDate, endDate: adjustedStartDate, itemType });
-      setValidationError('Out of month range');
+    if (!result.isValid) {
+      setDragPreview({
+        campsiteId,
+        startDate: result.startDate,
+        endDate: result.endDate,
+        itemType
+      });
+      setValidationError(result.error || 'Invalid move');
       return;
     }
 
-    // Calculate new end date (preserve duration)
-    const originalStartDate = getStartDate(draggedItem);
-    const originalEndDate = getEndDate(draggedItem);
-    const endDate = calculateNewEndDate(
-      originalStartDate,
-      originalEndDate,
-      adjustedStartDate
-    );
-
-    // SYNC validation (fast, no await)
-    // For reservations, use existing validation
-    // For blackouts, we'll validate conflicts with reservations and other blackouts
-    const validation = validateMove(
-      draggedItem,
+    // Validate against constraints (conflicts)
+    const validation = validateCandidate(
+      currentDraggedItem,
       campsiteId,
-      adjustedStartDate,
-      endDate,
+      result.startDate,
+      result.endDate,
       campsites,
-      isReservation(draggedItem) ? reservations : [],
-      isBlackout(draggedItem) ? blackoutDates : []
+      reservations,
+      blackoutDates
     );
 
-    // Update preview state
-    setDragPreview({ campsiteId, startDate: adjustedStartDate, endDate, itemType });
+    const newPreview: DragPreview = {
+      campsiteId,
+      startDate: result.startDate,
+      endDate: result.endDate,
+      itemType
+    };
+
+    // Update preview state and ref
+    setDragPreview(newPreview);
+    dragPreviewRef.current = newPreview;
+
     setValidationError(validation.valid ? null : validation.error);
-  }, [draggedItem, dragOffsetDays, monthStart, monthEnd, campsites, reservations, blackoutDates]);
+    validationErrorRef.current = validation.valid ? null : validation.error;
+  }, [monthStart, monthEnd, campsites, reservations, blackoutDates]);
 
   // Throttled version - only runs every 16ms (~60fps)
   const handleDragOverCell = useMemo(
@@ -260,44 +300,69 @@ export function useDragResize({
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
 
-    if (!dragPreview || validationError || !draggedItem) {
+    // Read from refs to ensure latest state without trigger re-renders or stale closures
+    const currentDragPreview = dragPreviewRef.current;
+    const currentValidationError = validationErrorRef.current;
+    const currentDraggedItem = draggedItemRef.current;
+
+    console.log('[DROP] Event fired', {
+      hasDragPreview: !!currentDragPreview,
+      hasValidationError: !!currentValidationError,
+      hasDraggedItem: !!currentDraggedItem
+    });
+
+    if (!currentDragPreview || currentValidationError || !currentDraggedItem) {
+      console.log('[DROP] Ignored due to missing state or error', { dragPreview: currentDragPreview, validationError: currentValidationError, draggedItem: currentDraggedItem });
       // Snap back - invalid drop
       return;
     }
 
     // Check for "no change" scenario
-    const currentCampsiteId = getCampsiteId(draggedItem);
-    const currentStartDate = getStartDate(draggedItem);
-    const currentEndDate = getEndDate(draggedItem);
+    const currentCampsiteId = getCampsiteId(currentDraggedItem);
+    const currentStartDate = getStartDate(currentDraggedItem);
+    const currentEndDate = getEndDate(currentDraggedItem);
     const noChange =
-      currentCampsiteId === dragPreview.campsiteId &&
-      currentStartDate === dragPreview.startDate &&
-      currentEndDate === dragPreview.endDate;
+      currentCampsiteId === currentDragPreview.campsiteId &&
+      currentStartDate === currentDragPreview.startDate &&
+      currentEndDate === currentDragPreview.endDate;
 
     if (noChange) {
-      // Parent should show toast
+      console.log('[DROP] No change detected');
       return;
     }
 
+    console.log('[DROP] Valid move requested', {
+      itemType: isReservation(currentDraggedItem) ? 'reservation' : 'blackout',
+      to: currentDragPreview
+    });
+
     // Request move from parent - call appropriate callback
-    if (isReservation(draggedItem)) {
+    if (isReservation(currentDraggedItem)) {
       onReservationMoveRequested(
-        draggedItem,
-        dragPreview.campsiteId,
-        dragPreview.startDate,
-        dragPreview.endDate
+        currentDraggedItem,
+        currentDragPreview.campsiteId,
+        currentDragPreview.startDate,
+        currentDragPreview.endDate
       );
     } else {
       onBlackoutMoveRequested(
-        draggedItem,
-        dragPreview.campsiteId,
-        dragPreview.startDate,
-        dragPreview.endDate
+        currentDraggedItem,
+        currentDragPreview.campsiteId,
+        currentDragPreview.startDate,
+        currentDragPreview.endDate
       );
     }
-  }, [dragPreview, validationError, draggedItem, onReservationMoveRequested, onBlackoutMoveRequested]);
+  }, [onReservationMoveRequested, onBlackoutMoveRequested]);
 
   const handleDragEnd = useCallback(() => {
+    console.log('[DRAG END] Cleaning up state');
+
+    // Clear refs immediately
+    draggedItemRef.current = null;
+    dragPreviewRef.current = null;
+    validationErrorRef.current = null;
+    dragOffsetDaysRef.current = 0;
+
     setIsDragging(false);
     setDraggedItem(null);
     setDragOffsetDays(0);
@@ -335,45 +400,38 @@ export function useDragResize({
     const hoveredDate = getDateFromPointer(e.clientX, e.clientY);
     if (!hoveredDate) return;
 
-    let newStartDate = resizeState.originalStartDate;
-    let newEndDate = resizeState.originalEndDate;
-
-    if (resizeState.side === 'left') {
-      // Resizing left handle (changing start date)
-      newStartDate = hoveredDate;
-    } else {
-      // Resizing right handle (changing end date)
-      // Add 1 day since end dates are exclusive
-      const hoveredDateObj = parseISO(hoveredDate);
-      newEndDate = format(addDays(hoveredDateObj, 1), 'yyyy-MM-dd');
-    }
+    // Use helper for calculation
+    const result = computeResizeDates(
+      resizeState.originalStartDate,
+      resizeState.originalEndDate,
+      resizeState.side,
+      hoveredDate,
+      monthStart,
+      monthEnd
+    );
 
     // Always update state first (so ghost preview shows)
-    setResizeState(prev => prev ? { ...prev, newStartDate, newEndDate } : null);
+    setResizeState(prev => prev ? {
+      ...prev,
+      newStartDate: result.newStartDate,
+      newEndDate: result.newEndDate
+    } : null);
 
-    // Then validate and set errors
-    // Check if date is within month range
-    if (!isDateInMonthRange(hoveredDate, monthStart, monthEnd)) {
-      setValidationError('Out of month range');
-      return;
-    }
-
-    // Validate: must have at least 1 night
-    if (newEndDate <= newStartDate) {
-      setValidationError('Minimum 1 night required');
+    if (!result.isValid) {
+      setValidationError(result.error || 'Invalid resize');
       return;
     }
 
     // Sync validation for conflicts
     const campsiteId = getCampsiteId(resizeState.item);
-    const validation = validateMove(
+    const validation = validateCandidate(
       resizeState.item,
       campsiteId,
-      newStartDate,
-      newEndDate,
+      result.newStartDate,
+      result.newEndDate,
       campsites,
-      isReservation(resizeState.item) ? reservations : [],
-      isBlackout(resizeState.item) ? blackoutDates : []
+      reservations,
+      blackoutDates
     );
 
     setValidationError(validation.valid ? null : validation.error);
@@ -457,14 +515,13 @@ export function useDragResize({
 
   const getDragGhost = useCallback((resourceId: string): GhostState | null => {
     if (!dragPreview || dragPreview.campsiteId !== resourceId) return null;
-    return {
-      mode: 'move',
-      resourceId: dragPreview.campsiteId,
-      startDate: dragPreview.startDate,
-      endDate: dragPreview.endDate,
-      isValid: !validationError,
-      errorMessage: validationError || undefined,
-    };
+    return buildGhostState(
+      'move',
+      dragPreview.campsiteId,
+      dragPreview.startDate,
+      dragPreview.endDate,
+      validationError
+    );
   }, [dragPreview, validationError]);
 
   const getResizeGhost = useCallback((resourceId: string): GhostState | null => {
@@ -472,14 +529,13 @@ export function useDragResize({
     const blockResourceId = getCampsiteId(resizeState.item);
     if (blockResourceId !== resourceId) return null;
 
-    return {
-      mode: resizeState.side === 'left' ? 'resize-start' : 'resize-end',
-      resourceId: blockResourceId,
-      startDate: resizeState.newStartDate,
-      endDate: resizeState.newEndDate,
-      isValid: !validationError,
-      errorMessage: validationError || undefined,
-    };
+    return buildGhostState(
+      resizeState.side === 'left' ? 'resize-start' : 'resize-end',
+      blockResourceId,
+      resizeState.newStartDate,
+      resizeState.newEndDate,
+      validationError
+    );
   }, [resizeState, validationError]);
 
   // Unified ghost: drag takes precedence over resize
@@ -499,5 +555,6 @@ export function useDragResize({
     handleDragEnd,
     handleResizeStart,
     getGhost,
+    getDragState,
   };
 }
