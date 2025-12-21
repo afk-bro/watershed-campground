@@ -1,9 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
-import path from 'path';
 import dotenv from 'dotenv';
 
-// Load env vars from .env.local
-dotenv.config({ path: path.resolve(__dirname, '.env.local') });
+// Load .env.test for E2E tests (local Supabase credentials)
+dotenv.config({ path: '.env.test' });
 
 /**
  * WSL-Specific Config
@@ -20,11 +19,23 @@ export default defineConfig({
         baseURL: 'http://127.0.0.1:3000',
         trace: 'on-first-retry',
         ignoreHTTPSErrors: true,
+        screenshot: 'only-on-failure',
+        video: 'retain-on-failure',
     },
     projects: [
+        // Setup Project - runs auth.setup.ts before tests
+        {
+            name: 'setup',
+            testMatch: /auth\.setup\.ts/,
+        },
+        // Main test project with auth state
         {
             name: 'chromium',
-            use: { ...devices['Desktop Chrome'] },
+            use: {
+                ...devices['Desktop Chrome'],
+                storageState: 'tests/.auth/admin.json', // Use authenticated state
+            },
+            dependencies: ['setup'], // Ensure setup runs first
         },
     ],
     webServer: {
