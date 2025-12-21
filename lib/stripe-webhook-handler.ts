@@ -53,8 +53,12 @@ function isReservationEmailData(obj: unknown): obj is ReservationEmailData {
 // Helper to send confirmation email
 async function sendConfirmationEmail(reservation: unknown) {
     if (!isReservationEmailData(reservation)) {
-        console.error('Invalid reservation data structure');
-        return { sent: false, error: 'Invalid reservation data' };
+        console.error('Invalid reservation data structure for email:', {
+            receivedType: typeof reservation,
+            receivedData: reservation,
+            requiredFields: ['id', 'email', 'email_sent_at', 'first_name', 'last_name', 'check_in', 'check_out', 'payment_status', 'adults', 'children', 'camping_unit']
+        });
+        return { sent: false, error: 'Invalid reservation data: missing required fields for email' };
     }
 
     try {
