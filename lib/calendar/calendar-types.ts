@@ -4,7 +4,7 @@
  * and blackouts to be treated as "blocks" on the calendar grid.
  */
 
-import { Reservation, BlackoutDate } from "@/lib/supabase";
+import { Reservation, BlackoutDate, Campsite } from "@/lib/supabase";
 
 // ============================================================================
 // Block Types - Unified representation
@@ -215,4 +215,17 @@ export function isReservationBlock(block: CalendarBlock): block is ReservationBl
  */
 export function isBlackoutBlock(block: CalendarBlock): block is BlackoutBlock {
   return block.type === 'blackout';
+}
+
+// ============================================================================
+// Calendar Data Types
+// ============================================================================
+
+/**
+ * Calendar data returned from API and used by SWR
+ */
+export interface CalendarData {
+  reservations: Reservation[];
+  campsites: Campsite[];
+  blackoutDates: BlackoutDate[];
 }
