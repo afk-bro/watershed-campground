@@ -20,12 +20,22 @@ import { useAutoScroll } from "./hooks/useAutoScroll";
 import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useDragResize } from "./hooks/useDragResize";
 
+interface CalendarData {
+  reservations: Reservation[];
+  campsites: Campsite[];
+  blackoutDates: BlackoutDate[];
+}
+
 interface CalendarGridProps {
   campsites: Campsite[];
   reservations: Reservation[];
   blackoutDates: BlackoutDate[];
   date: Date; // The month we are viewing
   onDateChange: (date: Date) => void;
+  onDataMutate?: (
+    data?: CalendarData | Promise<CalendarData> | ((current: CalendarData | undefined) => CalendarData | Promise<CalendarData>),
+    options?: { optimisticData?: CalendarData; rollbackOnError?: boolean; populateCache?: boolean; revalidate?: boolean }
+  ) => Promise<CalendarData | undefined>;
 }
 
 export default function CalendarGrid({
@@ -34,6 +44,7 @@ export default function CalendarGrid({
   blackoutDates = [],
   date,
   onDateChange,
+  onDataMutate,
 }: CalendarGridProps) {
   const router = useRouter();
   const { showToast } = useToast();
@@ -87,37 +98,102 @@ export default function CalendarGrid({
     newStartDate: string,
     newEndDate: string
   ) => {
+    // Fall back to reload if no mutate function provided
+    if (!onDataMutate) {
+      console.warn('[BLACKOUT MOVE] No mutate function provided, falling back to reload');
+      try {
+        const response = await fetch(`/api/admin/blackout-dates/${blackout.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
+            start_date: newStartDate,
+            end_date: newEndDate,
+          }),
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.message || 'Failed to update blackout date');
+        }
+
+        showToast('Blackout date updated successfully', 'success');
+        window.location.reload();
+      } catch (error: any) {
+        console.error('[BLACKOUT MOVE ERROR]', error);
+        showToast(error.message || 'Failed to update blackout date', 'error');
+      }
+      return;
+    }
+
     try {
-      // TODO: Implement blackout update API endpoint
-      console.log('[BLACKOUT MOVE]', {
+      console.log('[BLACKOUT MOVE] Optimistic update', {
         blackoutId: blackout.id,
         from: { start: blackout.start_date, end: blackout.end_date, campsite: blackout.campsite_id },
         to: { start: newStartDate, end: newEndDate, campsite: newCampsiteId },
       });
 
-      const response = await fetch(`/api/admin/blackout-dates/${blackout.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
-          start_date: newStartDate,
-          end_date: newEndDate,
-        }),
-      });
+      // Optimistic update with SWR
+      await onDataMutate(
+        async (current) => {
+          if (!current) throw new Error('No current data');
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Failed to update blackout date');
-      }
+          // Create optimistic updated blackout
+          const updatedBlackout: BlackoutDate = {
+            ...blackout,
+            start_date: newStartDate,
+            end_date: newEndDate,
+            campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
+          };
+
+          // Optimistically update the local data
+          const optimisticData: CalendarData = {
+            ...current,
+            blackoutDates: current.blackoutDates.map(b =>
+              b.id === blackout.id ? updatedBlackout : b
+            ),
+          };
+
+          // Make API call
+          const response = await fetch(`/api/admin/blackout-dates/${blackout.id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
+              start_date: newStartDate,
+              end_date: newEndDate,
+            }),
+          });
+
+          if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Failed to update blackout date');
+          }
+
+          const serverBlackout = await response.json();
+          console.log('[BLACKOUT MOVE] Server confirmed:', serverBlackout);
+
+          // Return updated data with server response
+          return {
+            ...current,
+            blackoutDates: current.blackoutDates.map(b =>
+              b.id === blackout.id ? serverBlackout : b
+            ),
+          };
+        },
+        {
+          rollbackOnError: true,
+          revalidate: false, // Don't revalidate immediately, we have the server response
+        }
+      );
 
       showToast('Blackout date updated successfully', 'success');
-      // Trigger refetch
-      window.location.reload(); // TODO: Replace with SWR mutate
     } catch (error: any) {
       console.error('[BLACKOUT MOVE ERROR]', error);
       showToast(error.message || 'Failed to update blackout date', 'error');
+      // SWR automatically rolls back on error
     }
-  }, []);
+  }, [onDataMutate, showToast]);
 
   // Drag and resize hook
   const {
