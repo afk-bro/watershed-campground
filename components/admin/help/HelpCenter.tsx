@@ -55,7 +55,7 @@ export default function HelpCenter({ onSelectArticle }: HelpCenterProps) {
                         </div>
                     ) : (
                         <div className="text-center py-12 text-[var(--color-text-muted)]">
-                            <p className="text-lg">No results found for "{query}"</p>
+                            <p className="text-lg">No results found for &quot;{query}&quot;</p>
                             <button onClick={() => setQuery("")} className="text-[var(--color-accent-gold)] hover:underline mt-2">
                                 Clear search
                             </button>

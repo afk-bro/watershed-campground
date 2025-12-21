@@ -1,5 +1,5 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { startOfMonth, endOfMonth, eachDayOfInterval, format, addDays, isSameDay } from "date-fns";
+import { startOfMonth, endOfMonth, eachDayOfInterval, format } from "date-fns";
 
 export type DayStatus = {
     date: string; // YYYY-MM-DD
@@ -34,7 +34,6 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
     }
 
     const totalSites = allCampsites.length;
-    const allSiteIds = new Set(allCampsites.map(c => c.id));
 
     // 2. Get all reservations in this month
     // Overlap: existing.start <= monthEnd AND existing.end >= monthStart
@@ -75,16 +74,6 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
         // If I arrive on 14th, I need 14th to be free.
         // So a reservation 12-14 blocks arrivals on 12 and 13. It does NOT block arrival on 14.
 
-        const reservedCount = reservations?.filter(r =>
-            r.check_in <= dateStr && r.check_out > dateStr && r.campsite_id
-        ).length || 0;
-
-        const siteBlackoutCount = blackouts?.filter(b =>
-            b.campsite_id !== null &&
-            b.start_date <= dateStr &&
-            b.end_date >= dateStr
-        ).length || 0;
-
         // This is a rough heuristic. 
         // Ideally we check *distinct* site IDs blocked.
         // Let's do it properly.
@@ -120,7 +109,7 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
  * Searches for specific campsites matching criteria.
  */
 export async function searchCampsites(params: SearchParams) {
-    const { checkIn, checkOut, guestCount, rvLength, unitType } = params;
+    const { checkIn, checkOut, guestCount, rvLength } = params;
 
     // 1. Get all conflicting IDs (same logic as availability.ts)
     const { data: conflicting } = await supabaseAdmin
@@ -146,7 +135,7 @@ export async function searchCampsites(params: SearchParams) {
     ].filter(id => id !== null) as string[]);
 
     // 2. Query available sites
-    let query = supabaseAdmin
+    const query = supabaseAdmin
         .from('campsites')
         .select('*')
         .eq('is_active', true)

@@ -8,7 +8,7 @@
  * - Ghost preview generation
  */
 
-import { useState, useCallback, useMemo, useEffect, useRef } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { format, parseISO } from 'date-fns';
 import type { Reservation, Campsite, BlackoutDate } from '@/lib/supabase';
 import type { GhostState } from '@/lib/calendar/calendar-types';
@@ -91,28 +91,37 @@ export interface UseDragResizeReturn {
 
 
 
-// Throttle utility for performance optimization
-function throttle<T extends (...args: any[]) => any>(
-  func: T,
-  wait: number
-): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+type ThrottledFn<T extends (...args: unknown[]) => void> = ((...args: Parameters<T>) => void) & { cancel: () => void };
+
+function createThrottle<T extends (...args: unknown[]) => void>(fn: T, wait: number): ThrottledFn<T> {
+  let timeout: ReturnType<typeof setTimeout> | null = null;
   let lastArgs: Parameters<T> | null = null;
 
-  return function (...args: Parameters<T>) {
+  const throttled = (...args: Parameters<T>) => {
     lastArgs = args;
 
     if (!timeout) {
       timeout = setTimeout(() => {
         if (lastArgs) {
-          func(...lastArgs);
+          fn(...lastArgs);
         }
         timeout = null;
         lastArgs = null;
       }, wait);
     }
   };
+
+  throttled.cancel = () => {
+    if (timeout) {
+      clearTimeout(timeout);
+    }
+    timeout = null;
+    lastArgs = null;
+  };
+
+  return throttled;
 }
+
 
 export interface UseDragResizeConfig {
   monthStart: Date;
@@ -170,6 +179,8 @@ export function useDragResize({
   const validationErrorRef = useRef<string | null>(null);
   const resizeStateRef = useRef<ResizeState | null>(null);
   const dragOffsetDaysRef = useRef<number>(0);
+  const throttledDragPreviewRef = useRef<ThrottledFn<(campsiteId: string, dateStr: string) => void> | null>(null);
+  const throttledResizePreviewRef = useRef<ThrottledFn<(e: PointerEvent) => void> | null>(null);
 
   // Sync refs with state
   useEffect(() => { draggedItemRef.current = draggedItem; }, [draggedItem]);
@@ -291,11 +302,23 @@ export function useDragResize({
     validationErrorRef.current = validation.valid ? null : validation.error;
   }, [monthStart, monthEnd, campsites, reservations, blackoutDates]);
 
-  // Throttled version - only runs every 16ms (~60fps)
-  const handleDragOverCell = useMemo(
-    () => throttle(updateDragPreview, 16),
-    [updateDragPreview]
-  );
+  // Create throttled drag preview updater after render to avoid accessing refs during render
+  useEffect(() => {
+    const fn = createThrottle((campsiteId: string, dateStr: string) => {
+      updateDragPreview(campsiteId, dateStr);
+    }, 16);
+
+    throttledDragPreviewRef.current = fn;
+
+    return () => {
+      fn.cancel();
+      throttledDragPreviewRef.current = null;
+    };
+  }, [updateDragPreview]);
+
+  const handleDragOverCell = useCallback((campsiteId: string, dateStr: string) => {
+    throttledDragPreviewRef.current?.(campsiteId, dateStr);
+  }, []);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
@@ -438,10 +461,18 @@ export function useDragResize({
   }, [resizeState, monthStart, monthEnd, campsites, reservations, blackoutDates]);
 
   // Throttled resize handler - 16ms for smooth ~60fps
-  const throttledResizePreview = useMemo(
-    () => throttle(updateResizePreview, 16),
-    [updateResizePreview]
-  );
+  useEffect(() => {
+    const fn = createThrottle((e: PointerEvent) => {
+      updateResizePreview(e);
+    }, 16);
+
+    throttledResizePreviewRef.current = fn;
+
+    return () => {
+      fn.cancel();
+      throttledResizePreviewRef.current = null;
+    };
+  }, [updateResizePreview]);
 
   const handleResizeMove = useCallback((e: PointerEvent) => {
     if (!resizeState) return;
@@ -450,8 +481,8 @@ export function useDragResize({
     updateScrollDirection(e.clientX, e.clientY);
 
     // Throttle the heavy validation and state updates
-    throttledResizePreview(e);
-  }, [resizeState, updateScrollDirection, throttledResizePreview]);
+    throttledResizePreviewRef.current?.(e);
+  }, [resizeState, updateScrollDirection]);
 
   const handleResizeEnd = useCallback(() => {
     // Stop auto-scroll
@@ -500,10 +531,10 @@ export function useDragResize({
   // Add/remove window pointer listeners for resize
   useEffect(() => {
     if (resizeState) {
-      window.addEventListener('pointermove', handleResizeMove as any);
+      window.addEventListener('pointermove', handleResizeMove as unknown as EventListener);
       window.addEventListener('pointerup', handleResizeEnd);
       return () => {
-        window.removeEventListener('pointermove', handleResizeMove as any);
+        window.removeEventListener('pointermove', handleResizeMove as unknown as EventListener);
         window.removeEventListener('pointerup', handleResizeEnd);
       };
     }

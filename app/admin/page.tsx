@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { AlertTriangle, X, Wrench } from "lucide-react";
 import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
@@ -23,18 +23,42 @@ export default function AdminPage() {
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [showArchived, setShowArchived] = useState(false);
 
+    const fetchReservations = useCallback(async () => {
+        setLoading(true);
+        try {
+            const response = await fetch('/api/admin/reservations');
+            if (!response.ok) {
+                throw new Error('Failed to fetch reservations');
+            }
+
+            const { data } = await response.json();
+
+            // Note: Blocking events (maintenance) don't have archived_at, so we'll show them when showArchived is false
+            const filtered = showArchived
+                ? (data || []).filter((item: unknown): item is OverviewItem => {
+                    if (!item || typeof item !== 'object') return false;
+                    const anyItem = item as Record<string, unknown>;
+                    return anyItem.type === 'reservation' && anyItem.archived_at != null;
+                  })
+                : data || [];
+
+            setItems(filtered);
+        } catch (err) {
+            console.error('Error fetching reservations:', err);
+            setError('Failed to load reservations');
+        } finally {
+            setLoading(false);
+        }
+    }, [showArchived]);
+
     // Clear selection when filter changes to avoid confusion
     useEffect(() => {
         setSelectedIds(new Set());
     }, [filter, showArchived]);
 
     useEffect(() => {
-        fetchReservations();
-    }, [showArchived]); // Re-fetch when archive mode toggles
-
-    useEffect(() => {
-        fetchReservations();
-    }, []);
+        void fetchReservations();
+    }, [fetchReservations]);
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
         try {
@@ -48,36 +72,12 @@ export default function AdminPage() {
                 throw new Error('Failed to update status');
             }
 
-            fetchReservations();
+            await fetchReservations();
         } catch (error) {
             console.error('Error updating status:', error);
             alert('Failed to update status');
         }
     };
-
-    const fetchReservations = async () => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/admin/reservations');
-            if (!response.ok) {
-                throw new Error('Failed to fetch reservations');
-            }
-
-            const { data } = await response.json();
-
-            // Note: Blocking events (maintenance) don't have archived_at, so we'll show them when showArchived is false
-            const filtered = showArchived
-                ? (data || []).filter((item: any) => item.type === 'reservation' && item.archived_at != null)
-                : data || [];
-
-            setItems(filtered);
-        } catch (err) {
-            console.error('Error fetching reservations:', err);
-            setError('Failed to load reservations');
-        } finally {
-            setLoading(false);
-        }
-    }
 
     const handleAssignCampsite = async (reservationId: string, campsiteId: string) => {
         const res = await fetch(`/api/admin/reservations/${reservationId}/assign`, {
@@ -91,7 +91,7 @@ export default function AdminPage() {
             throw new Error(data.error || 'Failed to assign campsite');
         }
 
-        fetchReservations();
+        await fetchReservations();
     };
 
     const filteredItems = (() => {
@@ -162,22 +162,26 @@ export default function AdminPage() {
             const data = await res.json();
             
             // Report results
-            const successCount = data.results.filter((r: any) => r.success).length;
-            const failCount = data.results.length - successCount;
+            const successCount = (data.results || []).filter((r: unknown) => {
+                return r && typeof r === 'object' && (r as Record<string, unknown>).success;
+            }).length;
+            const failCount = (data.results || []).length - successCount;
             
             alert(`Assigned ${successCount} reservations. ${failCount} failed or no spots available.`);
             
-            fetchReservations();
+            await fetchReservations();
             
             // Keep failures selected? For now clear all to be simple, 
             // but advanced UX would be: set selection to just the failed IDs.
             if (failCount === 0) {
                 setSelectedIds(new Set());
             } else {
-                 const failedIds = new Set<string>(
-                    data.results.filter((r: any) => !r.success).map((r: any) => r.id as string)
-                 );
-                 setSelectedIds(failedIds);
+                const failedIds = new Set<string>(
+                    (data.results || []).filter((r: unknown) => {
+                        return r && typeof r === 'object' && !(r as Record<string, unknown>).success;
+                    }).map((r: unknown) => (r as Record<string, unknown>).id as string)
+                );
+                setSelectedIds(failedIds);
             }
 
         } catch (error) {
@@ -454,7 +458,7 @@ export default function AdminPage() {
                                         }
 
                                         // Handle regular reservations
-                                        const reservation = item as any; // Type assertion since we know it's a reservation here
+                                        const reservation = item as Reservation; // Already filtered as reservation type
                                         // Row-level styling based on status
                                         const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
                                         const isCheckedIn = reservation.status === 'checked_in';

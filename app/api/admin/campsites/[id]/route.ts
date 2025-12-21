@@ -67,7 +67,7 @@ export async function PATCH(request: Request, { params }: Params) {
         const formData = validationResult.data;
 
         // Convert camelCase to snake_case for database
-        const updateData: any = {};
+        const updateData: Record<string, unknown> = {};
 
         if (formData.name !== undefined) updateData.name = formData.name;
         if (formData.code !== undefined) updateData.code = formData.code;

@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 
 // Load .env.test for E2E tests (local Supabase credentials)
 // Playwright runs from project root via symlink, so .env.test is in same directory
-const envConfig = dotenv.config({ path: '.env.test' });
+dotenv.config({ path: '.env.test' });
 
 export default defineConfig({
     testDir: './tests',

@@ -28,16 +28,16 @@ export async function POST(req: Request) {
         }
 
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
-    } catch (err: any) {
-        console.error(`Webhook signature verification failed: ${err.message}`);
-        return new NextResponse(`Webhook Error: ${err.message}`, { status: 400 });
+    } catch (err: unknown) {
+        console.error(`Webhook signature verification failed: ${err instanceof Error ? err.message : String(err)}`);
+        return new NextResponse(`Webhook Error: ${err instanceof Error ? err.message : String(err)}`, { status: 400 });
     }
 
     try {
         const result = await handleStripeWebhook(event);
         return NextResponse.json(result);
-    } catch (err: any) {
-        console.error(`Error processing webhook: ${err.message}`);
-        return new NextResponse(`Webhook Handler Error: ${err.message}`, { status: 500 });
+    } catch (err: unknown) {
+        console.error(`Error processing webhook: ${err instanceof Error ? err.message : String(err)}`);
+        return new NextResponse(`Webhook Handler Error: ${err instanceof Error ? err.message : String(err)}`, { status: 500 });
     }
 }

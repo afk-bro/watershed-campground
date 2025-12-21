@@ -1,16 +1,14 @@
 "use client";
-
-import { useState } from "react";
 import { Users, Truck } from "lucide-react";
 
 interface CampsiteParamsStepProps {
-    formData: any;
-    onChange: (data: any) => void;
+    formData: Record<string, unknown>;
+    onChange: (data: Record<string, unknown>) => void;
     onNext: () => void;
 }
 
 export default function CampsiteParamsStep({ formData, onChange, onNext }: CampsiteParamsStepProps) {
-    const handleChange = (field: string, value: any) => {
+    const handleChange = (field: string, value: unknown) => {
         onChange({ ...formData, [field]: value });
     };
 

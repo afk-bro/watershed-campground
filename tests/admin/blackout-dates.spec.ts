@@ -448,7 +448,7 @@ test.describe('Admin Blackout Dates', () => {
                 .insert(blackouts)
                 .select();
 
-            testBlackoutIds = data!.map((b: any) => b.id);
+            testBlackoutIds = data!.map((b: unknown) => (b as Record<string, unknown>).id);
         });
 
         test.afterEach(async () => {
@@ -471,7 +471,7 @@ test.describe('Admin Blackout Dates', () => {
             expect(data!.length).toBeGreaterThanOrEqual(2);
 
             // Should include our test blackouts
-            const testBlackouts = data!.filter((b: any) =>
+            const testBlackouts = data!.filter((b: unknown) =>
                 testBlackoutIds.includes(b.id)
             );
             expect(testBlackouts.length).toBe(2);

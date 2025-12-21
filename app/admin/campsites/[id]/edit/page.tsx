@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Container from "@/components/Container";
 import type { Campsite, CampsiteType } from "@/lib/supabase";
@@ -29,13 +29,7 @@ export default function EditCampsitePage() {
         imageUrl: "",
     });
 
-    useEffect(() => {
-        if (id) {
-            fetchCampsite();
-        }
-    }, [id]);
-
-    async function fetchCampsite() {
+    const fetchCampsite = useCallback(async () => {
         try {
             const response = await fetch(`/api/admin/campsites/${id}`);
 
@@ -63,13 +57,19 @@ export default function EditCampsitePage() {
             if (data.image_url) {
                 setImagePreview(data.image_url);
             }
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error fetching campsite:', err);
-            setError(err.message || 'Failed to load campsite');
+            setError(err instanceof Error ? err.message : 'Failed to load campsite');
         } finally {
             setLoading(false);
         }
-    }
+    }, [id]);
+
+    useEffect(() => {
+        if (id) {
+            void fetchCampsite();
+        }
+    }, [id, fetchCampsite]);
 
     async function handleSubmit(e: React.FormEvent) {
         e.preventDefault();
@@ -99,9 +99,9 @@ export default function EditCampsitePage() {
 
             // Success - redirect to campsites list
             router.push('/admin/campsites');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error updating campsite:', err);
-            setError(err.message || 'Failed to update campsite');
+            setError(err instanceof Error ? err.message : 'Failed to update campsite');
             setSaving(false);
         }
     }
@@ -166,9 +166,9 @@ export default function EditCampsitePage() {
 
             // Success - redirect to campsites list
             router.push('/admin/campsites');
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Error deactivating campsite:', err);
-            alert(err.message || 'Failed to deactivate campsite');
+            alert(err instanceof Error ? err.message : 'Failed to deactivate campsite');
         }
     }
 

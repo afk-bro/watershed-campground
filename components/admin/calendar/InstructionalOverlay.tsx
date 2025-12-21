@@ -33,7 +33,7 @@ export default function InstructionalOverlay() {
           </div>
           <h3 className="text-xl font-heading font-bold mb-2">Add Blackout Dates</h3>
           <p className="text-white/80 text-sm">
-            Block availability so guests can't book during closures, maintenance, or private use.
+            Block availability so guests can&apos;t book during closures, maintenance, or private use.
           </p>
         </div>
 
@@ -49,7 +49,7 @@ export default function InstructionalOverlay() {
             <div className="flex items-start gap-3">
               <div className="w-8 h-8 rounded-full bg-[var(--color-surface-elevated)] flex items-center justify-center flex-shrink-0 text-[var(--color-accent-gold)] font-bold">2</div>
               <div>
-                <p className="font-medium text-[var(--color-text-primary)]">Choose "Blackout"</p>
+                <p className="font-medium text-[var(--color-text-primary)]">Choose &quot;Blackout&quot;</p>
                 <p className="text-sm text-[var(--color-text-muted)]">Select Blackout Date from the popup menu.</p>
               </div>
             </div>
@@ -66,7 +66,7 @@ export default function InstructionalOverlay() {
               onClick={() => handleDismiss(true)}
               className="flex-1 py-2.5 px-4 rounded-lg font-medium bg-[var(--color-status-active)] text-white hover:bg-[var(--color-status-active)]/90 transition-colors shadow-sm text-sm"
             >
-              Don't show again
+              Don&apos;t show again
             </button>
           </div>
         </div>

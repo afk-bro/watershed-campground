@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { Edit2, Power, PowerOff } from "lucide-react";
 import type { Campsite, CampsiteType } from "@/lib/supabase";
@@ -13,11 +13,7 @@ export default function CampsitesPage() {
     const [filter, setFilter] = useState<CampsiteType | 'all' | 'active' | 'inactive'>('active');
     const [showInactive, setShowInactive] = useState(false);
 
-    useEffect(() => {
-        fetchCampsites();
-    }, [showInactive]);
-
-    async function fetchCampsites() {
+    const fetchCampsites = useCallback(async () => {
         try {
             setLoading(true);
             const url = `/api/admin/campsites${showInactive ? '?showInactive=true' : ''}`;
@@ -35,7 +31,11 @@ export default function CampsitesPage() {
         } finally {
             setLoading(false);
         }
-    }
+    }, [showInactive]);
+
+    useEffect(() => {
+        void fetchCampsites();
+    }, [fetchCampsites]);
 
     async function toggleActive(id: string, currentStatus: boolean) {
         const action = currentStatus ? 'deactivate' : 'activate';

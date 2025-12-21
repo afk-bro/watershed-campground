@@ -11,7 +11,6 @@ import { supabaseAdmin } from './supabase-admin';
  */
 export async function checkRateLimit(key: string, limit: number, windowSeconds: number): Promise<boolean> {
     const now = Math.floor(Date.now() / 1000);
-    const windowStart = now - windowSeconds;
 
     try {
         // 1. Cleanup old entries for this key (lazy expiration)

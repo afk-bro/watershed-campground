@@ -63,7 +63,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
         // ==========================================
         console.log("Setting up network and console monitoring...");
 
-        const apiResponses: Record<string, any> = {};
+        const apiResponses: Record<string, unknown> = {};
         const consoleLogs: string[] = [];
 
         // Capture browser console logs
