@@ -36,6 +36,7 @@ CREATE TABLE public.reservations (
   contact_method text NOT NULL,
   comments text,
   status reservation_status NOT NULL DEFAULT 'pending'::reservation_status,
+  public_edit_token_hash text,
   
   -- Payment Fields
   total_amount decimal(10, 2) NOT NULL DEFAULT 0.00,
@@ -105,6 +106,7 @@ CREATE INDEX idx_reservations_check_in ON public.reservations(check_in);
 CREATE INDEX idx_reservations_check_out ON public.reservations(check_out);
 CREATE INDEX idx_reservations_email ON public.reservations(email);
 CREATE INDEX idx_reservations_created_at ON public.reservations(created_at);
+CREATE INDEX idx_reservations_token_hash ON public.reservations(public_edit_token_hash);
 
 -- ============================================
 -- Triggers and Functions
@@ -133,26 +135,29 @@ CREATE TRIGGER update_reservations_updated_at
 ALTER TABLE public.reservations ENABLE ROW LEVEL SECURITY;
 
 -- Policy: Allow anonymous users to insert (public reservation form)
+-- SECURITY: Force status to 'pending' to prevent privilege escalation
 CREATE POLICY "Allow public inserts"
   ON public.reservations
   FOR INSERT
   TO anon
-  WITH CHECK (true);
+  WITH CHECK (status = 'pending');
 
 -- Policy: Allow authenticated users (admins) to read all reservations
+-- SECURITY: Only allow users with 'admin' role in JWT
 CREATE POLICY "Allow authenticated users to read all reservations"
   ON public.reservations
   FOR SELECT
   TO authenticated
-  USING (true);
+  USING (auth.jwt() ->> 'role' = 'admin');
 
 -- Policy: Allow authenticated users (admins) to update all reservations
+-- SECURITY: Only allow users with 'admin' role in JWT
 CREATE POLICY "Allow authenticated users to update all reservations"
   ON public.reservations
   FOR UPDATE
   TO authenticated
-  USING (true)
-  WITH CHECK (true);
+  USING (auth.jwt() ->> 'role' = 'admin')
+  WITH CHECK (auth.jwt() ->> 'role' = 'admin');
 
 -- ============================================
 -- Flexible Payment Tables
