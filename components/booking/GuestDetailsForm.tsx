@@ -41,7 +41,7 @@ export default function GuestDetailsForm({
                     {formData.campingUnit} • {formData.adults} Guests
                 </div>
             </div>
-            <button type="button" onClick={onChangeSelection} className="text-sm text-[var(--color-accent-gold)] hover:underline">
+            <button type="button" onClick={onChangeSelection} className="text-sm text-[var(--color-accent-gold)] hover:underline cursor-pointer transition-colors">
                 Change
             </button>
         </div>

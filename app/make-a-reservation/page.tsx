@@ -47,6 +47,14 @@ export default function ReservationPage() {
     submitReservation
   } = useReservationFlow();
 
+  // Step navigation handler
+  const handleStepClick = (targetStep: number) => {
+    if (targetStep < step && targetStep >= 1 && targetStep <= 3) {
+      setStep(targetStep as 1 | 2 | 3 | 4);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  };
+
   // Handlers bridging hook logic and navigation
   const handleDetailsSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -108,6 +116,13 @@ export default function ReservationPage() {
       );
   }
 
+  // Handler to return to wizard (change dates)
+  const handleChangeDates = () => {
+    setView('wizard');
+    setStep(1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   // Form View orchestrator
   return (
     <main>
@@ -117,6 +132,7 @@ export default function ReservationPage() {
         currentStep={step}
         totalSteps={4}
         stepLabels={['Your Details', 'Add-ons', 'Review & Pay', 'Confirmed']}
+        onStepClick={handleStepClick}
       />
 
       <div className="py-12 -mt-4">
@@ -133,7 +149,7 @@ export default function ReservationPage() {
                 onChange={updateFormData}
                 onSubmit={handleDetailsSubmit}
                 onSkip={handleSkipToCheckout}
-                onChangeSelection={() => setView('wizard')}
+                onChangeSelection={handleChangeDates}
                 fieldErrors={fieldErrors}
              />
            )}

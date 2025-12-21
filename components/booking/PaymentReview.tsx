@@ -2,7 +2,7 @@
 
 import { PaymentBreakdown, FormData } from "@/lib/booking/booking-types";
 import { Elements } from "@stripe/react-stripe-js";
-import PaymentForm from "../../PaymentForm";
+import PaymentForm from "@/components/PaymentForm";
 import { Stripe } from "@stripe/stripe-js";
 
 interface PaymentReviewProps {

@@ -75,22 +75,6 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
                 <p className="text-[var(--color-text-beige)]/70">Select your check-in and check-out dates.</p>
             </div>
 
-            {/* Helper Legend */}
-            <div className="flex justify-center gap-4 text-xs text-[var(--color-text-muted)] mb-4">
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-[var(--color-brand-forest-light)]/20 border border-[var(--color-brand-forest-light)]"></div>
-                    <span>Available</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-red-500/10 border border-red-500/30 diagonal-stripes"></div>
-                    <span>Sold Out</span>
-                </div>
-                <div className="flex items-center gap-1">
-                    <div className="w-3 h-3 rounded-full bg-[var(--color-accent-gold)]"></div>
-                    <span>Selected</span>
-                </div>
-            </div>
-
             <div className="bg-[var(--color-surface-elevated)] rounded-xl border border-[var(--color-border-subtle)] p-6 max-w-md mx-auto shadow-xl">
                 {/* Header */}
                 <div className="flex items-center justify-between mb-6">
@@ -134,15 +118,18 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
                                 disabled={isBlocked || loading}
                                 className={`
                                     h-10 w-full rounded-md flex items-center justify-center text-sm font-medium transition-all relative
-                                    ${isBlocked ? 'text-[var(--color-text-muted)] opacity-50 cursor-not-allowed bg-[var(--color-surface-primary)]/50' : 'hover:bg-[var(--color-brand-forest-light)]/20 text-[var(--color-text-primary)]'}
+                                    ${isBlocked ? 'text-red-400/80 cursor-not-allowed bg-red-500/10 border-2 border-red-500' : 'hover:bg-[var(--color-brand-forest-light)]/20 text-[var(--color-text-primary)]'}
                                     ${status === 'blackout' ? 'diagonal-stripes' : ''}
-                                    ${isSelected ? '!bg-[var(--color-accent-gold)] !text-[var(--color-brand-forest)] shadow-md z-10' : ''}
+                                    ${isSelected ? '!bg-[var(--color-accent-gold)] !text-[var(--color-brand-forest)] shadow-md z-10 !border-[var(--color-accent-gold)]' : ''}
                                     ${isInHoverRange ? '!bg-[var(--color-accent-gold)]/30 !text-[var(--color-text-primary)]' : ''}
                                     ${isHoverEnd ? '!bg-[var(--color-accent-gold)]/50 !text-[var(--color-brand-forest)] border-2 border-[var(--color-accent-gold)]' : ''}
-                                    ${isBlocked && !isSelected ? 'line-through decoration-red-500/50' : ''}
                                 `}
                             >
-                                {format(day, 'd')}
+                                {isBlocked ? (
+                                    <span className="text-[10px] font-bold">FULL</span>
+                                ) : (
+                                    format(day, 'd')
+                                )}
                                 {status === 'limited' && !isBlocked && !isSelected && !isInHoverRange && (
                                     <div className="absolute bottom-1 w-1 h-1 rounded-full bg-orange-500"></div>
                                 )}

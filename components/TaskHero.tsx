@@ -8,6 +8,7 @@ type Props = {
   currentStep?: number;
   totalSteps?: number;
   stepLabels?: string[];
+  onStepClick?: (step: number) => void;
 };
 
 export default function TaskHero({
@@ -15,7 +16,8 @@ export default function TaskHero({
   subtitle,
   currentStep,
   totalSteps,
-  stepLabels
+  stepLabels,
+  onStepClick
 }: Props) {
   return (
     <section className="relative w-full overflow-hidden" style={{ height: '32vh', minHeight: '240px' }}>
@@ -58,24 +60,35 @@ export default function TaskHero({
             {currentStep && totalSteps && (
               <div className="mb-5 flex flex-col items-center mx-auto">
                 <div className="flex items-center gap-2 mb-2">
-                  {Array.from({ length: totalSteps }).map((_, i) => (
-                    <div key={i} className="flex items-center">
-                      <div
-                        className={`
-                          h-1.5 rounded-full transition-all duration-500
-                          ${i < currentStep
-                            ? 'w-12 bg-accent-gold'
-                            : i === currentStep - 1
-                            ? 'w-16 bg-accent-gold shadow-[0_0_8px_rgba(200,167,90,0.6)]'
-                            : 'w-12 bg-accent-gold/20'
-                          }
-                        `}
-                      />
-                      {i < totalSteps - 1 && (
-                        <div className="w-2 h-[1px] bg-accent-gold/20" />
-                      )}
-                    </div>
-                  ))}
+                  {Array.from({ length: totalSteps }).map((_, i) => {
+                    const stepNumber = i + 1;
+                    const isCompleted = i < currentStep - 1;
+                    const isCurrent = i === currentStep - 1;
+                    const isClickable = onStepClick && (isCompleted || isCurrent) && stepNumber < 4; // Can't click "Confirmed" step
+
+                    return (
+                      <div key={i} className="flex items-center">
+                        <button
+                          onClick={() => isClickable && onStepClick(stepNumber)}
+                          disabled={!isClickable}
+                          className={`
+                            h-1.5 rounded-full transition-all duration-500
+                            ${i < currentStep
+                              ? 'w-12 bg-accent-gold'
+                              : i === currentStep - 1
+                              ? 'w-16 bg-accent-gold shadow-[0_0_8px_rgba(200,167,90,0.6)]'
+                              : 'w-12 bg-accent-gold/20'
+                            }
+                            ${isClickable ? 'cursor-pointer hover:shadow-[0_0_12px_rgba(200,167,90,0.8)] hover:scale-110' : isCurrent ? 'cursor-default' : 'cursor-not-allowed'}
+                          `}
+                          aria-label={stepLabels?.[i] ? `Go to ${stepLabels[i]}` : `Go to step ${stepNumber}`}
+                        />
+                        {i < totalSteps - 1 && (
+                          <div className="w-2 h-[1px] bg-accent-gold/20" />
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
                 {stepLabels && stepLabels[currentStep - 1] && (
                   <p className="text-xs font-medium text-accent-gold/80 tracking-wide uppercase">

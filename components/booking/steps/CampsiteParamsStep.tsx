@@ -75,17 +75,74 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
 
                  {/* RV Length - Conditional */}
                  {(formData.unitType === 'RV / Trailer' || formData.unitType === 'Camper Van') && (
-                     <div className="animate-in fade-in slide-in-from-top-2">
+                     <div className="animate-in fade-in slide-in-from-top-2 space-y-6">
                         <label className="block text-sm font-medium text-[var(--color-text-muted)] mb-2">
-                            Vehicle Length (ft)
+                            Vehicle Length
                         </label>
-                        <input
-                            type="number"
-                            value={formData.rvLength || ''}
-                            onChange={(e) => handleChange('rvLength', parseInt(e.target.value) || 0)}
-                            className="w-full p-4 bg-[var(--color-surface-primary)] border border-[var(--color-border-default)] rounded-lg focus:border-[var(--color-accent-gold)] outline-none transition-colors"
-                            placeholder="e.g. 25"
-                        />
+
+                        {/* Value Display Card */}
+                        <div className="flex justify-center">
+                            <div className="bg-[var(--color-accent-gold)] text-[var(--color-brand-forest)] px-6 py-3 rounded-xl shadow-lg">
+                                <div className="text-3xl font-bold tabular-nums">
+                                    {formData.rvLength || 0}<span className="text-xl ml-1">ft</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Slider Container */}
+                        <div className="relative px-2 pt-8 pb-4">
+                            {/* Tick marks and labels */}
+                            <div className="absolute top-0 left-2 right-2 flex justify-between pointer-events-none">
+                                {[0, 5, 10, 15, 20, 25, 30, 35, 40, 45, 50].map((tick) => (
+                                    <div key={tick} className="flex flex-col items-center">
+                                        <div className="h-3 w-0.5 bg-[var(--color-text-muted)]/30"></div>
+                                        <span className="text-[10px] text-[var(--color-text-muted)]/60 mt-1 font-medium">
+                                            {tick}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+
+                            {/* Slider Input */}
+                            <input
+                                type="range"
+                                min="0"
+                                max="50"
+                                step="2"
+                                value={formData.rvLength || 0}
+                                onChange={(e) => handleChange('rvLength', parseInt(e.target.value))}
+                                className="w-full h-2 bg-[var(--color-surface-primary)] rounded-lg appearance-none cursor-pointer
+                                    [&::-webkit-slider-thumb]:appearance-none
+                                    [&::-webkit-slider-thumb]:w-6
+                                    [&::-webkit-slider-thumb]:h-6
+                                    [&::-webkit-slider-thumb]:rounded-full
+                                    [&::-webkit-slider-thumb]:bg-[var(--color-accent-gold)]
+                                    [&::-webkit-slider-thumb]:shadow-lg
+                                    [&::-webkit-slider-thumb]:cursor-pointer
+                                    [&::-webkit-slider-thumb]:border-2
+                                    [&::-webkit-slider-thumb]:border-[var(--color-brand-forest)]
+                                    [&::-webkit-slider-thumb]:transition-transform
+                                    [&::-webkit-slider-thumb]:hover:scale-110
+                                    [&::-moz-range-thumb]:w-6
+                                    [&::-moz-range-thumb]:h-6
+                                    [&::-moz-range-thumb]:rounded-full
+                                    [&::-moz-range-thumb]:bg-[var(--color-accent-gold)]
+                                    [&::-moz-range-thumb]:shadow-lg
+                                    [&::-moz-range-thumb]:cursor-pointer
+                                    [&::-moz-range-thumb]:border-2
+                                    [&::-moz-range-thumb]:border-[var(--color-brand-forest)]
+                                    [&::-moz-range-thumb]:transition-transform
+                                    [&::-moz-range-thumb]:hover:scale-110
+                                    [&::-moz-range-thumb]:border-0"
+                                style={{
+                                    background: `linear-gradient(to right,
+                                        var(--color-accent-gold) 0%,
+                                        var(--color-accent-gold) ${((formData.rvLength || 0) / 50) * 100}%,
+                                        var(--color-surface-primary) ${((formData.rvLength || 0) / 50) * 100}%,
+                                        var(--color-surface-primary) 100%)`
+                                }}
+                            />
+                        </div>
                      </div>
                  )}
             </div>

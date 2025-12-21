@@ -66,7 +66,7 @@ export default function ReservationSummary({
                     {onChangeDates && (
                         <button
                             onClick={onChangeDates}
-                            className="text-xs text-[var(--color-accent-gold)] hover:text-[var(--color-accent-gold-dark)] flex items-center gap-1 transition-colors ml-auto sm:ml-0"
+                            className="text-xs text-[var(--color-accent-gold)] hover:text-[var(--color-accent-gold-dark)] flex items-center gap-1 transition-colors ml-auto sm:ml-0 cursor-pointer"
                             aria-label="Change dates"
                         >
                             <Edit2 className="w-3 h-3" />
@@ -90,7 +90,7 @@ export default function ReservationSummary({
                             {onChangeDetails && currentStep > 2 && (
                                 <button
                                     onClick={onChangeDetails}
-                                    className="text-xs text-[var(--color-accent-gold)] hover:text-[var(--color-accent-gold-dark)] flex items-center gap-1 transition-colors"
+                                    className="text-xs text-[var(--color-accent-gold)] hover:text-[var(--color-accent-gold-dark)] flex items-center gap-1 transition-colors cursor-pointer"
                                     aria-label="Change details"
                                 >
                                     <Edit2 className="w-3 h-3" />

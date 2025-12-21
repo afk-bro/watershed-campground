@@ -15,7 +15,7 @@ export const reservationFormSchema = z.object({
     checkOut: z.string().refine((date) => !isNaN(Date.parse(date)), {
         message: "Invalid check-out date",
     }),
-    rvLength: z.string().min(1, "RV length is required"),
+    rvLength: z.union([z.string(), z.number()]).transform(val => String(val)).default("0"),
     rvYear: z.string().optional(),
     adults: z.coerce.number().min(1, "At least 1 adult is required"),
     children: z.coerce.number().min(0).default(0),
@@ -72,7 +72,7 @@ export const databaseReservationSchema = z.object({
     }),
     adults: z.number().int().min(1, "Invalid adult count"),
     children: z.number().int().min(0, "Invalid children count"),
-    rv_length: z.string().min(1, "RV length is missing"),
+    rv_length: z.union([z.string(), z.number()]).transform(val => String(val)).default("0"),
     camping_unit: z.string().min(1, "Camping unit type is missing"),
     contact_method: z.enum(["Phone", "Email", "Either"], {
         message: "Invalid contact method in database"
