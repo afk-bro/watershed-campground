@@ -30,22 +30,23 @@ test.describe('Admin Smoke Tests', () => {
         // These tests use the auth state from auth.setup.ts
 
         test('/admin dashboard loads', async ({ page }) => {
-            await page.goto('/admin');
-            await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible();
+            await page.goto('/admin', { waitUntil: 'networkidle' });
+            // Wait for page to be fully loaded and interactive
+            await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible({ timeout: 10000 });
         });
 
         test('/admin/calendar loads', async ({ page }) => {
-            await page.goto('/admin/calendar');
+            await page.goto('/admin/calendar', { waitUntil: 'networkidle' });
             await expect(page).toHaveURL('/admin/calendar');
             // Calendar should render - check for the Calendar link in the nav
-            await expect(page.getByRole('link', { name: 'Calendar' })).toBeVisible();
+            await expect(page.getByRole('link', { name: 'Calendar' })).toBeVisible({ timeout: 10000 });
         });
 
         test('/admin/campsites loads', async ({ page }) => {
-            await page.goto('/admin/campsites');
+            await page.goto('/admin/campsites', { waitUntil: 'networkidle' });
             await expect(page).toHaveURL('/admin/campsites');
             // Use specific heading instead of generic text that matches multiple elements
-            await expect(page.getByRole('heading', { name: /Campsite Management/i })).toBeVisible();
+            await expect(page.getByRole('heading', { name: /Campsite Management/i })).toBeVisible({ timeout: 10000 });
         });
     });
 });
