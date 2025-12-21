@@ -1,17 +1,18 @@
 import Container from "../../components/Container";
-import Hero from "../../components/Hero";
+import TaskHero from "../../components/TaskHero";
 
 export default function RulesPage() {
   return (
     <main>
-      <Hero
+      <TaskHero
         title="Ground Rules & Policy"
         subtitle="Creating a respectful and enjoyable environment for everyone"
-        imageSrc="/gallery/banner.avif"
-        align="center"
       />
 
-      <div className="py-16">
+      {/* Divider */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />
+
+      <div className="py-12">
         <Container size="xl">
           {/* Introduction */}
           <div className="max-w-4xl mx-auto mb-16 text-center">

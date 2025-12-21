@@ -45,5 +45,27 @@ export const reservationFormSchema = z.object({
     comments: z.string().optional(),
 });
 
+export const campsiteFormSchema = z.object({
+    name: z.string().min(1, "Name is required"),
+    code: z.string()
+        .min(1, "Code is required")
+        .toUpperCase()
+        .regex(/^[A-Z0-9]+$/, "Code must contain only uppercase letters and numbers"),
+    type: z.enum(['rv', 'tent', 'cabin'], {
+        message: "Type must be rv, tent, or cabin"
+    }),
+    maxGuests: z.coerce.number()
+        .min(1, "At least 1 guest capacity is required")
+        .max(50, "Maximum capacity is 50 guests"),
+    baseRate: z.coerce.number()
+        .min(0, "Rate must be a positive number")
+        .max(10000, "Rate seems unreasonably high"),
+    isActive: z.boolean().default(true),
+    notes: z.string().optional(),
+    sortOrder: z.coerce.number().default(0),
+    imageUrl: z.string().optional(),
+});
+
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 export type ReservationFormData = z.infer<typeof reservationFormSchema>;
+export type CampsiteFormData = z.infer<typeof campsiteFormSchema>;

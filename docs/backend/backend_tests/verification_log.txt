@@ -1,0 +1,45 @@
+[INFO] [dotenv@17.2.3] injecting env (6) from .env.local [2m-- tip: 🔐 prevent building .env in docker: https://dotenvx.com/prebuild[0m
+[INFO] Starting Verification Tests...
+[INFO] Test A Site: Riverfront Site 1 (RV)
+[INFO] Test B Site: Cabin Alpha (Cabin)
+[INFO] 
+--- Executing Test A (Full Payment) ---
+[ERROR] Test A Init Failed: {"error":"Selected dates are no longer available."}
+[INFO] 
+--- Executing Test B (Deposit + Addons) ---
+[INFO] Test B Breakdown (Real API): {
+  "totalAmount": 500,
+  "policyApplied": {
+    "id": "f9130cf5-37c8-4ca4-a059-f004576496ae",
+    "created_at": "2025-12-14T00:24:48.696572+00:00",
+    "name": "Seasonal 50% Deposit",
+    "policy_type": "deposit",
+    "deposit_type": "percent",
+    "deposit_value": 50,
+    "due_days_before_checkin": 30,
+    "site_type": "cabin",
+    "campsite_id": null,
+    "start_month": null,
+    "end_month": null
+  },
+  "dueNow": 250,
+  "dueLater": 250,
+  "depositAmount": 250,
+  "remainderDueAt": "2026-05-11T00:00:00.000Z",
+  "siteTotal": 480,
+  "addonsTotal": 20
+}
+[INFO] PASS: Test B Balance Due: 250
+[INFO] Confirming PI pi_3Se3WQRgiCqfexJi19A21HnC (Deposit) for Live Verification...
+[INFO] Stripe PI Confirmed (Deposit Succeeded).
+[INFO] Test B Reservation Success: {
+  "success": true
+}
+[INFO] 
+Verifying DB Record for PI pi_3Se3WQRgiCqfexJi19A21HnC...
+[INFO] - Reservation ID: 1864fa39-b885-473a-9d72-5244014c3258
+[INFO] - Status: deposit_paid (Expected: deposit_paid)
+[INFO] - Balance Due: 250 (Expected: 250)
+[INFO] - Policy Snapshot: OK
+[INFO] - Transactions: 1 found
+[INFO] - Addons: 1 found
