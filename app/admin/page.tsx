@@ -34,13 +34,15 @@ export default function AdminPage() {
             const { data } = await response.json();
 
             // Note: Blocking events (maintenance) don't have archived_at, so we'll show them when showArchived is false
-            const filtered = showArchived
-                ? (data || []).filter((item: unknown): item is OverviewItem => {
-                    if (!item || typeof item !== 'object') return false;
-                    const anyItem = item as Record<string, unknown>;
-                    return anyItem.type === 'reservation' && anyItem.archived_at != null;
-                  })
-                : data || [];
+                        const filtered = showArchived
+                                ? (data || []).filter((item: unknown): item is OverviewItem => {
+                                        if (!item || typeof item !== 'object') return false;
+                                        const anyItem = item as Record<string, unknown>;
+                                        const type = anyItem.type;
+                                        const archived = (anyItem as Record<string, unknown>).archived_at;
+                                        return type === 'reservation' && archived != null;
+                                    })
+                                : (Array.isArray(data) ? data : []);
 
             setItems(filtered);
         } catch (err) {
@@ -457,8 +459,11 @@ export default function AdminPage() {
                                             );
                                         }
 
-                                        // Handle regular reservations
-                                        const reservation = item as Reservation; // Already filtered as reservation type
+                                        // Handle regular reservations (guard against non-reservation items)
+                                        if (item.type !== 'reservation') {
+                                            return null;
+                                        }
+                                        const reservation = item as unknown as Reservation;
                                         // Row-level styling based on status
                                         const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
                                         const isCheckedIn = reservation.status === 'checked_in';

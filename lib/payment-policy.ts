@@ -41,7 +41,7 @@ const DEFAULT_POLICY: PaymentPolicy = {
  * 4. Default
  */
 export async function determinePaymentPolicy(
-    supabaseAdmin: unknown, // Pass client to avoid re-init
+    supabaseAdmin: { from: (table: string) => { select: (cols: string) => Promise<{ data: PaymentPolicy[] | null; error: unknown }> } },
     campsiteId: string,
     campsiteType: string,
     checkInDate: Date
@@ -60,7 +60,7 @@ export async function determinePaymentPolicy(
     // Filter and Sort Candidates
     // We want the "most specific" rule.
     // Let's score them.
-    const scoredPolicies = policies.map((p: PaymentPolicy) => {
+    const scoredPolicies: Array<{ policy: PaymentPolicy; score: number; match: boolean }> = policies.map((p: PaymentPolicy) => {
         let score = 0;
         let match = true;
 
@@ -94,8 +94,8 @@ export async function determinePaymentPolicy(
     });
 
     const bestMatch = scoredPolicies
-        .filter((p: unknown) => (p as Record<string, unknown>).match)
-        .sort((a: unknown, b: unknown) => (b as Record<string, number>).score - (a as Record<string, number>).score)[0];
+        .filter((p) => p.match)
+        .sort((a, b) => b.score - a.score)[0];
 
     return bestMatch ? bestMatch.policy : DEFAULT_POLICY;
 }

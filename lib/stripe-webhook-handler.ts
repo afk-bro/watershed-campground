@@ -15,9 +15,43 @@ function escapeHtml(unsafe: string) {
         .replace(/'/g, "&#039;");
 }
 
+type ReservationRecord = {
+    id: string;
+    email_sent_at?: string | null;
+    first_name: string;
+    last_name: string;
+    email: string;
+    check_in: string;
+    check_out: string;
+    camping_unit: string;
+    adults: number;
+    children: number;
+    payment_status?: 'pay_on_arrival' | 'deposit_paid' | 'paid' | string | null;
+    amount_paid?: number | null;
+    balance_due?: number | null;
+};
+
+function isReservationRecord(obj: unknown): obj is ReservationRecord {
+    if (!obj || typeof obj !== 'object') return false;
+    const o = obj as Record<string, unknown>;
+    return typeof o.id === 'string'
+        && typeof o.first_name === 'string'
+        && typeof o.last_name === 'string'
+        && typeof o.email === 'string'
+        && typeof o.check_in === 'string'
+        && typeof o.check_out === 'string'
+        && typeof o.camping_unit === 'string'
+        && typeof o.adults === 'number'
+        && typeof o.children === 'number';
+}
+
 // Helper to send confirmation email
 async function sendConfirmationEmail(reservation: unknown) {
     try {
+        if (!isReservationRecord(reservation)) {
+            console.warn('sendConfirmationEmail called with invalid reservation payload');
+            return { sent: false, reason: 'invalid_reservation' };
+        }
         // Check if email was already sent (idempotency)
         if (reservation.email_sent_at) {
             console.log(`Email already sent for reservation ${reservation.id} at ${reservation.email_sent_at}`);
@@ -74,7 +108,8 @@ async function sendConfirmationEmail(reservation: unknown) {
 
         return { sent: true, emailId: emailResult.data?.id };
     } catch (error) {
-        console.error(`Failed to send confirmation email for reservation ${reservation.id}:`, error);
+        const resId = isReservationRecord(reservation) ? reservation.id : 'unknown';
+        console.error(`Failed to send confirmation email for reservation ${resId}:`, error);
         // Don't throw - we don't want to fail the webhook if email fails
         return { sent: false, error: error instanceof Error ? error.message : String(error) };
     }

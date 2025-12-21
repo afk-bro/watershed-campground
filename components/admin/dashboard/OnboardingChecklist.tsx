@@ -60,10 +60,7 @@ export default function OnboardingChecklist() {
     checkStatus();
   }, [dismissed]);
 
-  const handleDismiss = () => {
-    setDismissed(true);
-    localStorage.setItem("onboarding_dismissed", "true");
-  };
+  // Note: dismiss control handled by localStorage flag; no local handler needed
 
   if (dismissed) return null;
   if (loading) return (
