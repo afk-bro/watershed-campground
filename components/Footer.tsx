@@ -11,8 +11,8 @@ export default function Footer() {
       <div className="absolute inset-x-0 top-0 h-24 bg-gradient-to-b from-black/10 via-black/5 to-transparent pointer-events-none" />
 
       <Container size="xl">
-        {/* Main Footer Content */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-12 lg:gap-8 pt-16 pb-10 relative z-10">
+        {/* Main Footer Content - Reduced padding and gap for cleaner look */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 lg:gap-8 pt-12 pb-8 relative z-10">
           {/* Column 1: Brand, Description & Social */}
           <div className="lg:col-span-4 flex flex-col gap-5 lg:pr-12">
             <div className="flex items-center gap-3">
@@ -42,7 +42,7 @@ export default function Footer() {
                   href="https://facebook.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-brand-forest/40 border border-accent-gold/20 text-accent-gold/70 hover:bg-accent-gold/10 hover:border-accent-gold/40 hover:text-accent-gold hover:scale-[1.02] hover:shadow-[0_0_10px_rgba(200,167,90,0.3)] transition-all duration-300"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-brand-forest/40 border border-accent-gold/20 text-accent-gold/70 hover:bg-accent-gold/10 hover:border-accent-gold/40 hover:text-white hover:scale-110 hover:shadow-[0_0_15px_rgba(200,167,90,0.3)] transition-all duration-300"
                   aria-label="Facebook"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -53,7 +53,7 @@ export default function Footer() {
                   href="https://instagram.com"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="w-10 h-10 flex items-center justify-center rounded-full bg-brand-forest/40 border border-accent-gold/20 text-accent-gold/70 hover:bg-accent-gold/10 hover:border-accent-gold/40 hover:text-accent-gold hover:scale-[1.02] hover:shadow-[0_0_10px_rgba(200,167,90,0.3)] transition-all duration-300"
+                  className="w-10 h-10 flex items-center justify-center rounded-full bg-brand-forest/40 border border-accent-gold/20 text-accent-gold/70 hover:bg-accent-gold/10 hover:border-accent-gold/40 hover:text-white hover:scale-110 hover:shadow-[0_0_15px_rgba(200,167,90,0.3)] transition-all duration-300"
                   aria-label="Instagram"
                 >
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
@@ -68,14 +68,14 @@ export default function Footer() {
           <div className="lg:col-span-4 lg:px-12 lg:border-l lg:border-accent-gold/20">
             <h4 className="font-heading text-base text-accent-gold/90 mb-4 tracking-wide text-center">Quick Links</h4>
             <div className="grid grid-cols-2 gap-x-8 gap-y-4 justify-items-center">
-              <Link href="/" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Home</Link>
-              <Link href="/rates" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Rates</Link>
-              <Link href="/make-a-reservation" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Make a Reservation</Link>
-              <Link href="/amenities" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Amenities</Link>
-              <Link href="/gallery" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Gallery</Link>
-              <Link href="/things-to-do" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Things to Do</Link>
-                            <Link href="/rules" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Rules</Link>
-              <Link href="/contact" className="text-accent-beige/90 text-sm hover:text-accent-gold transition-colors text-center tracking-wide">Contact</Link>
+              <Link href="/" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Home</Link>
+              <Link href="/rates" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Rates</Link>
+              <Link href="/make-a-reservation" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Make a Reservation</Link>
+              <Link href="/amenities" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Amenities</Link>
+              <Link href="/gallery" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Gallery</Link>
+              <Link href="/things-to-do" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Things to Do</Link>
+                            <Link href="/rules" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Rules</Link>
+              <Link href="/contact" className="text-accent-beige/90 text-sm hover:text-white hover:translate-x-1 transition-all duration-300 inline-block text-center tracking-wide">Contact</Link>
             </div>
           </div>
 
@@ -88,7 +88,7 @@ export default function Footer() {
                 <svg className="w-3.5 h-3.5 text-accent-gold/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                 </svg>
-                <a href="tel:+12508786101" className="hover:text-accent-gold transition-colors">
+                <a href="tel:+12508786101" className="hover:text-white transition-colors duration-300">
                   250-878-6101
                 </a>
               </div>
@@ -98,7 +98,7 @@ export default function Footer() {
                 <svg className="w-3.5 h-3.5 text-accent-gold/60 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                 </svg>
-                <a href="mailto:info@thewatershedcampground.com" className="hover:text-accent-gold transition-colors break-all">
+                <a href="mailto:info@thewatershedcampground.com" className="hover:text-white transition-colors duration-300 break-all">
                   info@thewatershedcampground.com
                 </a>
               </div>
@@ -119,15 +119,15 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar - Legal */}
-        <div className="border-t border-accent-gold/25 pt-11 pb-6 relative z-10">
+        <div className="border-t border-accent-gold/25 pt-8 pb-6 relative z-10">
           <div className="flex flex-col md:flex-row justify-between items-center gap-4 text-[14px] text-accent-beige/75 tracking-wide">
             <p>&copy; {currentYear} The Watershed Campground. All rights reserved.</p>
             <nav className="flex items-center gap-4">
-              <Link href="/contact" className="hover:text-accent-gold transition-colors duration-200">
+              <Link href="/contact" className="hover:text-white transition-colors duration-200">
                 Privacy Policy
               </Link>
               <span className="text-accent-gold/20">·</span>
-              <Link href="/rates" className="hover:text-accent-gold transition-colors duration-200">
+              <Link href="/rates" className="hover:text-white transition-colors duration-200">
                 Terms & Conditions
               </Link>
             </nav>

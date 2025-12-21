@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Container from "../../components/Container";
-import Hero from "../../components/Hero";
+import TaskHero from "../../components/TaskHero";
 
 type AmenityCardProps = {
   title: string;
@@ -53,14 +53,15 @@ export default function AmenitiesPage() {
 
   return (
     <main>
-      <Hero
+      <TaskHero
         title="Amenities"
         subtitle="Everything you need for a comfortable stay"
-        imageSrc="/gallery/banner.avif"
-        align="center"
       />
 
-      <div className="py-16">
+      {/* Divider */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />
+
+      <div className="py-12">
         <Container size="xl">
           {/* Amenities Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-20">
@@ -191,7 +192,7 @@ export default function AmenitiesPage() {
               </form>
 
               {/* Social Media Links */}
-              <div className="mt-8 pt-8 border-t border-accent-gold/20">
+              <div className="mt-6 pt-6 border-t border-accent-gold/20">
                 <p className="text-center text-sm text-accent-beige/70 mb-4">Or connect with us on social media</p>
                 <div className="flex justify-center gap-4">
                   <a

@@ -1,15 +1,92 @@
 @import "tailwindcss";
 
+/* ============================================================================
+   DESIGN SYSTEM STABILITY - FROZEN
+   ============================================================================
+
+   STATUS: STABLE & FROZEN as of 2025-01-14
+
+   This design system is now locked for production use.
+
+   RULES FOR CHANGES:
+
+   1. NO NEW TOKENS unless a clear category emerges
+      - Don't add one-off colors for specific components
+      - If you need a new color 3+ times, propose a semantic token
+
+   2. PREFER COMPOSITION over expansion
+      - Use existing tokens in new combinations
+      - Example: bg-[var(--color-surface-card)] + border-[var(--color-border-strong)]
+      - Don't create new tokens for every UI variant
+
+   3. CHANGES REQUIRE REVIEW
+      - Discuss token additions in design system docs
+      - Update docs/design-system.md with rationale
+      - Run ESLint to verify no violations introduced
+
+   This prevents "token bloat" and maintains system integrity.
+
+   ============================================================================ */
+
+/* ============================================================================
+   DESIGN TOKENS
+   ============================================================================ */
+
 :root {
+  /* Typography */
   --font-heading: "Cormorant Garamond", serif;
   --font-body: Inter, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial, "Apple Color Emoji", "Segoe UI Emoji";
 
+  /* Brand Colors */
   --color-brand-forest: #06251c;
   --color-navbar-forest: #042c21;
   --color-accent-gold: #c8a75a;
   --color-accent-gold-dark: #d4c08a;
   --color-accent-gold-muted: #c8b37e;
   --color-accent-beige: #e9dfc7;
+
+  /* Semantic Surface Tokens */
+  --color-surface-primary: var(--color-brand-forest);
+  --color-surface-secondary: #083a2c;
+  --color-surface-card: #0a3f30;
+  --color-surface-elevated: #0d4538;
+  --color-surface-overlay: rgba(6, 37, 28, 0.95);
+
+  /* Semantic Text Tokens */
+  --color-text-primary: var(--color-accent-beige);
+  --color-text-secondary: #cbbfa5;
+  --color-text-muted: #b8aa8f; /* Lightened for WCAG AA contrast */
+  --color-text-inverse: #06251c;
+  --color-text-accent: var(--color-accent-gold);
+
+  /* Semantic Border/Divider Tokens */
+  --color-border-subtle: rgba(200, 167, 90, 0.15);
+  --color-border-default: rgba(200, 167, 90, 0.25);
+  --color-border-strong: rgba(200, 167, 90, 0.4);
+
+  /* Admin Status Colors (harmonized with brand) */
+  --color-status-pending: #c8a75a;
+  --color-status-pending-bg: rgba(200, 167, 90, 0.1);
+
+  --color-status-confirmed: #7fb069;
+  --color-status-confirmed-bg: rgba(127, 176, 105, 0.1);
+
+  --color-status-cancelled: #c97064;
+  --color-status-cancelled-bg: rgba(201, 112, 100, 0.1);
+
+  --color-status-active: #5ca3b8;
+  --color-status-active-bg: rgba(92, 163, 184, 0.1);
+
+  --color-status-neutral: #8a9ba8;
+  --color-status-neutral-bg: rgba(138, 155, 168, 0.1);
+
+  /* Error & Warning Colors */
+  --color-error: #c97064;
+  --color-error-bg: rgba(201, 112, 100, 0.1);
+  --color-warning: #d4a03a;
+  --color-warning-bg: rgba(212, 160, 58, 0.1);
+  --color-success: #7fb069;
+  --color-success-bg: rgba(127, 176, 105, 0.1);
 
   /* Vertical Rhythm Spacing System */
   --spacing-section-hero: 8rem;      /* 128px - Hero sections (py-32) */
@@ -23,9 +100,19 @@
   --spacing-content-medium: 1.5rem;  /* 24px - Between paragraphs */
   --spacing-content-small: 1rem;     /* 16px - Internal element grouping */
   --spacing-content-xsmall: 0.75rem; /* 12px - Tight grouping */
+
+  /* Focus Ring */
+  --focus-ring-color: var(--color-accent-gold);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
 }
 
+/* ============================================================================
+   TAILWIND v4 THEME INLINE (IntelliSense & Plugin Support)
+   ============================================================================ */
+
 @theme inline {
+  /* Brand Colors */
   --color-brand-forest: var(--color-brand-forest);
   --color-navbar-forest: var(--color-navbar-forest);
   --color-accent-gold: var(--color-accent-gold);
@@ -33,11 +120,38 @@
   --color-accent-gold-muted: var(--color-accent-gold-muted);
   --color-accent-beige: var(--color-accent-beige);
 
+  /* Semantic Tokens */
+  --color-surface-primary: var(--color-surface-primary);
+  --color-surface-secondary: var(--color-surface-secondary);
+  --color-surface-card: var(--color-surface-card);
+  --color-surface-elevated: var(--color-surface-elevated);
+  --color-surface-overlay: var(--color-surface-overlay);
+
+  --color-text-primary: var(--color-text-primary);
+  --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
+  --color-text-inverse: var(--color-text-inverse);
+  --color-text-accent: var(--color-text-accent);
+
+  --color-border-subtle: var(--color-border-subtle);
+  --color-border-default: var(--color-border-default);
+  --color-border-strong: var(--color-border-strong);
+
+  /* Status Colors */
+  --color-status-pending: var(--color-status-pending);
+  --color-status-confirmed: var(--color-status-confirmed);
+  --color-status-cancelled: var(--color-status-cancelled);
+  --color-status-active: var(--color-status-active);
+  --color-status-neutral: var(--color-status-neutral);
+
+  /* Typography */
   --font-heading: var(--font-heading);
   --font-body: var(--font-body);
 }
 
-/* Remove automatic dark scheme in favor of brand theme */
+/* ============================================================================
+   BASE STYLES
+   ============================================================================ */
 
 html {
   scroll-behavior: smooth;
@@ -47,13 +161,15 @@ body {
   background: var(--color-brand-forest);
   color: var(--color-accent-beige);
   font-family: var(--font-body);
-  font-size: 1.0625rem; /* 17px - slightly larger for better readability */
-  line-height: 1.75; /* Improved line-height for easier reading */
+  font-size: 1.0625rem; /* 17px - optimized for readability */
+  line-height: 1.75;
   position: relative;
+  z-index: 1; /* Ensures app content sits above background noise */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
+/* Subtle texture overlay - sits behind all content */
 body::before {
   content: "";
   position: fixed;
@@ -63,14 +179,304 @@ body::before {
   height: 100%;
   background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.015'/%3E%3C/svg%3E");
   pointer-events: none;
-  z-index: 9999;
+  z-index: 0; /* Safe z-index - won't interfere with modals, tooltips, or dropdowns */
+}
+
+/* ============================================================================
+   TYPOGRAPHY
+   ============================================================================ */
+
+/* Heading Defaults - Consistent brand typography */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading);
+  letter-spacing: 0.02em;
+  font-weight: 400; /* Cormorant looks best at normal weight */
 }
 
 .font-heading {
   font-family: var(--font-heading);
 }
 
-/* Slow bounce for scroll indicator */
+/* ============================================================================
+   ACCESSIBILITY - FOCUS STATES
+   ============================================================================ */
+
+/* Visible focus indicator for keyboard navigation (WCAG 2.1) */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: 2px;
+}
+
+/* Focus within for composite components */
+:focus-within {
+  --focus-ring-color: var(--color-accent-gold);
+}
+
+/* Remove default focus on mouse click, preserve for keyboard */
+:focus:not(:focus-visible) {
+  outline: none;
+}
+
+/* Custom focus styles for specific elements */
+button:focus-visible,
+a:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+}
+
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible {
+  border-color: var(--color-accent-gold);
+  box-shadow: 0 0 0 3px rgba(200, 167, 90, 0.15);
+}
+
+/* Custom Checkbox Styling - Full Control */
+input[type="checkbox"] {
+  /* Reset native appearance */
+  appearance: none;
+  -webkit-appearance: none;
+
+  /* Sizing - reduced by 2px from default 16px */
+  width: 14px;
+  height: 14px;
+
+  /* Visual styling */
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: 3px;
+
+  /* Positioning for checkmark */
+  position: relative;
+  cursor: pointer;
+
+  /* Smooth transitions */
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+/* Hover state */
+input[type="checkbox"]:hover:not(:disabled) {
+  border-color: var(--color-accent-gold);
+}
+
+/* Checked state - brand gold background */
+input[type="checkbox"]:checked {
+  background: var(--color-accent-gold);
+  border-color: var(--color-accent-gold);
+}
+
+/* Checkmark visual using ::after */
+input[type="checkbox"]:checked::after {
+  content: "";
+  position: absolute;
+  left: 3px;
+  top: 0px;
+  width: 5px;
+  height: 9px;
+  border: solid var(--color-brand-forest);
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+
+/* Focus state - matches existing focus treatment */
+input[type="checkbox"]:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(200, 167, 90, 0.15);
+  border-color: var(--color-accent-gold);
+}
+
+/* Disabled state */
+input[type="checkbox"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ============================================================================
+   LAYOUT UTILITIES - SECTION SPACING
+   ============================================================================ */
+
+.section-hero {
+  padding-block: var(--spacing-section-hero);
+}
+
+.section-xl {
+  padding-block: var(--spacing-section-xlarge);
+}
+
+.section-lg {
+  padding-block: var(--spacing-section-large);
+}
+
+.section-md {
+  padding-block: var(--spacing-section-medium);
+}
+
+.section-sm {
+  padding-block: var(--spacing-section-small);
+}
+
+/* ============================================================================
+   ADMIN UI COMPONENTS
+   ============================================================================ */
+
+/* Admin Card Surface */
+.admin-card {
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-subtle);
+  border-radius: 0.5rem;
+  padding: 1.5rem;
+  transition: border-color 0.2s ease;
+}
+
+.admin-card:hover {
+  border-color: var(--color-border-default);
+}
+
+/* Admin Table Surface */
+.admin-table {
+  background: var(--color-surface-secondary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.75rem;
+  overflow: hidden;
+}
+
+/* Admin Panel with Accent Border */
+.admin-panel {
+  background: var(--color-surface-primary);
+  border-left: 3px solid var(--color-accent-gold);
+  padding: 1.25rem;
+}
+
+/* ============================================================================
+   STATE UTILITIES - LOADING, ERROR, SUCCESS
+   ============================================================================ */
+
+/* Loading Skeleton */
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+}
+
+@keyframes skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
+.skeleton-text {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+  height: 1rem;
+  width: 100%;
+}
+
+.skeleton-title {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+  height: 1.5rem;
+  width: 75%;
+}
+
+.skeleton-button {
+  background: linear-gradient(
+    90deg,
+    var(--color-surface-secondary) 0%,
+    var(--color-surface-elevated) 50%,
+    var(--color-surface-secondary) 100%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 0.25rem;
+  height: 2.5rem;
+  width: 8rem;
+}
+
+/* Error States */
+.error-message {
+  background: var(--color-error-bg);
+  border-left: 4px solid var(--color-error);
+  color: var(--color-error);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+}
+
+.error-input {
+  border-color: var(--color-error) !important;
+  background: var(--color-error-bg);
+}
+
+.error-text {
+  color: var(--color-error);
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Success States */
+.success-message {
+  background: var(--color-success-bg);
+  border-left: 4px solid var(--color-success);
+  color: var(--color-success);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+}
+
+/* Warning States */
+.warning-message {
+  background: var(--color-warning-bg);
+  border-left: 4px solid var(--color-warning);
+  color: var(--color-warning);
+  padding: 1rem;
+  border-radius: 0.25rem;
+  margin: 1rem 0;
+}
+
+/* ============================================================================
+   ANIMATION UTILITIES
+   ============================================================================ */
+
+/* Smooth Surface Transitions */
+.transition-surface {
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+/* Smooth Transform Transitions */
+.transition-transform-smooth {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Hover Lift Effect */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.hover-lift:hover {
+  transform: translateY(-4px);
+}
+
+/* Slow Bounce for Scroll Indicator */
 @keyframes bounce-slow {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(6px); }
@@ -78,4 +484,276 @@ body::before {
 
 .animate-bounce-slow {
   animation: bounce-slow 1.8s ease-in-out infinite;
+}
+
+/* Fade In Animation */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.4s ease-out;
+}
+
+/* ============================================================================
+   RESPONSIVE DESIGN
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  /* Reduce section spacing on mobile */
+  .section-hero {
+    padding-block: 4rem;
+  }
+
+  .section-xl {
+    padding-block: 3rem;
+  }
+
+  .section-lg {
+    padding-block: 2.5rem;
+  }
+
+  .section-md {
+    padding-block: 2rem;
+  }
+
+  .section-sm {
+    padding-block: 1.5rem;
+  }
+
+  /* Slightly smaller base font on mobile */
+  body {
+    font-size: 1rem;
+  }
+
+  /* Admin tables scroll horizontally */
+  .admin-table {
+    overflow-x: auto;
+  }
+
+  /* Stack admin panels vertically */
+  .admin-panel {
+    margin-bottom: 1rem;
+  }
+}
+
+/* Tablet adjustments */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .section-hero {
+    padding-block: 6rem;
+  }
+
+  .section-xl {
+    padding-block: 4.5rem;
+  }
+}
+
+/* ============================================================================
+   PRINT STYLES
+   ============================================================================ */
+
+@media print {
+  /* Remove background texture for clean printing */
+  body::before {
+    display: none;
+  }
+
+  /* Hide interactive elements */
+  .no-print,
+  nav,
+  button,
+  .admin-panel {
+    display: none !important;
+  }
+
+  /* Ensure readable text on white background */
+  * {
+    color: #000 !important;
+    background: #fff !important;
+  }
+
+  /* Preserve borders for structure */
+  .admin-table,
+  .admin-card {
+    border: 1px solid #000 !important;
+  }
+
+  /* Prevent page breaks inside important elements */
+  .admin-card,
+  tr {
+    page-break-inside: avoid;
+  }
+
+  /* Add page breaks between major sections */
+  .section-lg,
+  .section-xl {
+    page-break-after: always;
+  }
+}
+
+/* ============================================================================
+   COMPONENT RECIPES - Consistent UI Primitives
+   ============================================================================ */
+
+/* Button Variants */
+.btn-primary {
+  padding: 0.5rem 1rem;
+  background: var(--color-accent-gold);
+  color: var(--color-text-inverse);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  padding: 0.5rem 1rem;
+  background: var(--color-surface-card);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-surface-elevated);
+}
+
+.btn-secondary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-ghost {
+  padding: 0.5rem 1rem;
+  background: transparent;
+  color: var(--color-accent-gold);
+  border: none;
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: background-color 0.2s ease;
+  cursor: pointer;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  background: var(--color-surface-elevated);
+}
+
+.btn-ghost:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-danger {
+  padding: 0.5rem 1rem;
+  background: var(--color-error);
+  color: var(--color-text-inverse);
+  border-radius: 0.5rem;
+  font-weight: 500;
+  transition: opacity 0.2s ease;
+  border: none;
+  cursor: pointer;
+}
+
+.btn-danger:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+.btn-danger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Form Input Variants */
+.input,
+.select,
+.textarea {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  background: var(--color-surface-card);
+  border: 1px solid var(--color-border-default);
+  border-radius: 0.5rem;
+  color: var(--color-text-primary);
+  font-size: 1rem;
+  line-height: 1.5;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.input:focus,
+.select:focus,
+.textarea:focus {
+  outline: none;
+  border-color: var(--color-accent-gold);
+  box-shadow: 0 0 0 3px rgba(200, 167, 90, 0.15);
+}
+
+.textarea {
+  resize: vertical;
+  min-height: 100px;
+}
+
+/* Form Labels */
+.label {
+  display: block;
+  margin-bottom: 0.5rem;
+  color: var(--color-text-primary);
+  font-weight: 500;
+  font-size: 0.875rem;
+}
+
+.label-required::after {
+  content: " *";
+  color: var(--color-error);
+}
+
+.help-text {
+  margin-top: 0.25rem;
+  color: var(--color-text-muted);
+  font-size: 0.875rem;
+}
+
+/* ============================================================================
+   UTILITY OVERRIDES
+   ============================================================================ */
+
+/* Disable text selection on draggable elements */
+.no-select {
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Ensure proper stacking for modals/overlays */
+.modal-overlay {
+  z-index: 1000;
+}
+
+.modal-content {
+  z-index: 1001;
+}
+
+.tooltip {
+  z-index: 1002;
+}
+
+.dropdown-menu {
+  z-index: 999;
 }

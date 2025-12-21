@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Container from "../../components/Container";
-import Hero from "../../components/Hero";
+import TaskHero from "../../components/TaskHero";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -50,14 +50,15 @@ export default function ContactPage() {
 
   return (
     <main>
-      <Hero
+      <TaskHero
         title="Say Hello"
-        subtitle="We'd love to hear from you"
-        imageSrc="/gallery/banner.avif"
-        align="center"
+        subtitle="We'd love to hear from you — send us a message"
       />
 
-      <div className="py-16">
+      {/* Divider */}
+      <div className="w-full h-px bg-gradient-to-r from-transparent via-accent-gold/40 to-transparent" />
+
+      <div className="py-12">
         <Container>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8 lg:gap-12 max-w-7xl mx-auto">
             {/* Left Column: Contact Info + Map */}

@@ -2,10 +2,8 @@ import type { Metadata } from "next";
 import { Cormorant_Garamond, Inter } from "next/font/google";
 import Script from "next/script";
 import "./globals.css";
-import { navLinks } from "../lib/navLinks";
 import { getLocalBusinessSchema } from "../lib/metadata";
-import Navbar from "../components/Navbar";
-import Footer from "../components/Footer";
+import ConditionalLayout from "../components/ConditionalLayout";
 
 const headingFont = Cormorant_Garamond({
   variable: "--font-heading",
@@ -85,7 +83,7 @@ export default function RootLayout({
   const structuredData = getLocalBusinessSchema();
 
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5" />
         <meta name="theme-color" content="#06251c" />
@@ -96,9 +94,9 @@ export default function RootLayout({
         />
       </head>
       <body className={`${headingFont.variable} ${bodyFont.variable} antialiased bg-brand-forest text-accent-beige`}>
-        <Navbar links={navLinks} />
-        {children}
-        <Footer />
+        <ConditionalLayout>
+          {children}
+        </ConditionalLayout>
       </body>
     </html>
   );

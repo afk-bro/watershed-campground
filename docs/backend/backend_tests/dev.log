@@ -1,0 +1,18 @@
+
+> watershed-campground@0.1.0 dev
+> next dev -H 0.0.0.0
+
+'\\wsl.localhost\Ubuntu-24.04\home\x\dev\projects\watershed-campground'
+CMD.EXE was started with the above path as the current directory.
+UNC paths are not supported.  Defaulting to Windows directory.
+   ▲ Next.js 16.0.9 (Turbopack)
+   - Local:         http://localhost:3000
+   - Network:       http://0.0.0.0:3000
+
+ ✓ Starting...
+\\wsl.localhost\Ubuntu-24.04\home\x\dev\projects\watershed-campground\node_modules\next\dist\lib\find-pages-dir.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+\\wsl.localhost\Ubuntu-24.04\home\x\dev\projects\watershed-campground\node_modules\next\dist\server\lib\router-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+\\wsl.localhost\Ubuntu-24.04\home\x\dev\projects\watershed-campground\node_modules\next\dist\server\lib\start-server.js: Invalid source map. Only conformant source maps can be used to find the original code. Cause: Error: sourceMapURL could not be parsed
+Error: > Couldn't find any `pages` or `app` directory. Please create one under the project root
+    at ignore-listed frames
+[?25h

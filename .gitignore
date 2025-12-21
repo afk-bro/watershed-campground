@@ -23,6 +23,8 @@
 # misc
 .DS_Store
 *.pem
+.mcp.json
+.venv
 
 # debug
 npm-debug.log*
@@ -39,3 +41,4 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+tests/.auth/
