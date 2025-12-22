@@ -6,7 +6,14 @@ import type { ReservationStatus } from "@/lib/supabase";
 import { Resend } from "resend";
 import { generateRescheduleEmail } from "@/lib/emails/rescheduleNotification";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors
+let resendClient: Resend | null = null;
+function getResendClient() {
+    if (!resendClient) {
+        resendClient = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resendClient;
+}
 
 type UpdateReservationBody = {
     status?: ReservationStatus;
@@ -253,6 +260,7 @@ export async function PATCH(
                 }
 
                 if (emailData) {
+                    const resend = getResendClient();
                     await resend.emails.send({
                         from: "The Watershed Campground <onboarding@resend.dev>",
                         to: [updatedReservation.email],

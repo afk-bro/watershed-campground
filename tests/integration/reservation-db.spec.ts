@@ -78,14 +78,14 @@ test.describe.serial('Reservation Integration (DB)', () => {
         );
 
         expect(result).toBeDefined();
-        expect(result.id).toBeTruthy();
-        expect(result.status).toBe('confirmed');
+        expect(result.reservation.id).toBeTruthy();
+        expect(result.reservation.status).toBe('confirmed');
 
         // Verify Ledger
         const { data: ledger, error } = await supabaseAdmin
             .from('payment_transactions')
             .select('*')
-            .eq('reservation_id', result.id)
+            .eq('reservation_id', result.reservation.id)
             .single();
 
         expect(error).toBeNull();
@@ -94,7 +94,7 @@ test.describe.serial('Reservation Integration (DB)', () => {
         expect(ledger.stripe_payment_intent_id).toContain('pi_test_');
 
         // Cleanup (Optional, but good practice)
-        await supabaseAdmin.from('payment_transactions').delete().eq('reservation_id', result.id);
-        await supabaseAdmin.from('reservations').delete().eq('id', result.id);
+        await supabaseAdmin.from('payment_transactions').delete().eq('reservation_id', result.reservation.id);
+        await supabaseAdmin.from('reservations').delete().eq('id', result.reservation.id);
     });
 });

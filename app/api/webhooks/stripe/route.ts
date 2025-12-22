@@ -3,9 +3,16 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { handleStripeWebhook } from "@/lib/stripe-webhook-handler";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-    apiVersion: "2025-11-17.clover",
-});
+// Lazy initialization to avoid build-time errors
+let stripeClient: Stripe | null = null;
+function getStripeClient() {
+    if (!stripeClient) {
+        stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+            apiVersion: "2024-12-18.acacia",
+        });
+    }
+    return stripeClient;
+}
 
 const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -27,6 +34,7 @@ export async function POST(req: Request) {
             return new NextResponse("Webhook Error: Missing signature/secret", { status: 400 });
         }
 
+        const stripe = getStripeClient();
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: unknown) {
         console.error(`Webhook signature verification failed: ${err instanceof Error ? err.message : String(err)}`);

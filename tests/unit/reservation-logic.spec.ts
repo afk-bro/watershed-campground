@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { reservationFormSchema } from '../../lib/reservation/validation';
 import { generateGuestConfirmationHtml, generateAdminNotificationHtml } from '../../lib/email/templates';
 import { createReservationRecord, CodeDeps } from '../../lib/reservation/reservation-service';
@@ -93,11 +94,11 @@ test.describe('Email Templates', () => {
 // --- Service Logic Tests (Mocked DB) ---
 test.describe('Reservation Service', () => {
     test('createReservationRecord inserts data correctly', async () => {
-        // Mock Supabase Client
-        const mockInsert = test.info().snapshotDir ? (data) => Promise.resolve({ data, error: null }) : null;
-
+        // Mock Supabase Client with proper type
+        type MockSupabaseClient = Pick<SupabaseClient, 'from'>;
+        
         // We need a proper mock chain: .from().insert().select().single()
-        const mockSupabase = {
+        const mockSupabase: MockSupabaseClient = {
             from: (table: string) => {
                 return {
                     insert: (data: unknown[]) => {
@@ -106,7 +107,8 @@ test.describe('Reservation Service', () => {
                                 single: async () => {
                                     // Mock response
                                     if (table === 'reservations') {
-                                        return { data: { id: "res_123", ...data[0] }, error: null };
+                                        const firstItem = data[0] as Record<string, unknown>;
+                                        return { data: { id: "res_123", ...firstItem }, error: null };
                                     }
                                     return { data: null, error: null }; // For ledgers/addons
                                 }
@@ -115,12 +117,23 @@ test.describe('Reservation Service', () => {
                     }
                 };
             }
-        } as unknown as { from: (table: string) => unknown };
+        };
 
-        const formData: Record<string, unknown> = {
-            firstName: "Test", lastName: "User", email: "test@user.com",
-            // ... other req fields simplified for test
-            checkIn: "2024-01-01", checkOut: "2024-01-02",
+        const formData = {
+            firstName: "Test",
+            lastName: "User",
+            email: "test@user.com",
+            phone: "555-0100",
+            address1: "123 Test St",
+            city: "Test City",
+            postalCode: "12345",
+            checkIn: "2024-01-01",
+            checkOut: "2024-01-02",
+            rvLength: "0",
+            adults: 2,
+            children: 0,
+            campingUnit: "Tent",
+            contactMethod: "Email" as const,
             addons: [{ id: "addon_1", quantity: 1, price: 10 }]
         };
 
@@ -132,9 +145,9 @@ test.describe('Reservation Service', () => {
             { paymentStatus: 'paid', amountPaid: 60, balanceDue: 0, paymentType: 'full' }
         );
 
-        expect(result.id).toBe("res_123");
-        expect(result.first_name).toBe("Test");
-        expect(result.amount_paid).toBe(60);
-        expect(result.campsite_id).toBe("site_123");
+        expect(result.reservation.id).toBe("res_123");
+        expect(result.reservation.first_name).toBe("Test");
+        expect(result.reservation.amount_paid).toBe(60);
+        expect(result.reservation.campsite_id).toBe("site_123");
     });
 });

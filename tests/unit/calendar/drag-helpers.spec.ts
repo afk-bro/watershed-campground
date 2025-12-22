@@ -14,12 +14,18 @@ test.describe('Drag Helpers', () => {
         campsite_id: 'site1',
         status: 'confirmed',
         created_at: '',
-        email: '',
-        first_name: '',
-        last_name: '',
-        phone: '',
-        camping_unit: '',
-        adults: 1
+        email: 'test@example.com',
+        first_name: 'Test',
+        last_name: 'User',
+        phone: '555-0100',
+        address1: '123 Test St',
+        city: 'Test City',
+        postal_code: '12345',
+        camping_unit: 'RV',
+        rv_length: '25',
+        contact_method: 'Email',
+        adults: 1,
+        children: 0
     };
 
     test('computeDragDates calculates correct offset and maintains duration', () => {
