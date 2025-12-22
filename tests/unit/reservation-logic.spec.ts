@@ -94,11 +94,8 @@ test.describe('Email Templates', () => {
 // --- Service Logic Tests (Mocked DB) ---
 test.describe('Reservation Service', () => {
     test('createReservationRecord inserts data correctly', async () => {
-        // Mock Supabase Client with proper type
-        type MockSupabaseClient = Pick<SupabaseClient, 'from'>;
-        
         // We need a proper mock chain: .from().insert().select().single()
-        const mockSupabase: MockSupabaseClient = {
+        const mockSupabase = {
             from: (table: string) => {
                 return {
                     insert: (data: unknown[]) => {
@@ -117,7 +114,7 @@ test.describe('Reservation Service', () => {
                     }
                 };
             }
-        };
+        } as unknown as SupabaseClient;
 
         const formData = {
             firstName: "Test",

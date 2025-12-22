@@ -63,7 +63,7 @@ export async function determinePaymentPolicy(
     // Filter and Sort Candidates
     // We want the "most specific" rule.
     // Let's score them.
-    const scoredPolicies: Array<{ policy: PaymentPolicy; score: number; match: boolean }> = policies.map((p: PaymentPolicy) => {
+    const scoredPolicies: Array<{ policy: PaymentPolicy; score: number; match: boolean }> = policies.map((p) => {
         let score = 0;
         let match = true;
 
@@ -93,7 +93,7 @@ export async function determinePaymentPolicy(
 
         console.log(`Policy: ${p.name}, SiteType: ${p.site_type} vs ${campsiteType}, Match: ${match}, Score: ${score}`);
 
-        return { policy: p, score, match };
+        return { policy: p as PaymentPolicy, score, match };
     });
 
     const bestMatch = scoredPolicies
