@@ -45,5 +45,17 @@ export const supabaseAdmin = new Proxy({} as SupabaseClient, {
         const value = client[prop as keyof SupabaseClient];
         // Bind methods to the client instance
         return typeof value === 'function' ? value.bind(client) : value;
+    },
+    has(target, prop) {
+        const client = getSupabaseAdmin();
+        return Reflect.has(client as object, prop);
+    },
+    ownKeys(target) {
+        const client = getSupabaseAdmin();
+        return Reflect.ownKeys(client as object);
+    },
+    getOwnPropertyDescriptor(target, prop) {
+        const client = getSupabaseAdmin();
+        return Reflect.getOwnPropertyDescriptor(client as object, prop);
     }
 });
