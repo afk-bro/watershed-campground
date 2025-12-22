@@ -18,6 +18,64 @@ export interface PaymentPolicy {
     end_month?: number;
 }
 
+/**
+ * Type guard to check if a value is a valid PaymentPolicyType
+ * @internal - Exported for testing purposes
+ */
+export function isPaymentPolicyType(value: string): value is PaymentPolicyType {
+    return value === 'full' || value === 'deposit';
+}
+
+/**
+ * Type guard to check if a value is a valid DepositType
+ * @internal - Exported for testing purposes
+ */
+export function isDepositType(value: string): value is DepositType {
+    return value === 'percent' || value === 'fixed';
+}
+
+/**
+ * Converts database row to PaymentPolicy with type validation.
+ * Validates that policy_type and deposit_type match expected literal types.
+ * @internal - Exported for testing purposes
+ */
+export function toPaymentPolicy(data: Database['public']['Tables']['payment_policies']['Row']): PaymentPolicy | null {
+    // Validate policy_type using type guard for proper type narrowing
+    const policyType = data.policy_type;
+    if (!isPaymentPolicyType(policyType)) {
+        console.error(
+            `Invalid policy_type: ${policyType} for payment policy id=${data.id}, name=${data.name}`,
+            { row: data }
+        );
+        return null;
+    }
+    
+    // Validate deposit_type if present using type guard
+    const depositType = data.deposit_type;
+    if (depositType !== null && !isDepositType(depositType)) {
+        console.error(
+            `Invalid deposit_type: ${depositType} for payment policy id=${data.id}, name=${data.name}`,
+            { row: data }
+        );
+        return null;
+    }
+    
+    // After validation with type guards, TypeScript knows these are the correct types
+    // Map database row to PaymentPolicy interface
+    return {
+        id: data.id,
+        name: data.name,
+        policy_type: policyType, // Now properly typed as PaymentPolicyType
+        deposit_type: depositType ?? undefined, // depositType is validated as DepositType | null; null is converted to undefined here
+        deposit_value: data.deposit_value ?? undefined,
+        due_days_before_checkin: data.due_days_before_checkin ?? undefined,
+        site_type: data.site_type ?? undefined,
+        campsite_id: data.campsite_id ?? undefined,
+        start_month: data.start_month ?? undefined,
+        end_month: data.end_month ?? undefined,
+    };
+}
+
 export interface PaymentBreakdown {
     totalAmount: number;
     policyApplied: PaymentPolicy;
@@ -63,38 +121,41 @@ export async function determinePaymentPolicy(
     // Filter and Sort Candidates
     // We want the "most specific" rule.
     // Let's score them.
-    const scoredPolicies: Array<{ policy: PaymentPolicy; score: number; match: boolean }> = policies.map((p: PaymentPolicy) => {
-        let score = 0;
-        let match = true;
+    const validPolicies = policies.map(toPaymentPolicy).filter((p): p is PaymentPolicy => p !== null);
+    
+    const scoredPolicies: Array<{ policy: PaymentPolicy; score: number; match: boolean }> = validPolicies
+        .map((p) => {
+            let score = 0;
+            let match = true;
 
-        // 1. Campsite ID Match (Highest Priority)
-        if (p.campsite_id) {
-            if (p.campsite_id === campsiteId) score += 100;
-            else match = false;
-        }
-
-        // 2. Site Type Match
-        if (p.site_type) {
-            if (p.site_type === campsiteType) score += 50;
-            else match = false;
-        }
-
-        // 3. Season Match
-        if (p.start_month && p.end_month) {
-            // ... (keep logic)
-            if (p.start_month <= p.end_month) {
-                if (checkInMonth >= p.start_month && checkInMonth <= p.end_month) score += 20;
-                else match = false;
-            } else {
-                if (checkInMonth >= p.start_month || checkInMonth <= p.end_month) score += 20;
+            // 1. Campsite ID Match (Highest Priority)
+            if (p.campsite_id) {
+                if (p.campsite_id === campsiteId) score += 100;
                 else match = false;
             }
-        }
 
-        console.log(`Policy: ${p.name}, SiteType: ${p.site_type} vs ${campsiteType}, Match: ${match}, Score: ${score}`);
+            // 2. Site Type Match
+            if (p.site_type) {
+                if (p.site_type === campsiteType) score += 50;
+                else match = false;
+            }
 
-        return { policy: p, score, match };
-    });
+            // 3. Season Match
+            if (p.start_month && p.end_month) {
+                // ... (keep logic)
+                if (p.start_month <= p.end_month) {
+                    if (checkInMonth >= p.start_month && checkInMonth <= p.end_month) score += 20;
+                    else match = false;
+                } else {
+                    if (checkInMonth >= p.start_month || checkInMonth <= p.end_month) score += 20;
+                    else match = false;
+                }
+            }
+
+            console.log(`Policy: ${p.name}, SiteType: ${p.site_type} vs ${campsiteType}, Match: ${match}, Score: ${score}`);
+
+            return { policy: p, score, match };
+        });
 
     const bestMatch = scoredPolicies
         .filter((p) => p.match)
