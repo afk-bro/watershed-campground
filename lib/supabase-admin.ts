@@ -50,6 +50,7 @@ export const supabaseAdmin = new Proxy({} as SupabaseClient, {
         const client = getSupabaseAdmin();
         return Reflect.has(client as object, prop);
     },
+    // Note: Only ownKeys needs eslint-disable; the underscore prefix works for other handlers
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     ownKeys(_target) {
         const client = getSupabaseAdmin();
