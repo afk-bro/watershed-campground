@@ -1,28 +1,45 @@
 import 'server-only';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Ensure this runs only on the server
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+// Lazy initialization to avoid build-time errors
+let supabaseAdminClient: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    if (process.env.NODE_ENV !== 'development') {
-        // In production, strictly require these
-        throw new Error("CRITICAL: Supabase admin environment variables are missing (URL or SERVICE_ROLE_KEY).");
-    } else {
-        console.warn("WARNING: Supabase admin keys missing. Some API routes may fail.");
+function getSupabaseAdmin() {
+    if (!supabaseAdminClient) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            if (process.env.NODE_ENV !== 'development') {
+                // In production, strictly require these
+                throw new Error("CRITICAL: Supabase admin environment variables are missing (URL or SERVICE_ROLE_KEY).");
+            } else {
+                console.warn("WARNING: Supabase admin keys missing. Some API routes may fail.");
+            }
+        }
+
+        supabaseAdminClient = createClient(
+            supabaseUrl || "",
+            supabaseServiceKey || "",
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
+        );
     }
+    return supabaseAdminClient;
 }
 
 // Admin client with secret key - bypasses RLS
 // NEVER import this into client-side components
-export const supabaseAdmin = createClient(
-    supabaseUrl || "",
-    supabaseServiceKey || "",
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
+// Using a Proxy to maintain backward compatibility with existing code
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+    get(target, prop) {
+        const client = getSupabaseAdmin();
+        const value = client[prop as keyof SupabaseClient];
+        // Bind methods to the client instance
+        return typeof value === 'function' ? value.bind(client) : value;
     }
-);
+});
