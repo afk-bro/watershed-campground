@@ -26,24 +26,30 @@ function toPaymentPolicy(data: Database['public']['Tables']['payment_policies'][
     const validPolicyTypes: PaymentPolicyType[] = ['full', 'deposit'];
     const validDepositTypes: DepositType[] = ['percent', 'fixed'];
     
-    // Validate policy_type
-    if (!validPolicyTypes.includes(data.policy_type as PaymentPolicyType)) {
-        console.error(`Invalid policy_type: ${data.policy_type}`);
+    // Validate policy_type - check without type assertion for proper type safety
+    const policyType = data.policy_type;
+    if (!validPolicyTypes.includes(policyType as PaymentPolicyType)) {
+        console.error(`Invalid policy_type: ${policyType}`);
         return null;
     }
     
-    // Validate deposit_type if present
-    if (data.deposit_type && !validDepositTypes.includes(data.deposit_type as DepositType)) {
-        console.error(`Invalid deposit_type: ${data.deposit_type}`);
+    // Validate deposit_type if present - check without type assertion
+    const depositType = data.deposit_type;
+    if (depositType && !validDepositTypes.includes(depositType as DepositType)) {
+        console.error(`Invalid deposit_type: ${depositType}`);
         return null;
     }
+    
+    // After validation, we know these values are valid - safe to cast
+    const validatedPolicyType = policyType as PaymentPolicyType;
+    const validatedDepositType = depositType ? (depositType as DepositType) : undefined;
     
     // Map database row to PaymentPolicy interface
     return {
         id: data.id,
         name: data.name,
-        policy_type: data.policy_type as PaymentPolicyType,
-        deposit_type: data.deposit_type as DepositType | undefined,
+        policy_type: validatedPolicyType,
+        deposit_type: validatedDepositType,
         deposit_value: data.deposit_value ?? undefined,
         due_days_before_checkin: data.due_days_before_checkin ?? undefined,
         site_type: data.site_type ?? undefined,
