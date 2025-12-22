@@ -85,7 +85,9 @@ select 1;
 
 drop index if exists "public"."idx_reservations_status";
 
-drop index if exists "public"."payment_policies_pkey";
+-- Avoid dropping the primary key index directly; it is required by the PK constraint.
+-- Keeping existing PK intact prevents migration failures locally.
+-- drop index if exists "public"."payment_policies_pkey";
 
 
   create table "public"."reservation_addons" (
@@ -162,7 +164,8 @@ CREATE UNIQUE INDEX reservation_addons_pkey ON public.reservation_addons USING b
 
 CREATE INDEX idx_reservations_status ON public.reservations USING btree (status);
 
-CREATE UNIQUE INDEX payment_policies_pkey ON public.payment_policies USING btree (id);
+-- Preserve existing primary key; do not recreate the index here.
+-- CREATE UNIQUE INDEX payment_policies_pkey ON public.payment_policies USING btree (id);
 
 alter table "public"."reservation_addons" add constraint "reservation_addons_pkey" PRIMARY KEY using index "reservation_addons_pkey";
 
