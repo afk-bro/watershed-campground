@@ -78,9 +78,9 @@ export default defineConfig({
         timeout: 120000,
         stdout: 'pipe',
         stderr: 'pipe',
-        env: {
-            // Pass all loaded env vars from .env.test to the webServer
-            ...process.env,
-        },
+        env: Object.fromEntries(
+            // Pass all loaded env vars from .env.test to the webServer, filtering out undefined
+            Object.entries(process.env).filter(([_, v]) => v !== undefined)
+        ) as Record<string, string>,
     },
 });
