@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { SupabaseClient } from '@supabase/supabase-js';
 import { reservationFormSchema } from '../../lib/reservation/validation';
 import { generateGuestConfirmationHtml, generateAdminNotificationHtml } from '../../lib/email/templates';
 import { createReservationRecord, CodeDeps } from '../../lib/reservation/reservation-service';
@@ -93,12 +94,11 @@ test.describe('Email Templates', () => {
 // --- Service Logic Tests (Mocked DB) ---
 test.describe('Reservation Service', () => {
     test('createReservationRecord inserts data correctly', async () => {
-        // Mock Supabase Client
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        const mockInsert = test.info().snapshotDir ? (data: any) => Promise.resolve({ data, error: null }) : null;
-
+        // Mock Supabase Client with proper type
+        type MockSupabaseClient = Pick<SupabaseClient, 'from'>;
+        
         // We need a proper mock chain: .from().insert().select().single()
-        const mockSupabase = {
+        const mockSupabase: MockSupabaseClient = {
             from: (table: string) => {
                 return {
                     insert: (data: unknown[]) => {
@@ -117,8 +117,7 @@ test.describe('Reservation Service', () => {
                     }
                 };
             }
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        } as any;
+        };
 
         const formData = {
             firstName: "Test",
