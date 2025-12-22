@@ -10,17 +10,21 @@ function getSupabaseAdmin() {
         const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
 
         if (!supabaseUrl || !supabaseServiceKey) {
-            if (process.env.NODE_ENV !== 'development') {
+            if (process.env.NODE_ENV === 'production') {
                 // In production, strictly require these
                 throw new Error("CRITICAL: Supabase admin environment variables are missing (URL or SERVICE_ROLE_KEY).");
             } else {
-                console.warn("WARNING: Supabase admin keys missing. Some API routes may fail.");
+                // In development, throw error with helpful message
+                throw new Error(
+                    "Supabase admin keys missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your .env file. " +
+                    "Some API routes require these credentials to function."
+                );
             }
         }
 
         supabaseAdminClient = createClient(
-            supabaseUrl || "",
-            supabaseServiceKey || "",
+            supabaseUrl,
+            supabaseServiceKey,
             {
                 auth: {
                     autoRefreshToken: false,

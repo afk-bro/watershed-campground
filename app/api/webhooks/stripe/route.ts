@@ -8,7 +8,7 @@ let stripeClient: Stripe | null = null;
 function getStripeClient() {
     if (!stripeClient) {
         stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
-            apiVersion: "2025-11-17.clover",
+            apiVersion: "2024-12-18.acacia",
         });
     }
     return stripeClient;
