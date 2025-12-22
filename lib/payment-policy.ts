@@ -63,7 +63,7 @@ function toPaymentPolicy(data: Database['public']['Tables']['payment_policies'][
         id: data.id,
         name: data.name,
         policy_type: policyType, // Now properly typed as PaymentPolicyType
-        deposit_type: depositType ?? undefined, // Now properly typed as DepositType | null, converted to undefined
+        deposit_type: depositType ?? undefined, // depositType is validated as DepositType | null; null is converted to undefined here
         deposit_value: data.deposit_value ?? undefined,
         due_days_before_checkin: data.due_days_before_checkin ?? undefined,
         site_type: data.site_type ?? undefined,
