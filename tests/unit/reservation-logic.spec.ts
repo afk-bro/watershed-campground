@@ -94,8 +94,9 @@ test.describe('Email Templates', () => {
 // --- Service Logic Tests (Mocked DB) ---
 test.describe('Reservation Service', () => {
     test('createReservationRecord inserts data correctly', async () => {
-        // We need a proper mock chain: .from().insert().select().single()
-        const mockSupabase = {
+        // Create a minimal mock implementing only the methods used by the service
+        // This approach avoids complex type assertions while maintaining type safety
+        const mockSupabase: Partial<SupabaseClient> = {
             from: (table: string) => {
                 return {
                     insert: (data: unknown[]) => {
@@ -112,9 +113,10 @@ test.describe('Reservation Service', () => {
                             })
                         }
                     }
-                };
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                } as any;
             }
-        } as unknown as SupabaseClient;
+        };
 
         const formData = {
             firstName: "Test",
@@ -135,7 +137,7 @@ test.describe('Reservation Service', () => {
         };
 
         const result = await createReservationRecord(
-            { supabase: mockSupabase },
+            { supabase: mockSupabase as SupabaseClient },
             formData,
             "site_123",
             { siteTotal: 50, addonsTotal: 10, totalAmount: 60 },
