@@ -85,16 +85,32 @@ export const databaseReservationSchema = z.object({
     payment_status: z.string().optional().default('pending'),
     amount_paid: z.number().min(0).optional().default(0),
     balance_due: z.number().min(0).optional().default(0),
+    total_amount: z.number().min(0).optional(),
     payment_policy_snapshot: z.any().optional(), // JSONB field
     remainder_due_at: z.string().nullable().optional(),
+    stripe_payment_intent_id: z.string().nullable().optional(),
 
     // References
     campsite_id: z.string().uuid().nullable().optional(),
     public_edit_token_hash: z.string().nullable().optional(),
+    public_edit_token_expires_at: z.string().nullable().optional(),
 
     // Allow timestamps and other DB-managed fields
     email_sent_at: z.string().nullable().optional(),
     archived_at: z.string().nullable().optional(),
-}).strict(); // Enforce exact schema - no extra fields allowed
+    archived_by: z.string().uuid().nullable().optional(),
+
+        // Opaque metadata stored as JSONB (flexible but guided)
+        metadata: z
+            .union([
+                z.record(z.unknown()),
+                z.array(z.unknown()),
+                z.string(),
+                z.number(),
+                z.boolean(),
+                z.null(),
+            ])
+            .optional(),
+}).passthrough(); // Allow extra DB columns to avoid breaking when schema evolves
 
 export type DatabaseReservation = z.infer<typeof databaseReservationSchema>;
