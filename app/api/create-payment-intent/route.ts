@@ -15,7 +15,11 @@ import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-p
 let stripeClient: Stripe | null = null;
 function getStripeClient() {
     if (!stripeClient) {
-        stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+        const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+        if (!stripeSecretKey) {
+            throw new Error("STRIPE_SECRET_KEY is missing; cannot initialize Stripe client");
+        }
+        stripeClient = new Stripe(stripeSecretKey, {
             apiVersion: "2024-12-18.acacia",
         });
     }
@@ -46,15 +50,16 @@ export async function POST(request: Request) {
             );
         }
 
-        if (!process.env.STRIPE_SECRET_KEY) {
+        let stripe: Stripe;
+        try {
+            stripe = getStripeClient();
+        } catch {
             console.error("STRIPE_SECRET_KEY is missing");
             return NextResponse.json(
                 { error: "Payment system configuration missing" },
                 { status: 503 }
             );
         }
-
-        const stripe = getStripeClient();
 
         const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json() as {
             checkIn: string;
