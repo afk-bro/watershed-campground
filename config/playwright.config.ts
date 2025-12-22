@@ -81,8 +81,6 @@ export default defineConfig({
         env: {
             // Pass all loaded env vars from .env.test to the webServer
             ...process.env,
-            // Force test mode for Next.js
-            NODE_ENV: 'test',
         },
     },
 });
