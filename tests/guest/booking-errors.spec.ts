@@ -297,7 +297,7 @@ test.describe('Guest Booking - Error Handling', () => {
                 .eq('is_active', true);
 
             // Create reservations for all RV sites
-            const reservations = rvSites!.map((site: unknown) => ({
+            const reservations = rvSites!.map((site: { id: string }) => ({
                 first_name: 'Blocker',
                 last_name: 'Test',
                 email: 'blocker@test.com',
