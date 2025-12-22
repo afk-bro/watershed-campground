@@ -103,7 +103,7 @@ export const databaseReservationSchema = z.object({
         // Opaque metadata stored as JSONB (flexible but guided)
         metadata: z
             .union([
-                z.record(z.unknown()),
+                z.record(z.string(), z.unknown()),
                 z.array(z.unknown()),
                 z.string(),
                 z.number(),
