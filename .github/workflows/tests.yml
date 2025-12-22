@@ -37,17 +37,22 @@ jobs:
           echo "NEXT_PUBLIC_SUPABASE_URL=$(npx supabase status | grep 'API URL' | awk '{print $3}')" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(npx supabase status | grep 'anon key' | awk '{print $3}')" >> $GITHUB_ENV
           echo "SUPABASE_SERVICE_ROLE_KEY=$(npx supabase status | grep 'service_role key' | awk '{print $3}')" >> $GITHUB_ENV
+          echo "TEST_ADMIN_EMAIL=${{ secrets.TEST_ADMIN_EMAIL }}" >> $GITHUB_ENV
+          echo "TEST_ADMIN_PASSWORD=${{ secrets.TEST_ADMIN_PASSWORD }}" >> $GITHUB_ENV
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}" >> $GITHUB_ENV
+          echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> $GITHUB_ENV
       - name: Create .env.test for Playwright
         run: |
           cat > .env.test << 'ENVEOF'
           NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}
           NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           SUPABASE_SERVICE_ROLE_KEY=${{ env.SUPABASE_SERVICE_ROLE_KEY }}
-          TEST_ADMIN_EMAIL=${{ secrets.TEST_ADMIN_EMAIL }}
-          TEST_ADMIN_PASSWORD=${{ secrets.TEST_ADMIN_PASSWORD }}
-          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
-          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
-          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          TEST_ADMIN_EMAIL=${{ env.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD=${{ env.TEST_ADMIN_PASSWORD }}
+          STRIPE_SECRET_KEY=${{ env.STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ env.STRIPE_WEBHOOK_SECRET }}
           ENVEOF
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
