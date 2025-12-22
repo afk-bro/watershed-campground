@@ -22,7 +22,7 @@ export async function POST(request: Request) {
         let body;
         try {
             body = JSON.parse(rawBody);
-        } catch (parseError) {
+        } catch {
             return NextResponse.json({ error: "Malformed JSON body" }, { status: 400 });
         }
         
