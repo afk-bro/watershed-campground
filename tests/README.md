@@ -488,7 +488,22 @@ STRIPE_SECRET_KEY=sk_test_...
 ```
 
 ### Seed Data
-Database is automatically seeded with test data:
+
+**Two-File Seeding Strategy:**
+
+1. **`supabase/seed.local.sql`** - DESTRUCTIVE (local/test only)
+   - Truncates all tables for clean slate
+   - Safety checks prevent running in production/preview
+   - **Only run explicitly via `npm run test:db:reset`**
+   - **Never in `sql_paths`** (not auto-executed by Supabase)
+
+2. **`supabase/seed.sql`** - SAFE (all environments)
+   - Inserts test data with explicit `ON CONFLICT (business_key) DO NOTHING`
+   - Idempotent - safe to run multiple times
+   - Includes E2E validation that fails loudly if incomplete
+   - In `sql_paths` (runs during `supabase db reset`)
+
+**What Gets Seeded:**
 
 **Campsites (7):**
 - S1, S2, S3: RV sites (riverfront)
@@ -502,6 +517,28 @@ Database is automatically seeded with test data:
 **Admin User:**
 - Email: admin@test.com
 - Password: testpass123
+
+**Production Safety:** The destructive `seed.local.sql` will NEVER run in production because:
+- It's **NOT in `sql_paths`** (must be run explicitly via test scripts)
+- Has safety checks that abort if not running on local Supabase
+- Vercel/preview/production only run the safe `seed.sql` (if at all)
+
+**Local Reset Command:**
+```bash
+npm run test:db:reset  # Runs migrations + seed.local.sql + seed.sql
+```
+
+This script:
+1. Runs `npx supabase db reset` (migrations + seed.sql)
+2. Explicitly runs `seed.local.sql` (truncate)
+3. Re-runs `seed.sql` (reload test data)
+4. Validates all data loaded correctly
+
+**Validation:** After seeding, validation checks ensure:
+- At least 7 campsites exist
+- At least 3 reservations exist
+- Admin user (admin@test.com) exists
+- If validation fails, the command errors loudly instead of silently continuing
 
 ### Dev Server
 The Playwright config automatically starts the dev server if not running.
@@ -576,7 +613,28 @@ test.afterAll(async () => {
 
 ## Stripe Testing
 
-Guest booking tests use Stripe test mode with test card numbers:
+**Default Behavior:** Stripe payment tests are **SKIPPED by default** to:
+- Avoid flaky headless browser + iframe interactions
+- Prevent unnecessary Stripe API calls during development
+- Keep PRs deployable even when Stripe iframes are flaky
+
+```bash
+# Default test run (Stripe tests skipped)
+npx playwright test
+# Result: ~175 passed, 15 skipped ✅
+
+# Enable Stripe tests for full payment flow testing
+STRIPE_TESTS_ENABLED=true npx playwright test
+# Result: ~190 passed ✅
+```
+
+**CI Strategy:**
+- **PR checks**: Stripe tests SKIPPED (fast, reliable gate)
+- **Nightly builds**: Stripe tests ENABLED (full coverage)
+- **Pre-release**: Stripe tests ENABLED (comprehensive validation)
+
+**Test Cards:**
+When Stripe tests are enabled, use these test card numbers:
 - **Success:** 4242 4242 4242 4242
 - **Decline:** 4000 0000 0000 0002
 - **Authentication Required:** 4000 0025 0000 3155

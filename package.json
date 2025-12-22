@@ -15,7 +15,8 @@
     "test:debug": "playwright test --debug",
     "test:report": "playwright show-report",
     "test:setup": "./scripts/test-setup.sh",
-    "test:quick": "playwright test tests/admin/smoke.spec.ts"
+    "test:quick": "playwright test tests/admin/smoke.spec.ts",
+    "test:db:reset": "node scripts/db-reset-local.mjs"
   },
   "dependencies": {
     "@stripe/react-stripe-js": "^5.4.1",
