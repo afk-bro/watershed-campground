@@ -8,9 +8,16 @@ import { reservationFormSchema } from "@/lib/reservation/validation";
 import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-    apiVersion: "2025-11-17.clover" as const,
-});
+// Lazy initialization to avoid build-time errors
+let stripeClient: Stripe | null = null;
+function getStripeClient() {
+    if (!stripeClient) {
+        stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
+            apiVersion: "2025-11-17.clover" as const,
+        });
+    }
+    return stripeClient;
+}
 
 export async function POST(request: Request) {
     try {
@@ -46,6 +53,7 @@ export async function POST(request: Request) {
         let recommendedSiteId: string;
 
         if (paymentIntentId) {
+            const stripe = getStripeClient();
             paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
             if (paymentIntent.status !== 'succeeded') {
                 return NextResponse.json({ error: "Payment not verified" }, { status: 400 });
