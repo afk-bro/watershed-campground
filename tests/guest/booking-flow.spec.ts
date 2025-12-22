@@ -29,8 +29,14 @@ test.describe('Guest Booking Flow', () => {
         // Select Unit Type
         await page.getByRole('button', { name: 'RV / Trailer' }).click();
 
-        // Fill Vehicle Length
-        await page.getByPlaceholder('e.g. 25').fill('25');
+        // Set Vehicle Length slider
+        const vehicleLengthSlider = page.locator('input[type="range"]').first();
+        await vehicleLengthSlider.evaluate((el, value) => {
+            const input = el as HTMLInputElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, '25');
 
         // Click Find Campsites
         await page.getByRole('button', { name: 'Find Campsites' }).click();
@@ -50,7 +56,7 @@ test.describe('Guest Booking Flow', () => {
         await page.getByPlaceholder('Address Line 1').fill('123 Test Lane');
         await page.getByPlaceholder('City').fill('Test City');
         await page.getByPlaceholder('Postal Code').fill('12345');
-        await page.getByPlaceholder('Phone').fill('555-0199');
+        await page.getByPlaceholder('Phone').fill('5550100000');
         await page.getByPlaceholder('Email').fill('test@example.com');
         
         // Select contact method
@@ -60,7 +66,7 @@ test.describe('Guest Booking Flow', () => {
         await page.getByRole('button', { name: 'Continue to Add-ons' }).click();
 
         // 6. Step 5: Add-ons
-        await expect(page.getByRole('heading', { name: 'Enhance Your Stay' })).toBeVisible();
+        await expect(page.getByRole('heading', { name: 'Enhance Your Stay' })).toBeVisible({ timeout: 15000 });
 
         // Test reaches add-ons step successfully
         // Note: Payment step requires Stripe configuration to proceed

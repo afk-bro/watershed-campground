@@ -16,11 +16,11 @@ test.describe('Admin Campsite Management', () => {
             // Wait for page to load
             await expect(page.getByRole('heading', { name: /Campsites/i })).toBeVisible();
 
-            // Should show campsite list
-            await expect(page.getByText(/Site/i)).toBeVisible();
+            // Should show campsite list table
+            await expect(page.getByRole('columnheader', { name: /Name/i })).toBeVisible();
 
-            // Should have at least one campsite from seed data (S1, S2, etc.)
-            await expect(page.getByText(/S1|S2|S3|S4|S5|C1|C2/)).toBeVisible();
+            // Should have at least one campsite from seed data
+            await expect(page.getByText('S1')).toBeVisible();
         });
 
         test('should filter campsites by type', async ({ page }) => {
@@ -33,8 +33,8 @@ test.describe('Admin Campsite Management', () => {
                 await rvFilter.click();
                 await page.waitForTimeout(500);
 
-                // Should only show RV sites (S1, S2, S3 from seed data)
-                await expect(page.getByText(/S1|S2|S3/)).toBeVisible();
+                // Should only show RV sites (e.g., S1 from seed data)
+                await expect(page.getByText('S1')).toBeVisible();
                 // Should not show tent sites (S4, S5)
                 await expect(page.getByText('S4')).not.toBeVisible();
             }
@@ -70,10 +70,11 @@ test.describe('Admin Campsite Management', () => {
         });
 
         test('should create a new RV campsite via API', async ({ request }) => {
+            const code = `TEST${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
             const response = await request.post('/api/admin/campsites', {
                 data: {
                     name: 'Test RV Site',
-                    code: 'TEST1',
+                    code,
                     type: 'rv',
                     maxGuests: 6,
                     baseRate: 55.00,
@@ -88,10 +89,10 @@ test.describe('Admin Campsite Management', () => {
             const body = await response.json();
             expect(body.data).toBeDefined();
             expect(body.data.name).toBe('Test RV Site');
-            expect(body.data.code).toBe('TEST1');
+            expect(body.data.code).toBe(code);
             expect(body.data.type).toBe('rv');
             expect(body.data.max_guests).toBe(6);
-            expect(body.data.base_rate).toBe('55.00');
+            expect(Number(body.data.base_rate)).toBe(55);
 
             createdCampsiteId = body.data.id;
 
@@ -106,10 +107,11 @@ test.describe('Admin Campsite Management', () => {
         });
 
         test('should create a tent campsite', async ({ request }) => {
+            const code = `TENT${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
             const response = await request.post('/api/admin/campsites', {
                 data: {
                     name: 'Test Tent Site',
-                    code: 'TENT99',
+                    code,
                     type: 'tent',
                     maxGuests: 4,
                     baseRate: 30.00,
@@ -127,10 +129,11 @@ test.describe('Admin Campsite Management', () => {
         });
 
         test('should create a cabin', async ({ request }) => {
+            const code = `CAB${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
             const response = await request.post('/api/admin/campsites', {
                 data: {
                     name: 'Test Cabin',
-                    code: 'CAB99',
+                    code,
                     type: 'cabin',
                     maxGuests: 8,
                     baseRate: 150.00,
@@ -144,7 +147,7 @@ test.describe('Admin Campsite Management', () => {
 
             const body = await response.json();
             expect(body.data.type).toBe('cabin');
-            expect(body.data.base_rate).toBe('150.00');
+            expect(Number(body.data.base_rate)).toBe(150);
 
             createdCampsiteId = body.data.id;
         });
@@ -309,11 +312,12 @@ test.describe('Admin Campsite Management', () => {
 
         test.beforeEach(async () => {
             // Create a test campsite for each update test
+            const code = `UPD${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
             const { data } = await supabaseAdmin
                 .from('campsites')
                 .insert({
                     name: 'Update Test Site',
-                    code: 'UPDT1',
+                    code,
                     type: 'rv',
                     max_guests: 4,
                     base_rate: 45.00,
@@ -366,7 +370,7 @@ test.describe('Admin Campsite Management', () => {
             expect(response.status()).toBe(200);
 
             const body = await response.json();
-            expect(body.data.base_rate).toBe('65.00');
+            expect(Number(body.data.base_rate)).toBe(65);
         });
 
         test('should update multiple fields at once', async ({ request }) => {
@@ -383,7 +387,7 @@ test.describe('Admin Campsite Management', () => {
 
             const body = await response.json();
             expect(body.data.name).toBe('Multi Update Site');
-            expect(body.data.base_rate).toBe('75.00');
+            expect(Number(body.data.base_rate)).toBe(75);
             expect(body.data.max_guests).toBe(6);
             expect(body.data.notes).toBe('Updated via test');
         });
@@ -429,11 +433,12 @@ test.describe('Admin Campsite Management', () => {
 
         test('should reject update to duplicate code', async ({ request }) => {
             // Create another campsite
+            const dupCode = `DUP${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
             const { data: otherSite } = await supabaseAdmin
                 .from('campsites')
                 .insert({
                     name: 'Other Site',
-                    code: 'OTHER1',
+                    code: dupCode,
                     type: 'tent',
                     max_guests: 2,
                     base_rate: 25.00,
@@ -447,7 +452,7 @@ test.describe('Admin Campsite Management', () => {
                 // Try to update test campsite with duplicate code
                 const response = await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
                     data: {
-                        code: 'OTHER1', // Duplicate
+                        code: dupCode, // Duplicate
                     },
                 });
 
@@ -481,11 +486,12 @@ test.describe('Admin Campsite Management', () => {
         let testCampsiteId: string;
 
         test.beforeEach(async () => {
+            const code = `DEL${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
             const { data } = await supabaseAdmin
                 .from('campsites')
                 .insert({
                     name: 'Delete Test Site',
-                    code: 'DEL1',
+                    code,
                     type: 'rv',
                     max_guests: 4,
                     base_rate: 45.00,

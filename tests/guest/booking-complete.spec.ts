@@ -4,7 +4,13 @@ import { format, addDays } from 'date-fns';
 test.describe('Guest Booking - Complete Happy Path', () => {
     test.use({ storageState: { cookies: [], origins: [] } }); // Unauthenticated user
 
+    const runStripe = process.env.STRIPE_TESTS_ENABLED === 'true';
+    if (!runStripe) {
+        console.log('⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)');
+    }
+
     test('should complete full booking with Stripe payment', async ({ page }) => {
+        test.skip(!runStripe, 'Stripe tests disabled (set STRIPE_TESTS_ENABLED=true in CI/staging)');
         test.setTimeout(60000); // Increase timeout for full E2E flow including Stripe
         // ==========================================
         // STEP 1: Navigate to Reservation Page
@@ -32,7 +38,15 @@ test.describe('Guest Booking - Complete Happy Path', () => {
         // ==========================================
         await expect(page.getByRole('heading', { name: 'Who is coming?' })).toBeVisible();
         await page.getByRole('button', { name: /RV.*Trailer/i }).click();
-        await page.getByPlaceholder(/e\.g\.\s*25/i).fill('28');
+
+        // Vehicle Length slider replaces the old text input
+        const vehicleLengthSlider = page.locator('input[type="range"]').first();
+        await vehicleLengthSlider.evaluate((el, value) => {
+            const input = el as HTMLInputElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, '28');
         await page.getByRole('button', { name: /Find Campsites/i }).click();
 
         // ==========================================
@@ -131,7 +145,8 @@ test.describe('Guest Booking - Complete Happy Path', () => {
         await expect(page.getByRole('heading', { name: 'Enhance Your Stay' })).toBeVisible();
 
         console.log("Clicking 'Review & Pay' button...");
-        const reviewPayBtn = page.getByRole('button', { name: /Review.*Pay/i });
+        const reviewPayBtn = page.getByRole('button', { name: 'Review & Pay', exact: true });
+        await expect(reviewPayBtn).toBeEnabled();
         await reviewPayBtn.click();
 
         // Wait for payment intent creation
@@ -365,7 +380,13 @@ test.describe('Guest Booking - Complete Happy Path', () => {
 
         await expect(page.getByRole('heading', { name: 'Who is coming?' })).toBeVisible();
         await page.getByRole('button', { name: /RV.*Trailer/i }).click();
-        await page.getByPlaceholder(/e\.g\.\s*25/i).fill('28');
+        const vehicleLengthSlider1 = page.locator('input[type="range"]').first();
+        await vehicleLengthSlider1.evaluate((el, value) => {
+            const input = el as HTMLInputElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, '28');
         await page.getByRole('button', { name: /Find Campsites/i }).click();
         await expect(page.getByRole('heading', { name: /available/i })).toBeVisible({ timeout: 10000 });
         await page.getByRole('button', { name: /Book Now/i }).first().click();
@@ -390,7 +411,13 @@ test.describe('Guest Booking - Complete Happy Path', () => {
 
         await expect(page.getByRole('heading', { name: 'Who is coming?' })).toBeVisible();
         await page.getByRole('button', { name: /RV.*Trailer/i }).click();
-        await page.getByPlaceholder(/e\.g\.\s*25/i).fill('28');
+        const vehicleLengthSlider2 = page.locator('input[type="range"]').first();
+        await vehicleLengthSlider2.evaluate((el, value) => {
+            const input = el as HTMLInputElement;
+            input.value = value;
+            input.dispatchEvent(new Event('input', { bubbles: true }));
+            input.dispatchEvent(new Event('change', { bubbles: true }));
+        }, '28');
         await page.getByRole('button', { name: /Find Campsites/i }).click();
         await expect(page.getByRole('heading', { name: /available/i })).toBeVisible({ timeout: 10000 });
         await page.getByRole('button', { name: /Book Now/i }).first().click();

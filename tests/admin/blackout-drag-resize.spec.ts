@@ -12,6 +12,13 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
     let testCampsiteId: string;
     let alternateCampsiteId: string;
 
+    // Hide instructional overlay that can intercept pointer events
+    test.beforeEach(async ({ page }) => {
+        await page.addInitScript(() => {
+            window.localStorage.setItem('has_seen_blackout_overlay', 'true');
+        });
+    });
+
     // Setup: Create test data
     test.beforeAll(async () => {
         // Get two campsites for testing moves
@@ -375,7 +382,10 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     camping_unit: 'RV / Trailer',
                     contact_method: 'Email',
                     status: 'confirmed',
-                    campsite_id: testCampsiteId
+                    campsite_id: testCampsiteId,
+                    total_amount: 300,
+                    amount_paid: 0,
+                    balance_due: 300
                 })
                 .select()
                 .single();
