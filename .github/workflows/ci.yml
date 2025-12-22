@@ -82,6 +82,11 @@ jobs:
           echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
           echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
 
+      - name: Verify .env.test file
+        run: |
+          echo "Contents of .env.test (with secrets masked):"
+          cat .env.test | sed 's/=.*/=***MASKED***/'
+
       - name: Run Playwright tests
         run: npx playwright test
         env:
