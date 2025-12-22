@@ -27,8 +27,26 @@ jobs:
           node-version: '20'
           cache: 'npm'
       - run: npm ci
+      - uses: supabase/setup-cli@v1
       - name: Start Supabase
         run: npx supabase start
+      - name: Create .env.test for Playwright
+        run: |
+          SUPABASE_STATUS=$(npx supabase status)
+          SUPABASE_URL=$(echo "$SUPABASE_STATUS" | grep -i 'API URL' | awk '{print $3}')
+          SUPABASE_ANON_KEY=$(echo "$SUPABASE_STATUS" | grep -i 'anon key' | awk '{print $3}')
+          SUPABASE_SERVICE_ROLE_KEY=$(echo "$SUPABASE_STATUS" | grep -i 'service_role key' | awk '{print $3}')
+
+          cat <<EOF > .env.test
+          NEXT_PUBLIC_SUPABASE_URL=$SUPABASE_URL
+          NEXT_PUBLIC_SUPABASE_ANON_KEY=$SUPABASE_ANON_KEY
+          SUPABASE_SERVICE_ROLE_KEY=$SUPABASE_SERVICE_ROLE_KEY
+          TEST_ADMIN_EMAIL=${{ secrets.TEST_ADMIN_EMAIL }}
+          TEST_ADMIN_PASSWORD=${{ secrets.TEST_ADMIN_PASSWORD }}
+          STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}
+          EOF
       - name: Install Playwright Browsers
         run: npx playwright install --with-deps chromium
       - name: Run Playwright Tests
