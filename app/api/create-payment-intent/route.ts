@@ -20,7 +20,7 @@ function getStripeClient() {
             throw new Error("STRIPE_SECRET_KEY is missing; cannot initialize Stripe client");
         }
         stripeClient = new Stripe(stripeSecretKey, {
-            apiVersion: "2024-12-18.acacia",
+            apiVersion: "2025-11-17.clover",
         });
     }
     return stripeClient;
