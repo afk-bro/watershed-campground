@@ -345,6 +345,7 @@ export type Database = {
           hear_about: string | null
           id: string
           last_name: string
+          metadata: Json | null
           payment_policy_snapshot: Json | null
           payment_status: string | null
           phone: string
@@ -381,6 +382,7 @@ export type Database = {
           hear_about?: string | null
           id?: string
           last_name: string
+          metadata?: Json | null
           payment_policy_snapshot?: Json | null
           payment_status?: string | null
           phone: string
@@ -417,6 +419,7 @@ export type Database = {
           hear_about?: string | null
           id?: string
           last_name?: string
+          metadata?: Json | null
           payment_policy_snapshot?: Json | null
           payment_status?: string | null
           phone?: string
