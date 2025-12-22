@@ -46,6 +46,16 @@ test.describe('Payment Policy Type Guards', () => {
 
 // --- Database Row to PaymentPolicy Conversion Tests ---
 test.describe('toPaymentPolicy Conversion', () => {
+    // Helper to mock console.error for validation tests
+    const mockConsoleError = () => {
+        const spy = { calls: [] as any[] };
+        const original = console.error;
+        console.error = (...args: any[]) => {
+            spy.calls.push(args);
+        };
+        return { spy, restore: () => { console.error = original; } };
+    };
+
     const createMockRow = (overrides: Partial<Database['public']['Tables']['payment_policies']['Row']> = {}): Database['public']['Tables']['payment_policies']['Row'] => {
         return {
             id: 'test-policy-1',
@@ -131,14 +141,7 @@ test.describe('toPaymentPolicy Conversion', () => {
     });
 
     test('returns null for invalid policy_type', () => {
-        const consoleSpy = test.step('mock console.error', () => {
-            const spy = { calls: [] as any[] };
-            const original = console.error;
-            console.error = (...args: any[]) => {
-                spy.calls.push(args);
-            };
-            return { spy, restore: () => { console.error = original; } };
-        });
+        const consoleMock = mockConsoleError();
 
         const row = createMockRow({
             id: 'invalid-1',
@@ -149,18 +152,11 @@ test.describe('toPaymentPolicy Conversion', () => {
         const result = toPaymentPolicy(row);
 
         expect(result).toBeNull();
-        consoleSpy.restore();
+        consoleMock.restore();
     });
 
     test('returns null for invalid deposit_type', () => {
-        const consoleSpy = test.step('mock console.error', () => {
-            const spy = { calls: [] as any[] };
-            const original = console.error;
-            console.error = (...args: any[]) => {
-                spy.calls.push(args);
-            };
-            return { spy, restore: () => { console.error = original; } };
-        });
+        const consoleMock = mockConsoleError();
 
         const row = createMockRow({
             id: 'invalid-2',
@@ -172,7 +168,7 @@ test.describe('toPaymentPolicy Conversion', () => {
         const result = toPaymentPolicy(row);
 
         expect(result).toBeNull();
-        consoleSpy.restore();
+        consoleMock.restore();
     });
 
     test('converts policy with site_type', () => {
