@@ -41,7 +41,8 @@ const DEFAULT_POLICY: PaymentPolicy = {
  * 4. Default
  */
 export async function determinePaymentPolicy(
-    supabaseAdmin: { from: (table: string) => { select: (cols: string) => Promise<{ data: PaymentPolicy[] | null; error: unknown }> } },
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    supabaseAdmin: any,
     campsiteId: string,
     campsiteType: string,
     checkInDate: Date
