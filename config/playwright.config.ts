@@ -79,12 +79,9 @@ export default defineConfig({
         stdout: 'pipe',
         stderr: 'pipe',
         env: {
-            // Explicitly pass required environment variables from .env.test
-            NEXT_PUBLIC_SUPABASE_URL: process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-            NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '',
-            SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY || '',
-            TEST_ADMIN_EMAIL: process.env.TEST_ADMIN_EMAIL || '',
-            TEST_ADMIN_PASSWORD: process.env.TEST_ADMIN_PASSWORD || '',
+            // Pass all loaded env vars from .env.test to the webServer
+            ...process.env,
+            // Force test mode for Next.js
             NODE_ENV: 'test',
         },
     },
