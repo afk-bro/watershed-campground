@@ -1,9 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
-// Load .env.test for E2E tests (local Supabase credentials)
-// Playwright runs from project root via symlink, so .env.test is in same directory
-dotenv.config({ path: '.env.test' });
+// Load .env.local for E2E tests (local Supabase credentials)
+// CI creates .env.local with local Supabase credentials, local dev has it already
+dotenv.config({ path: '.env.local' });
 
 // Debug: Verify env vars are present (for CI troubleshooting)
 if (process.env.CI) {
@@ -87,13 +87,9 @@ export default defineConfig({
         timeout: 120000,
         stdout: 'pipe',
         stderr: 'pipe',
-        env: {
-            // Set NODE_ENV=test to make Next.js load .env.test instead of .env.local
-            NODE_ENV: 'test',
-            ...Object.fromEntries(
-                // Pass all loaded env vars from .env.test to the webServer, filtering out undefined
-                Object.entries(process.env).filter(([, v]) => v !== undefined)
-            ),
-        } as Record<string, string>,
+        env: Object.fromEntries(
+            // Pass all loaded env vars from .env.local to the webServer, filtering out undefined
+            Object.entries(process.env).filter(([, v]) => v !== undefined)
+        ) as Record<string, string>,
     },
 });

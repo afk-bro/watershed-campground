@@ -91,16 +91,16 @@ jobs:
 
       - name: Create test environment file
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env.test
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ env.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
-          echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
-          echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env.local
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ env.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.local
+          echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.local
+          echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.local
 
-      - name: Verify .env.test file
+      - name: Verify .env.local file
         run: |
-          echo "Contents of .env.test (with secrets masked):"
-          cat .env.test | sed 's/=.*/=***MASKED***/'
+          echo "Contents of .env.local (with secrets masked):"
+          cat .env.local | sed 's/=.*/=***MASKED***/'
 
       - name: Run Playwright tests
         run: npx playwright test
