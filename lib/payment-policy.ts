@@ -20,23 +20,26 @@ export interface PaymentPolicy {
 
 /**
  * Type guard to check if a value is a valid PaymentPolicyType
+ * @internal - Exported for testing purposes
  */
-function isPaymentPolicyType(value: string): value is PaymentPolicyType {
+export function isPaymentPolicyType(value: string): value is PaymentPolicyType {
     return value === 'full' || value === 'deposit';
 }
 
 /**
  * Type guard to check if a value is a valid DepositType
+ * @internal - Exported for testing purposes
  */
-function isDepositType(value: string): value is DepositType {
+export function isDepositType(value: string): value is DepositType {
     return value === 'percent' || value === 'fixed';
 }
 
 /**
  * Converts database row to PaymentPolicy with type validation.
  * Validates that policy_type and deposit_type match expected literal types.
+ * @internal - Exported for testing purposes
  */
-function toPaymentPolicy(data: Database['public']['Tables']['payment_policies']['Row']): PaymentPolicy | null {
+export function toPaymentPolicy(data: Database['public']['Tables']['payment_policies']['Row']): PaymentPolicy | null {
     // Validate policy_type using type guard for proper type narrowing
     const policyType = data.policy_type;
     if (!isPaymentPolicyType(policyType)) {
