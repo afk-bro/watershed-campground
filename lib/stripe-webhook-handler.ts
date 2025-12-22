@@ -2,7 +2,14 @@ import { supabase } from "@/lib/supabase";
 import Stripe from "stripe";
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Lazy initialization to avoid build-time errors
+let resendClient: Resend | null = null;
+function getResendClient() {
+    if (!resendClient) {
+        resendClient = new Resend(process.env.RESEND_API_KEY);
+    }
+    return resendClient;
+}
 
 // Helper to escape HTML
 function escapeHtml(unsafe: string) {
@@ -71,6 +78,7 @@ async function sendConfirmationEmail(reservation: unknown) {
             : `<p><strong>Payment Received:</strong> $${reservation.amount_paid?.toFixed(2) || '0.00'} - Thank you!</p>`;
 
         // Send email to guest
+        const resend = getResendClient();
         const emailResult = await resend.emails.send({
             from: "The Watershed Campground <onboarding@resend.dev>",
             to: [reservation.email],

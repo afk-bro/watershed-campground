@@ -1,28 +1,63 @@
 import 'server-only';
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-// Ensure this runs only on the server
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+// Lazy initialization to avoid build-time errors
+let supabaseAdminClient: SupabaseClient | null = null;
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    if (process.env.NODE_ENV !== 'development') {
-        // In production, strictly require these
-        throw new Error("CRITICAL: Supabase admin environment variables are missing (URL or SERVICE_ROLE_KEY).");
-    } else {
-        console.warn("WARNING: Supabase admin keys missing. Some API routes may fail.");
+function getSupabaseAdmin() {
+    if (!supabaseAdminClient) {
+        const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+        const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+
+        if (!supabaseUrl || !supabaseServiceKey) {
+            if (process.env.NODE_ENV === 'production') {
+                // In production, strictly require these
+                throw new Error("CRITICAL: Supabase admin environment variables are missing (URL or SERVICE_ROLE_KEY).");
+            } else {
+                // In development, throw error with helpful message
+                throw new Error(
+                    "Supabase admin keys missing. Please set NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY in your .env file. " +
+                    "Some API routes require these credentials to function."
+                );
+            }
+        }
+
+        supabaseAdminClient = createClient(
+            supabaseUrl,
+            supabaseServiceKey,
+            {
+                auth: {
+                    autoRefreshToken: false,
+                    persistSession: false
+                }
+            }
+        );
     }
+    return supabaseAdminClient;
 }
 
 // Admin client with secret key - bypasses RLS
 // NEVER import this into client-side components
-export const supabaseAdmin = createClient(
-    supabaseUrl || "",
-    supabaseServiceKey || "",
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
+// Using a Proxy to maintain backward compatibility with existing code
+export const supabaseAdmin = new Proxy({} as SupabaseClient, {
+    get(_target, prop) {
+        const client = getSupabaseAdmin();
+        const value = client[prop as keyof SupabaseClient];
+        // Bind methods to the client instance
+        return typeof value === 'function' ? value.bind(client) : value;
+    },
+    has(_target, prop) {
+        const client = getSupabaseAdmin();
+        return Reflect.has(client as object, prop);
+    },
+    // Note: Only ownKeys needs eslint-disable; the underscore prefix works for other handlers
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ownKeys(_target) {
+        const client = getSupabaseAdmin();
+        return Reflect.ownKeys(client as object);
+    },
+    getOwnPropertyDescriptor(_target, prop) {
+        const client = getSupabaseAdmin();
+        return Reflect.getOwnPropertyDescriptor(client as object, prop);
     }
-);
+});

@@ -1,3 +1,6 @@
+import { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/lib/database.types";
+
 // Types
 export type PaymentPolicyType = 'full' | 'deposit';
 export type DepositType = 'percent' | 'fixed';
@@ -41,7 +44,7 @@ const DEFAULT_POLICY: PaymentPolicy = {
  * 4. Default
  */
 export async function determinePaymentPolicy(
-    supabaseAdmin: { from: (table: string) => { select: (cols: string) => Promise<{ data: PaymentPolicy[] | null; error: unknown }> } },
+    supabaseAdmin: SupabaseClient<Database>,
     campsiteId: string,
     campsiteType: string,
     checkInDate: Date
