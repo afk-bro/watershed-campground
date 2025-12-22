@@ -11,6 +11,17 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { checkAvailability } from "@/lib/availability/engine";
 import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
 
+// Lazy initialization to avoid build-time errors
+let stripeClient: Stripe | null = null;
+function getStripeClient() {
+    if (!stripeClient) {
+        stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
+            apiVersion: "2024-12-18.acacia",
+        });
+    }
+    return stripeClient;
+}
+
 // Helper function to calculate total site cost
 function calculateTotal(baseRate: string, checkIn: string, checkOut: string): number {
     const rate = parseFloat(baseRate);
@@ -43,9 +54,7 @@ export async function POST(request: Request) {
             );
         }
 
-        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-            apiVersion: "2024-12-18.acacia" as const,
-        });
+        const stripe = getStripeClient();
 
         const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json() as {
             checkIn: string;
