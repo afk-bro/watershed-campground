@@ -95,7 +95,8 @@ test.describe('Email Templates', () => {
 test.describe('Reservation Service', () => {
     test('createReservationRecord inserts data correctly', async () => {
         // Create a minimal mock implementing only the methods used by the service
-        // This approach avoids complex type assertions while maintaining type safety
+        // This approach reduces the need for complex type assertions while largely maintaining type safety,
+        // though a small number of targeted assertions are still required when wiring the mock into the service.
         const mockSupabase: Partial<SupabaseClient> = {
             from: (table: string) => {
                 return {
