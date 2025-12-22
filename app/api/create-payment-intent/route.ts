@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         }
 
         const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-            apiVersion: "2025-11-17.clover" as const,
+            apiVersion: "2024-12-18.acacia" as const,
         });
 
         const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json() as {
