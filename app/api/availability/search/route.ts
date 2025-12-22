@@ -13,7 +13,18 @@ const searchSchema = z.object({
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const rawBody = await request.text();
+
+        if (!rawBody || !rawBody.trim()) {
+            return NextResponse.json({ error: "Request body is required" }, { status: 400 });
+        }
+
+        let body;
+        try {
+            body = JSON.parse(rawBody);
+        } catch (parseError) {
+            return NextResponse.json({ error: "Malformed JSON body" }, { status: 400 });
+        }
         
         // Validate and sanitize input
         const validated = searchSchema.parse(body);

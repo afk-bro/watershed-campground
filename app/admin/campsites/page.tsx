@@ -110,7 +110,7 @@ export default function CampsitesPage() {
                 <div className="mb-8 flex items-center justify-between">
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-accent-gold mb-2">
-                            Campsite Management
+                            Campsites
                         </h1>
                         <p className="text-[var(--color-text-muted)]">
                             Manage campground sites and availability

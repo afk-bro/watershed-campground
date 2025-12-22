@@ -48,9 +48,9 @@ test.describe('Payment Policy Type Guards', () => {
 test.describe('toPaymentPolicy Conversion', () => {
     // Helper to mock console.error for validation tests
     const mockConsoleError = () => {
-        const spy = { calls: [] as any[] };
+        const spy = { calls: [] as unknown[][] };
         const original = console.error;
-        console.error = (...args: any[]) => {
+        console.error = (...args: unknown[]) => {
             spy.calls.push(args);
         };
         return { spy, restore: () => { console.error = original; } };
@@ -146,7 +146,7 @@ test.describe('toPaymentPolicy Conversion', () => {
         const row = createMockRow({
             id: 'invalid-1',
             name: 'Invalid Policy',
-            policy_type: 'invalid-type' as any
+            policy_type: 'invalid-type' as unknown as PaymentPolicy['policy_type']
         });
 
         const result = toPaymentPolicy(row);
@@ -162,7 +162,7 @@ test.describe('toPaymentPolicy Conversion', () => {
             id: 'invalid-2',
             name: 'Invalid Deposit Type',
             policy_type: 'deposit',
-            deposit_type: 'invalid-deposit' as any
+            deposit_type: 'invalid-deposit' as unknown as PaymentPolicy['deposit_type']
         });
 
         const result = toPaymentPolicy(row);

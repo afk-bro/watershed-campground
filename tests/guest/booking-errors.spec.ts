@@ -314,6 +314,9 @@ test.describe('Guest Booking - Error Handling', () => {
                 contact_method: 'Email',
                 status: 'confirmed',
                 campsite_id: site.id,
+                total_amount: 200,
+                amount_paid: 0,
+                balance_due: 200,
             }));
 
             const { data: createdReservations } = await supabaseAdmin

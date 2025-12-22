@@ -48,7 +48,16 @@ export async function GET(request: Request, { params }: Params) {
 export async function PATCH(request: Request, { params }: Params) {
     try {
         const { id } = await params;
-        const body = await request.json();
+        const text = await request.text();
+        if (!text) {
+            return NextResponse.json({ error: "Empty request body" }, { status: 400 });
+        }
+        let body: unknown;
+        try {
+            body = JSON.parse(text);
+        } catch {
+            return NextResponse.json({ error: "Malformed JSON" }, { status: 400 });
+        }
 
         // Validate request body (make all fields optional for partial updates)
         const partialSchema = campsiteFormSchema.partial();

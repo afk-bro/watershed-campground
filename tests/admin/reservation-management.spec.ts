@@ -32,7 +32,11 @@ test.describe('Admin Reservation Management - Happy Path', () => {
                 rv_length: '25',
                 camping_unit: 'RV / Trailer',
                 contact_method: 'Email',
-                status: 'pending'
+                status: 'pending',
+                // Ensure monetary fields are populated to satisfy NOT NULL constraints
+                total_amount: 200,
+                amount_paid: 0,
+                balance_due: 200
             })
             .select()
             .single();

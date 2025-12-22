@@ -42,7 +42,16 @@ export async function GET(request: Request) {
 // POST /api/admin/campsites - Create a new campsite
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
+        const text = await request.text();
+        if (!text) {
+            return NextResponse.json({ error: "Empty request body" }, { status: 400 });
+        }
+        let body: unknown;
+        try {
+            body = JSON.parse(text);
+        } catch {
+            return NextResponse.json({ error: "Malformed JSON" }, { status: 400 });
+        }
 
         // Validate request body
         const validationResult = campsiteFormSchema.safeParse(body);
