@@ -1,6 +1,17 @@
 -- ============================================
 -- Test Seed Data for E2E Tests
 -- ============================================
+-- This file is SAFE for all environments (local, preview, production)
+-- Uses ON CONFLICT to avoid errors when data already exists
+--
+-- ⚠️  NOTE: This file is designed for E2E test environments
+--     If you don't want test fixtures in production, don't run this file there
+--     Validation at the end assumes E2E test data (strict counts)
+--
+-- For LOCAL-ONLY destructive cleanup, see: supabase/seed.local.sql
+--
+-- In tests: Run `npm run test:db:reset` which runs migrations, then seed.local.sql, then this
+-- In production: This file would run via sql_paths, but you may want to skip it
 
 -- ============================================
 -- 1. Create Admin User for Testing
@@ -43,7 +54,8 @@ INSERT INTO auth.users (
   '{}'::jsonb,
   'authenticated',
   'authenticated'
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- Insert identity for the user
 INSERT INTO auth.identities (
@@ -64,7 +76,8 @@ INSERT INTO auth.identities (
   now(),
   now(),
   now()
-);
+)
+ON CONFLICT (id) DO NOTHING;
 
 -- ============================================
 -- 2. Seed Campsites
@@ -76,7 +89,8 @@ INSERT INTO public.campsites (id, code, name, type, max_guests, base_rate, is_ac
   ('10000000-0000-0000-0000-000000000004'::uuid, 'S4', 'Forest Site 4', 'tent', 4, 30.00, true, 4, 'Shaded tent site near hiking trails'),
   ('10000000-0000-0000-0000-000000000005'::uuid, 'S5', 'Forest Site 5', 'tent', 2, 25.00, true, 5, 'Cozy tent site with fire pit'),
   ('10000000-0000-0000-0000-000000000006'::uuid, 'C1', 'Cabin Alpha', 'cabin', 6, 120.00, true, 10, 'Two-bedroom cabin with kitchen'),
-  ('10000000-0000-0000-0000-000000000007'::uuid, 'C2', 'Cabin Beta', 'cabin', 4, 100.00, true, 11, 'One-bedroom cabin with kitchenette');
+  ('10000000-0000-0000-0000-000000000007'::uuid, 'C2', 'Cabin Beta', 'cabin', 4, 100.00, true, 11, 'One-bedroom cabin with kitchenette')
+ON CONFLICT (code) DO NOTHING;  -- Business key: campsite code must be unique
 
 -- ============================================
 -- 3. Seed Reservations
@@ -168,7 +182,55 @@ INSERT INTO public.reservations (
     'pending',
     100.00,
     'pi_test_unassigned'
-  );
+  )
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================
+-- Seed Validation - Fail Loud if Incomplete!
+-- ============================================
+-- ⚠️  E2E TEST VALIDATION - Checks for specific test fixture counts
+-- This is intentionally strict for E2E environments
+-- If running in production, you may want to skip/modify this section
+
+DO $$
+DECLARE
+  campsite_count INT;
+  reservation_count INT;
+  admin_exists BOOLEAN;
+BEGIN
+  -- Count seed data
+  SELECT COUNT(*) INTO campsite_count
+  FROM public.campsites
+  WHERE id::text LIKE '10000000%';
+
+  SELECT COUNT(*) INTO reservation_count
+  FROM public.reservations
+  WHERE id::text LIKE '20000000%';
+
+  SELECT EXISTS(SELECT 1 FROM auth.users WHERE email = 'admin@test.com')
+  INTO admin_exists;
+
+  -- Validate E2E test fixture counts
+  IF campsite_count < 7 THEN
+    RAISE EXCEPTION '❌ E2E SEED FAILED: Expected >= 7 test campsites, got %. Did seed.local.sql run first?', campsite_count;
+  END IF;
+
+  IF reservation_count < 3 THEN
+    RAISE EXCEPTION '❌ E2E SEED FAILED: Expected >= 3 test reservations, got %. Did seed.local.sql run first?', reservation_count;
+  END IF;
+
+  IF NOT admin_exists THEN
+    RAISE EXCEPTION '❌ E2E SEED FAILED: Test admin (admin@test.com) not found';
+  END IF;
+
+  -- Success!
+  RAISE NOTICE '✓ E2E seed validation passed:';
+  RAISE NOTICE '  - % test campsites seeded', campsite_count;
+  RAISE NOTICE '  - % test reservations seeded', reservation_count;
+  RAISE NOTICE '  - Test admin (admin@test.com) exists';
+  RAISE NOTICE '';
+  RAISE NOTICE 'Ready for E2E testing!';
+END $$;
 
 -- ============================================
 -- Seed Complete!

@@ -68,6 +68,13 @@ jobs:
       - name: Start Supabase local instance
         run: npx supabase start
 
+      - name: Load E2E test fixtures
+        run: |
+          echo "🔄 Loading E2E test fixtures (seed.local.sql)..."
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/seed.local.sql
+          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/seed.sql
+          echo "✅ E2E fixtures loaded"
+
       - name: Get Supabase credentials
         run: |
           echo "NEXT_PUBLIC_SUPABASE_URL=$(npx supabase status | grep 'API URL' | awk '{print $3}')" >> $GITHUB_ENV

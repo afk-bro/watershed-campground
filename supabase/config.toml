@@ -60,6 +60,10 @@ schema_paths = []
 enabled = true
 # Specifies an ordered list of seed files to load during db reset.
 # Supports glob patterns relative to supabase directory: "./seeds/*.sql"
+#
+# IMPORTANT: Only seed.sql is in sql_paths (safe for all environments)
+#            seed.local.sql must be run EXPLICITLY in local/test scripts
+#            See: npm run test:db:reset
 sql_paths = ["./seed.sql"]
 
 [db.network_restrictions]
