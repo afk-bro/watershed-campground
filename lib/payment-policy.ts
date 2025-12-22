@@ -19,37 +19,45 @@ export interface PaymentPolicy {
 }
 
 /**
+ * Type guard to check if a value is a valid PaymentPolicyType
+ */
+function isPaymentPolicyType(value: string): value is PaymentPolicyType {
+    return value === 'full' || value === 'deposit';
+}
+
+/**
+ * Type guard to check if a value is a valid DepositType
+ */
+function isDepositType(value: string): value is DepositType {
+    return value === 'percent' || value === 'fixed';
+}
+
+/**
  * Converts database row to PaymentPolicy with type validation.
  * Validates that policy_type and deposit_type match expected literal types.
  */
 function toPaymentPolicy(data: Database['public']['Tables']['payment_policies']['Row']): PaymentPolicy | null {
-    const validPolicyTypes: PaymentPolicyType[] = ['full', 'deposit'];
-    const validDepositTypes: DepositType[] = ['percent', 'fixed'];
-    
-    // Validate policy_type - check without type assertion for proper type safety
+    // Validate policy_type using type guard for proper type narrowing
     const policyType = data.policy_type;
-    if (!validPolicyTypes.includes(policyType as PaymentPolicyType)) {
+    if (!isPaymentPolicyType(policyType)) {
         console.error(`Invalid policy_type: ${policyType}`);
         return null;
     }
     
-    // Validate deposit_type if present - check without type assertion
+    // Validate deposit_type if present using type guard
     const depositType = data.deposit_type;
-    if (depositType && !validDepositTypes.includes(depositType as DepositType)) {
+    if (depositType !== null && !isDepositType(depositType)) {
         console.error(`Invalid deposit_type: ${depositType}`);
         return null;
     }
     
-    // After validation, we know these values are valid - safe to cast
-    const validatedPolicyType = policyType as PaymentPolicyType;
-    const validatedDepositType = depositType ? (depositType as DepositType) : undefined;
-    
+    // After validation with type guards, TypeScript knows these are the correct types
     // Map database row to PaymentPolicy interface
     return {
         id: data.id,
         name: data.name,
-        policy_type: validatedPolicyType,
-        deposit_type: validatedDepositType,
+        policy_type: policyType, // Now properly typed as PaymentPolicyType
+        deposit_type: depositType ?? undefined, // Now properly typed as DepositType | null, converted to undefined
         deposit_value: data.deposit_value ?? undefined,
         due_days_before_checkin: data.due_days_before_checkin ?? undefined,
         site_type: data.site_type ?? undefined,
