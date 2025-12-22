@@ -77,9 +77,17 @@ jobs:
 
       - name: Get Supabase credentials
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=$(npx supabase status | grep 'API URL' | awk '{print $3}')" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(npx supabase status | grep 'anon key' | awk '{print $3}')" >> $GITHUB_ENV
-          echo "SUPABASE_SERVICE_ROLE_KEY=$(npx supabase status | grep 'service_role key' | awk '{print $3}')" >> $GITHUB_ENV
+          # Extract credentials from Supabase status using JSON output for reliability
+          STATUS_JSON=$(npx supabase status -o json)
+
+          echo "NEXT_PUBLIC_SUPABASE_URL=$(echo $STATUS_JSON | jq -r '.API_URL')" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(echo $STATUS_JSON | jq -r '.PUBLISHABLE_KEY')" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$(echo $STATUS_JSON | jq -r '.SECRET_KEY')" >> $GITHUB_ENV
+
+          # Debug: verify env vars are set (show yes/no, not values)
+          echo "NEXT_PUBLIC_SUPABASE_URL is set? -> $([ -n "$NEXT_PUBLIC_SUPABASE_URL" ] && echo yes || echo no)"
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set? -> $([ -n "$NEXT_PUBLIC_SUPABASE_ANON_KEY" ] && echo yes || echo no)"
+          echo "SUPABASE_SERVICE_ROLE_KEY is set? -> $([ -n "$SUPABASE_SERVICE_ROLE_KEY" ] && echo yes || echo no)"
 
       - name: Create test environment file
         run: |

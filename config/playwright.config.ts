@@ -5,6 +5,15 @@ import dotenv from 'dotenv';
 // Playwright runs from project root via symlink, so .env.test is in same directory
 dotenv.config({ path: '.env.test' });
 
+// Debug: Verify env vars are present (for CI troubleshooting)
+if (process.env.CI) {
+    console.log("CI env present:", {
+        url: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+        anon: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+        service: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    });
+}
+
 export default defineConfig({
     testDir: './tests',
     fullyParallel: true,
