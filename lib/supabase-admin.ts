@@ -40,21 +40,23 @@ function getSupabaseAdmin() {
 // NEVER import this into client-side components
 // Using a Proxy to maintain backward compatibility with existing code
 export const supabaseAdmin = new Proxy({} as SupabaseClient, {
-    get(target, prop) {
+    get(_target, prop) {
         const client = getSupabaseAdmin();
         const value = client[prop as keyof SupabaseClient];
         // Bind methods to the client instance
         return typeof value === 'function' ? value.bind(client) : value;
     },
-    has(target, prop) {
+    has(_target, prop) {
         const client = getSupabaseAdmin();
         return Reflect.has(client as object, prop);
     },
-    ownKeys(target) {
+    // Note: Only ownKeys needs eslint-disable; the underscore prefix works for other handlers
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    ownKeys(_target) {
         const client = getSupabaseAdmin();
         return Reflect.ownKeys(client as object);
     },
-    getOwnPropertyDescriptor(target, prop) {
+    getOwnPropertyDescriptor(_target, prop) {
         const client = getSupabaseAdmin();
         return Reflect.getOwnPropertyDescriptor(client as object, prop);
     }
