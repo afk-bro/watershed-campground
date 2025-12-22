@@ -102,10 +102,23 @@ jobs:
           echo "Contents of .env.local (with secrets masked):"
           cat .env.local | sed 's/=.*/=***MASKED***/'
 
+      - name: Assert required env vars are present
+        run: |
+          test -n "${{ env.NEXT_PUBLIC_SUPABASE_URL }}" || (echo "❌ Missing NEXT_PUBLIC_SUPABASE_URL" && exit 1)
+          test -n "${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" || (echo "❌ Missing NEXT_PUBLIC_SUPABASE_ANON_KEY" && exit 1)
+          test -n "${{ env.SUPABASE_SERVICE_ROLE_KEY }}" || (echo "❌ Missing SUPABASE_SERVICE_ROLE_KEY" && exit 1)
+          echo "✅ All required env vars are present"
+
       - name: Run Playwright tests
         run: npx playwright test
         env:
           CI: true
+          # Pass Supabase credentials to Playwright/Next.js webServer
+          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_ADMIN_EMAIL: admin@test.com
+          TEST_ADMIN_PASSWORD: testpass123
 
       - name: Upload Playwright report
         if: always()
