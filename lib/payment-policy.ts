@@ -40,14 +40,20 @@ function toPaymentPolicy(data: Database['public']['Tables']['payment_policies'][
     // Validate policy_type using type guard for proper type narrowing
     const policyType = data.policy_type;
     if (!isPaymentPolicyType(policyType)) {
-        console.error(`Invalid policy_type: ${policyType}`);
+        console.error(
+            `Invalid policy_type: ${policyType} for payment policy id=${data.id}, name=${data.name}`,
+            { row: data }
+        );
         return null;
     }
     
     // Validate deposit_type if present using type guard
     const depositType = data.deposit_type;
     if (depositType !== null && !isDepositType(depositType)) {
-        console.error(`Invalid deposit_type: ${depositType}`);
+        console.error(
+            `Invalid deposit_type: ${depositType} for payment policy id=${data.id}, name=${data.name}`,
+            { row: data }
+        );
         return null;
     }
     
