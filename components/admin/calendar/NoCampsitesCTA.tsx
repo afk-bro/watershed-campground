@@ -13,7 +13,7 @@ export default function NoCampsitesCTA() {
         No Campsites Found
       </h3>
       <p className="text-[var(--color-text-muted)] max-w-md mb-8">
-        Your calendar is empty because you haven't added any campsites yet. 
+        Your calendar is empty because you haven&apos;t added any campsites yet.
         Start by creating your first campsite to begin managing bookings.
       </p>
       <Link

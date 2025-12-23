@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, XCircle, LogIn, LogOut, HelpCircle } from "lucide-react";
+import { CheckCircle2, Clock, XCircle, LogIn, LogOut, HelpCircle, type LucideIcon } from "lucide-react";
 import type { ReservationStatus } from "@/lib/supabase";
 
 type Props = {
@@ -6,7 +6,7 @@ type Props = {
 };
 
 export default function StatusPill({ status }: Props) {
-    const config: Record<ReservationStatus, { label: string; icon: any; classes: string }> = {
+    const config: Record<ReservationStatus, { label: string; icon: LucideIcon; classes: string }> = {
         pending: {
             label: 'Pending',
             icon: Clock,
