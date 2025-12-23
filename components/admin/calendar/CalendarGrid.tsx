@@ -9,7 +9,7 @@ import ReservationDrawer from "./ReservationDrawer";
 import RescheduleConfirmDialog from "./RescheduleConfirmDialog";
 import GhostPreview from "./GhostPreview";
 import CalendarCell from "./CalendarCell";
-import { ChevronLeft, ChevronRight, Ban } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban, Hand, ArrowLeftToLine, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import InstructionalOverlay from "./InstructionalOverlay";
 import EmptyStateHelper from "./EmptyStateHelper";
@@ -20,6 +20,9 @@ import { useAutoScroll } from "./hooks/useAutoScroll";
 import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useDragResize } from "./hooks/useDragResize";
 import { useBlackoutManager } from "./hooks/useBlackoutManager";
+import { useCalendarPanning } from "./hooks/useCalendarPanning";
+import { useSyncedScroll } from "./hooks/useSyncedScroll";
+import SyncedScrollbar from "./SyncedScrollbar";
 import CalendarControls from "./CalendarControls";
 import BlackoutDrawer from "./BlackoutDrawer";
 import CalendarLegend from "./CalendarLegend";
@@ -113,10 +116,40 @@ export default function CalendarGrid({
 
   // Auto-scroll hook
   const { scrollContainerRef, updateScrollDirection, stopAutoScroll } = useAutoScroll();
+  // Panning hook
+  const { headerProps, containerProps } = useCalendarPanning({ scrollContainerRef });
+
+  // Synced Top Scrollbar
+  const { slaveRef } = useSyncedScroll(scrollContainerRef);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const monthPickerRef = useRef<HTMLInputElement>(null);
+  const [contentWidth, setContentWidth] = useState(0);
+  const [showFloatingRail, setShowFloatingRail] = useState(false);
+
+  // Measure content width for synced scrollbar
+  useEffect(() => {
+    if (contentRef.current) {
+      setContentWidth(contentRef.current.scrollWidth);
+    }
+  }, [days.length, campsites.length, reservations.length]);
+
+  // Toggle floating rail based on scroll position - Show when valid
+  useEffect(() => {
+    const handleScroll = () => {
+       // Show when scrolled down a bit to keep header accessible optionally, 
+       // but here we just show it always or based on user pref?
+       // User asked: "Add a floating mini rail at bottom only when scrolled down".
+       // So we check window.scrollY.
+       setShowFloatingRail(window.scrollY > 200); 
+    };
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
+
 
   // Ref needed for HTML5 drag auto-scroll (legacy pattern)
   const autoScrollIntervalRef = useRef<number | null>(null);
-
+  
   // Handle move request from drag/resize hook
   const handleMoveRequested = useCallback((
     reservation: Reservation,
@@ -282,7 +315,7 @@ export default function CalendarGrid({
       setShowCreationDialog(true);
     }
   }, [handleCellMouseUpBase, isCreating, creationStart, creationEnd]);
-
+  
   const handleReservationClick = (res: Reservation) => {
     setSelectedReservation(res);
     setIsDrawerOpen(true);
@@ -300,6 +333,7 @@ export default function CalendarGrid({
   const handleNextMonth = () => {
     onDateChange(new Date(date.getFullYear(), date.getMonth() + 1, 1));
   };
+
   const handleConfirmReschedule = async () => {
     if (!pendingMove) return;
 
@@ -406,7 +440,7 @@ export default function CalendarGrid({
   };
 
   return (
-    <div className="flex flex-col admin-card relative select-none">
+    <div className="flex flex-col admin-card relative select-none overflow-x-hidden">
       <InstructionalOverlay />
       <CalendarControls 
         searchQuery={searchQuery}
@@ -435,22 +469,22 @@ export default function CalendarGrid({
       )}
       {/* Header Controls */}
       <div className="flex items-center justify-between p-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)]">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg font-heading font-bold text-[var(--color-text-primary)]">
+        <div className="flex items-center gap-6">
+          <h2 className="text-2xl font-heading font-bold text-[var(--color-text-primary)] tracking-tight">
             {format(date, "MMMM yyyy")}
           </h2>
-          <div className="flex items-center rounded-md border border-[var(--color-border-strong)] bg-[var(--color-surface-card)] shadow-sm">
+          <div className="flex items-center gap-2">
             <button
               onClick={handlePrevMonth}
               aria-label="Previous Month"
-              className="p-1.5 hover:bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] border-r border-[var(--color-border-strong)] transition-surface"
+              className="p-2 rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] shadow-sm hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)] transition-all active:scale-95"
             >
               <ChevronLeft size={20} />
             </button>
             <button
               onClick={handleNextMonth}
               aria-label="Next Month"
-              className="p-1.5 hover:bg-[var(--color-surface-elevated)] text-[var(--color-text-muted)] transition-surface"
+              className="p-2 rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] shadow-sm hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)] transition-all active:scale-95"
             >
               <ChevronRight size={20} />
             </button>
@@ -481,10 +515,14 @@ export default function CalendarGrid({
         </div>
       </div>
 
+      {/* Synced Top Scrollbar */}
+      <SyncedScrollbar ref={slaveRef} contentWidth={contentWidth} className="z-[60] bg-transparent border-none -mb-3 relative scrollbar-hide" />
+
       {/* Grid Container - Horizontal Scroll Only */}
       <div
         ref={scrollContainerRef}
-        className="overflow-x-auto overflow-y-visible relative"
+        {...containerProps}
+        className="calendar-hscroll overflow-x-auto overflow-y-visible relative select-none"
         onMouseUp={handleCellMouseUp}
         onMouseLeave={() => {
            if (isCreating) {
@@ -493,11 +531,21 @@ export default function CalendarGrid({
            }
         }}
       >
-        <div className="inline-block min-w-full">
+        <div ref={contentRef} className="inline-block min-w-full">
           {/* Header Row (Dates) */}
-          <div className="flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b-2 border-[var(--color-border-strong)]">
+          <div 
+            className={`flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b-2 border-[var(--color-border-strong)] ${headerProps.className}`}
+            onPointerDown={headerProps.onPointerDown}
+            onPointerMove={headerProps.onPointerMove}
+            onPointerUp={headerProps.onPointerUp}
+            onPointerCancel={headerProps.onPointerCancel}
+            data-header-row="true"
+          >
             {/* Corner Sticky */}
-            <div className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] py-3 px-2 lg:px-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40 text-xs lg:text-sm">
+            <div 
+                className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] pt-5 pb-3 px-2 lg:px-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40 text-xs lg:text-sm"
+                data-no-pan="true"
+             >
               Campsite
             </div>
             {/* Days */}
@@ -505,7 +553,7 @@ export default function CalendarGrid({
               {days.map((day) => (
                 <div
                   key={day.toString()}
-                  className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] py-2 px-1 lg:py-3 lg:px-2 text-xs
+                  className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] pt-5 pb-2 px-1 lg:px-2 text-xs
                     ${isWeekend(day) ? "bg-[var(--color-surface-elevated)]/50" : ""}
                     ${isToday(day) ? "bg-[var(--color-status-active)]/15 border-t-2 border-t-[var(--color-status-active)]" : ""}`}
                 >
@@ -752,6 +800,57 @@ export default function CalendarGrid({
         validationError={confirmDialogError}
       />
       
+      <div className={`fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-1 p-1.5 rounded-full bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] shadow-xl transition-all duration-300 ${showFloatingRail ? 'translate-y-0 opacity-100' : 'translate-y-20 opacity-0 pointer-events-none'}`}>
+        <button
+          onClick={() => {
+            if (scrollContainerRef.current) scrollContainerRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+          }}
+          className="p-2 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+          title="Scroll to Start"
+        >
+          <ArrowLeftToLine size={18} />
+        </button>
+        <div className="w-px h-4 bg-[var(--color-border-subtle)] mx-1" />
+        <div 
+          className="relative flex items-center gap-2 px-3 py-1.5 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors font-medium text-sm cursor-pointer group"
+          onClick={() => monthPickerRef.current?.showPicker()}
+        >
+          <CalendarIcon size={16} />
+          <span className="whitespace-nowrap">{format(date, "MMMM yyyy")}</span>
+          <input
+            ref={monthPickerRef}
+            type="month"
+            className="absolute inset-0 opacity-0 pointer-events-none"
+            value={format(date, 'yyyy-MM')}
+            onChange={(e) => {
+              if (e.target.value) {
+                 const [y, m] = e.target.value.split('-').map(Number);
+                 onDateChange(new Date(y, m - 1, 1));
+              }
+            }}
+            tabIndex={-1}
+            aria-label="Change Month"
+          />
+        </div>
+        <div className="w-px h-4 bg-[var(--color-border-subtle)] mx-1" />
+        <button
+          onClick={() => {
+             if (scrollContainerRef.current) scrollContainerRef.current.scrollBy({ left: -300, behavior: 'smooth' });
+          }}
+          className="p-2 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+        >
+          <ChevronLeft size={18} />
+        </button>
+        <button
+          onClick={() => {
+             if (scrollContainerRef.current) scrollContainerRef.current.scrollBy({ left: 300, behavior: 'smooth' });
+          }}
+          className="p-2 rounded-full hover:bg-[var(--color-surface-hover)] text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+        >
+          <ChevronRight size={18} />
+        </button>
+      </div>
+
       <CalendarLegend />
     </div>
   );
