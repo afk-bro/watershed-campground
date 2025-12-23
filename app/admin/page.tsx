@@ -5,6 +5,7 @@ import Link from "next/link";
 import { AlertTriangle, X, Wrench, Search } from "lucide-react";
 import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
 import StatusPill from "@/components/admin/StatusPill";
+import PaymentBadge from "@/components/admin/PaymentBadge";
 import RowActions from "@/components/admin/RowActions";
 import ReservationDrawer from "@/components/admin/calendar/ReservationDrawer";
 import AssignmentDialog from "@/components/admin/AssignmentDialog";
@@ -12,6 +13,15 @@ import Container from "@/components/Container";
 import OnboardingChecklist from "@/components/admin/dashboard/OnboardingChecklist";
 import BulkBar from "@/components/admin/reservations/BulkBar";
 import { computeCounts, getNights, sortItems, type SortMode } from "@/lib/admin/reservations/listing";
+
+type PaymentStatus = 'paid' | 'deposit_paid' | 'payment_due' | 'overdue' | 'failed' | 'refunded' | null;
+
+interface PaymentTransaction {
+    amount: number;
+    status: string;
+    type: string;
+    created_at: string;
+}
 
 type FilterType = ReservationStatus | 'all' | 'maintenance';
 
@@ -291,6 +301,68 @@ export default function AdminPage() {
         if (filter === 'all') return 'All';
         if (filter === 'maintenance') return 'Maintenance';
         return filter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    };
+
+    // Determine payment status based on transactions and reservation data
+    const getPaymentStatus = (item: unknown): PaymentStatus => {
+        const reservation = item as {
+            payment_transactions?: PaymentTransaction[],
+            metadata?: { total_amount?: number },
+            check_in?: string,
+            status?: string
+        };
+
+        const transactions = reservation.payment_transactions || [];
+        const totalAmount = reservation.metadata?.total_amount || 0;
+
+        // No transactions yet
+        if (transactions.length === 0) {
+            // Check if overdue (past check-in and not cancelled)
+            if (reservation.check_in && reservation.status !== 'cancelled') {
+                const checkInDate = new Date(reservation.check_in);
+                const now = new Date();
+                if (now > checkInDate) {
+                    return 'overdue';
+                }
+            }
+            return 'payment_due';
+        }
+
+        // Find succeeded transactions
+        const succeededTransactions = transactions.filter(t => t.status === 'succeeded');
+        const totalPaid = succeededTransactions.reduce((sum, t) => sum + t.amount, 0);
+
+        // Check for refunded
+        const hasRefund = transactions.some(t => t.type === 'refund');
+        if (hasRefund) {
+            return 'refunded';
+        }
+
+        // Check for failed (most recent transaction)
+        const sortedTransactions = [...transactions].sort((a, b) =>
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        );
+        if (sortedTransactions[0]?.status === 'failed') {
+            return 'failed';
+        }
+
+        // Determine if paid in full or deposit
+        if (totalPaid > 0 && totalAmount > 0) {
+            // Allow 1 cent tolerance for rounding
+            if (Math.abs(totalPaid - totalAmount) < 0.02) {
+                return 'paid';
+            } else if (totalPaid < totalAmount) {
+                return 'deposit_paid';
+            }
+            return 'paid'; // Overpaid or exact
+        }
+
+        // Has payments but can't determine status
+        if (totalPaid > 0) {
+            return 'deposit_paid';
+        }
+
+        return 'payment_due';
     };
 
     if (loading) {
@@ -722,9 +794,13 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Status Column */}
-                                                <td className="px-5 py-4 align-middle">
-                                                    <div className="flex items-center min-h-[28px]">
+                                                <td className="px-5 py-4 align-top">
+                                                    <div className="flex flex-col gap-1.5 min-h-[28px]">
                                                         <StatusPill status={reservation.status} />
+                                                        {(() => {
+                                                            const paymentStatus = getPaymentStatus(reservation);
+                                                            return paymentStatus && <PaymentBadge status={paymentStatus} />;
+                                                        })()}
                                                     </div>
                                                 </td>
 

@@ -34,12 +34,13 @@ export async function GET() {
             );
         }
 
-        // Fetch reservations
+        // Fetch reservations with payment data
         const { data: reservations, error: reservationsError } = await supabaseAdmin
             .from('reservations')
             .select(`
                 *,
-                campsite:campsites(code, name, type)
+                campsite:campsites(code, name, type),
+                payment_transactions(amount, status, type, created_at)
             `)
             .is('archived_at', null);
 

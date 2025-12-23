@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { createPortal } from "react-dom";
 
 interface TooltipProps {
@@ -15,11 +15,7 @@ export default function Tooltip({ children, content, side = 'top', className = '
     const [coords, setCoords] = useState({ top: 0, left: 0 });
     const triggerRef = useRef<HTMLDivElement>(null);
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
-    const [mounted, setMounted] = useState(false);
-
-    useEffect(() => {
-        setMounted(true);
-    }, []);
+    const isBrowser = typeof window !== 'undefined';
 
     const show = () => {
         timeoutRef.current = setTimeout(() => {
@@ -70,7 +66,7 @@ export default function Tooltip({ children, content, side = 'top', className = '
             onBlur={hide}
         >
             {children}
-            {mounted && visible && createPortal(
+            {isBrowser && visible && createPortal(
                 <div 
                     className={`
                         fixed z-[9999] px-2.5 py-1.5 
