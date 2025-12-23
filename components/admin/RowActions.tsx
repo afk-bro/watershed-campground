@@ -1,6 +1,7 @@
 import { Check, X, LogIn, LogOut } from "lucide-react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import type { LucideIcon } from "lucide-react";
+import Tooltip from "@/components/ui/Tooltip";
 
 type Props = {
     reservation: Reservation;
@@ -14,18 +15,21 @@ type ActionButtonProps = {
     title: string;
 };
 
+
+
 function ActionButton({ onClick, icon: Icon, colorClass, title }: ActionButtonProps) {
     return (
-        <button
-            onClick={(e) => {
-                e.stopPropagation();
-                onClick();
-            }}
-            title={title}
-            className={`p-2 rounded-full transition-colors cursor-pointer ${colorClass}`}
-        >
-            <Icon size={16} />
-        </button>
+        <Tooltip content={title} side="top">
+            <button
+                onClick={(e) => {
+                    e.stopPropagation();
+                    onClick();
+                }}
+                className={`p-2 rounded-full transition-colors cursor-pointer ${colorClass}`}
+            >
+                <Icon size={16} />
+            </button>
+        </Tooltip>
     );
 }
 
