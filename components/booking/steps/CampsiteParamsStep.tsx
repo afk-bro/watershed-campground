@@ -109,13 +109,13 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                                 type="range"
                                 min="0"
                                 max="50"
-                                step="2"
+                                step="1"
                                 value={fd.rvLength || 0}
                                 onChange={(e) => handleChange('rvLength', parseInt(e.target.value))}
                                 className="w-full h-2 bg-[var(--color-surface-primary)] rounded-lg appearance-none cursor-pointer
                                     [&::-webkit-slider-thumb]:appearance-none
-                                    [&::-webkit-slider-thumb]:w-6
-                                    [&::-webkit-slider-thumb]:h-6
+                                    [&::-webkit-slider-thumb]:w-8
+                                    [&::-webkit-slider-thumb]:h-8
                                     [&::-webkit-slider-thumb]:rounded-full
                                     [&::-webkit-slider-thumb]:bg-[var(--color-accent-gold)]
                                     [&::-webkit-slider-thumb]:shadow-lg
@@ -124,8 +124,8 @@ export default function CampsiteParamsStep({ formData, onChange, onNext }: Camps
                                     [&::-webkit-slider-thumb]:border-[var(--color-brand-forest)]
                                     [&::-webkit-slider-thumb]:transition-transform
                                     [&::-webkit-slider-thumb]:hover:scale-110
-                                    [&::-moz-range-thumb]:w-6
-                                    [&::-moz-range-thumb]:h-6
+                                    [&::-moz-range-thumb]:w-8
+                                    [&::-moz-range-thumb]:h-8
                                     [&::-moz-range-thumb]:rounded-full
                                     [&::-moz-range-thumb]:bg-[var(--color-accent-gold)]
                                     [&::-moz-range-thumb]:shadow-lg

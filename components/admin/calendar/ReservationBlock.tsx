@@ -100,7 +100,7 @@ function ReservationBlock({
         isDragging ? 'opacity-40' : ''
       } ${isResizing ? 'opacity-60' : ''} ${
         isGlobalDragging && !isDragging ? 'pointer-events-none' : ''
-      }`}
+      } [.is-panning_&]:pointer-events-none`}
       style={{
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,
