@@ -34,7 +34,7 @@ export type Campsite = {
     is_active: boolean;
     notes?: string;
     sort_order: number;
-    image_url?: string;
+    image_url?: string | null;
 };
 
 export type Reservation = {

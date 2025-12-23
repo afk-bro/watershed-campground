@@ -134,10 +134,10 @@ export async function DELETE(request: Request, { params }: Params) {
     try {
         const { id } = await params;
 
-        // Soft delete: set is_active to false instead of actually deleting
+        // Real delete: Remove the campsite record
         const { data, error } = await supabaseAdmin
             .from('campsites')
-            .update({ is_active: false })
+            .delete()
             .eq('id', id)
             .select()
             .single();
@@ -150,16 +150,24 @@ export async function DELETE(request: Request, { params }: Params) {
                 );
             }
 
-            console.error("Error deactivating campsite:", error);
+            // Check for foreign key constraint (e.g. linked reservations)
+            if (error.code === '23503') {
+                return NextResponse.json(
+                    { error: "Cannot delete campsite with existing reservations. Deactivate it instead." },
+                    { status: 409 }
+                );
+            }
+
+            console.error("Error deleting campsite:", error);
             return NextResponse.json(
-                { error: "Failed to deactivate campsite" },
+                { error: "Failed to delete campsite" },
                 { status: 500 }
             );
         }
 
         return NextResponse.json({
             data,
-            message: "Campsite deactivated successfully"
+            message: "Campsite deleted permanently"
         });
     } catch (error) {
         console.error("Error in DELETE /api/admin/campsites/[id]:", error);

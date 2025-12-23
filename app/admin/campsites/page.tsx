@@ -1,23 +1,27 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Edit2, Power, PowerOff } from "lucide-react";
+import { Edit2, Power, PowerOff, Trash2, Camera, X } from "lucide-react";
 import type { Campsite, CampsiteType } from "@/lib/supabase";
 import Container from "@/components/Container";
+import { useToast } from "@/components/ui/Toast";
 
 export default function CampsitesPage() {
     const [campsites, setCampsites] = useState<Campsite[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [filter, setFilter] = useState<CampsiteType | 'all' | 'active' | 'inactive'>('active');
-    const [showInactive, setShowInactive] = useState(false);
+    const [isDeleting, setIsDeleting] = useState<string | null>(null);
+    const [uploadingId, setUploadingId] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const { showToast } = useToast();
 
     const fetchCampsites = useCallback(async () => {
         try {
             setLoading(true);
-            const url = `/api/admin/campsites${showInactive ? '?showInactive=true' : ''}`;
-            const response = await fetch(url);
+            // Default to showing all for admin list management
+            const response = await fetch('/api/admin/campsites?showInactive=true');
 
             if (!response.ok) {
                 throw new Error('Failed to fetch campsites');
@@ -28,10 +32,11 @@ export default function CampsitesPage() {
         } catch (err) {
             console.error('Error fetching campsites:', err);
             setError('Failed to load campsites');
+            showToast('Failed to load campsites', 'error');
         } finally {
             setLoading(false);
         }
-    }, [showInactive]);
+    }, [showToast]);
 
     useEffect(() => {
         void fetchCampsites();
@@ -39,14 +44,7 @@ export default function CampsitesPage() {
 
     async function toggleActive(id: string, currentStatus: boolean) {
         const action = currentStatus ? 'deactivate' : 'activate';
-        const confirmMessage = currentStatus
-            ? 'Are you sure you want to deactivate this campsite? It will no longer be available for new reservations.'
-            : 'Activate this campsite? It will become available for new reservations.';
-
-        if (!confirm(confirmMessage)) {
-            return;
-        }
-
+        
         try {
             const response = await fetch(`/api/admin/campsites/${id}`, {
                 method: 'PATCH',
@@ -55,16 +53,109 @@ export default function CampsitesPage() {
             });
 
             if (!response.ok) {
-                throw new Error(`Failed to ${action} campsite`);
+                const errorData = await response.json();
+                throw new Error(errorData.error || `Failed to ${action} campsite`);
             }
 
             // Optimistically update the UI
             setCampsites(prev =>
                 prev.map(c => c.id === id ? { ...c, is_active: !currentStatus } : c)
             );
+            
+            showToast(`Campsite ${action}d successfully`, 'success');
         } catch (err) {
             console.error(`Error ${action}ing campsite:`, err);
-            alert(`Failed to ${action} campsite`);
+            showToast(err instanceof Error ? err.message : `Failed to ${action} campsite`, 'error');
+        }
+    }
+
+    async function handleDelete(id: string, code: string) {
+        if (!confirm(`Are you sure you want to PERMANENTLY delete campsite ${code}? This cannot be undone.`)) {
+            return;
+        }
+
+        try {
+            setIsDeleting(id);
+            const response = await fetch(`/api/admin/campsites/${id}`, {
+                method: 'DELETE',
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || 'Failed to delete campsite');
+            }
+
+            setCampsites(prev => prev.filter(c => c.id !== id));
+            showToast('Campsite deleted permanently', 'success');
+        } catch (err) {
+            console.error('Error deleting campsite:', err);
+            showToast(err instanceof Error ? err.message : 'Failed to delete campsite', 'error');
+        } finally {
+            setIsDeleting(null);
+        }
+    }
+
+    async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
+        const file = e.target.files?.[0];
+        if (!file || !uploadingId) return;
+
+        try {
+            setLoading(true);
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('name', file.name);
+
+            const uploadRes = await fetch('/api/admin/upload-image', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (!uploadRes.ok) throw new Error('Failed to upload image');
+            
+            const { url } = await uploadRes.json();
+
+            // Update campsite in DB
+            const patchRes = await fetch(`/api/admin/campsites/${uploadingId}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl: url }),
+            });
+
+            if (!patchRes.ok) throw new Error('Failed to update campsite image');
+
+            // Update local state
+            setCampsites(prev => prev.map(c => c.id === uploadingId ? { ...c, image_url: url } : c));
+            showToast('Image uploaded successfully', 'success');
+        } catch (err) {
+            console.error('Image upload error:', err);
+            showToast('Failed to upload image', 'error');
+        } finally {
+            setLoading(false);
+            setUploadingId(null);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    }
+
+    async function handleRemoveImage(id: string) {
+        if (!confirm('Remove this image?')) return;
+
+        try {
+            setLoading(true);
+            const response = await fetch(`/api/admin/campsites/${id}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ imageUrl: null }),
+            });
+
+            if (!response.ok) throw new Error('Failed to remove image');
+
+            setCampsites(prev => prev.map(c => c.id === id ? { ...c, image_url: null } : c));
+            showToast('Image removed', 'success');
+        } catch (err) {
+            console.error('Error removing image:', err);
+            showToast('Failed to remove image', 'error');
+        } finally {
+            setLoading(false);
         }
     }
 
@@ -171,16 +262,17 @@ export default function CampsitesPage() {
                         </button>
                     ))}
                     <div className="h-6 w-px bg-[var(--color-border-strong)] mx-2"></div>
-                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-primary)] cursor-pointer">
-                        <input
-                            type="checkbox"
-                            checked={showInactive}
-                            onChange={(e) => setShowInactive(e.target.checked)}
-                            className="rounded"
-                        />
-                        Show Inactive
+                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-primary)] opacity-60">
+                        <span className="font-medium">Admin View:</span> All status visible
                     </label>
                 </div>
+                <input 
+                    type="file" 
+                    ref={fileInputRef} 
+                    className="hidden" 
+                    accept="image/*" 
+                    onChange={handleImageUpload} 
+                />
 
                 {/* Campsites Table */}
                 <div className="admin-table">
@@ -228,29 +320,42 @@ export default function CampsitesPage() {
                                             className="hover:bg-[var(--color-surface-elevated)] hover:shadow-sm transition-all duration-150 group cursor-pointer border-l-2 border-transparent hover:border-l-[var(--color-accent-gold)]"
                                         >
                                             <td className="px-4 py-3">
-                                                {campsite.image_url ? (
-                                                    <img
-                                                        src={campsite.image_url}
-                                                        alt={campsite.name}
-                                                        className="w-12 h-12 object-cover rounded-lg ring-2 ring-transparent group-hover:ring-[var(--color-accent-gold)]/20 transition-all"
-                                                    />
-                                                ) : (
-                                                    <div className="w-12 h-12 bg-[var(--color-surface-elevated)] rounded-lg flex items-center justify-center ring-2 ring-transparent group-hover:ring-[var(--color-accent-gold)]/20 transition-all">
-                                                        <svg
-                                                            className="w-6 h-6 text-[var(--color-text-muted)]"
-                                                            fill="none"
-                                                            stroke="currentColor"
-                                                            viewBox="0 0 24 24"
-                                                        >
-                                                            <path
-                                                                strokeLinecap="round"
-                                                                strokeLinejoin="round"
-                                                                strokeWidth={2}
-                                                                d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                                <div className="relative w-12 h-12 group/thumb">
+                                                    {campsite.image_url ? (
+                                                        <>
+                                                            <img
+                                                                src={campsite.image_url}
+                                                                alt={campsite.name}
+                                                                className="w-full h-full object-cover rounded-lg ring-2 ring-transparent group-hover/thumb:ring-[var(--color-accent-gold)]/40 transition-all cursor-pointer"
+                                                                onClick={() => {
+                                                                    setUploadingId(campsite.id);
+                                                                    fileInputRef.current?.click();
+                                                                }}
                                                             />
-                                                        </svg>
-                                                    </div>
-                                                )}
+                                                            <button 
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleRemoveImage(campsite.id);
+                                                                }}
+                                                                className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover/thumb:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
+                                                                title="Remove image"
+                                                            >
+                                                                <X className="w-3 h-3" />
+                                                            </button>
+                                                        </>
+                                                    ) : (
+                                                        <div 
+                                                            className="w-full h-full bg-[var(--color-surface-elevated)] rounded-lg flex items-center justify-center ring-2 ring-transparent group-hover/thumb:ring-[var(--color-accent-gold)]/40 transition-all cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                                                            onClick={() => {
+                                                                setUploadingId(campsite.id);
+                                                                fileInputRef.current?.click();
+                                                            }}
+                                                            title="Upload image"
+                                                        >
+                                                            <Camera className="w-5 h-5 text-[var(--color-text-muted)]" />
+                                                        </div>
+                                                    )}
+                                                </div>
                                             </td>
                                             <td className="px-4 py-3">
                                                 <div className="font-medium text-[var(--color-text-primary)]">
@@ -318,6 +423,15 @@ export default function CampsitesPage() {
                                                                 <span className="hidden sm:inline">Activate</span>
                                                             </>
                                                         )}
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDelete(campsite.id, campsite.code)}
+                                                        disabled={isDeleting === campsite.id}
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 rounded-lg transition-all duration-150 disabled:opacity-50"
+                                                        title="Delete campsite permanently"
+                                                    >
+                                                        <Trash2 className="w-4 h-4" />
+                                                        <span className="hidden sm:inline">Delete</span>
                                                     </button>
                                                 </div>
                                             </td>
