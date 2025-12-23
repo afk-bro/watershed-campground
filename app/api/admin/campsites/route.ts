@@ -7,14 +7,15 @@ import { z } from "zod";
 export async function GET(request: Request) {
     try {
         const { searchParams } = new URL(request.url);
-        const showInactive = searchParams.get('showInactive') === 'true';
+        // Default to showing inactive for admin unless explicitly hidden
+        const showInactive = searchParams.get('showInactive') !== 'false';
 
         let query = supabaseAdmin
             .from('campsites')
             .select('*')
             .order('sort_order', { ascending: true });
 
-        // Filter by active status unless showInactive is true
+        // Filter by active status if showInactive is explicitly false
         if (!showInactive) {
             query = query.eq('is_active', true);
         }
