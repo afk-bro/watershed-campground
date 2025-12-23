@@ -13,6 +13,7 @@ import Container from "@/components/Container";
 import OnboardingChecklist from "@/components/admin/dashboard/OnboardingChecklist";
 import BulkBar from "@/components/admin/reservations/BulkBar";
 import { computeCounts, getNights, sortItems, type SortMode } from "@/lib/admin/reservations/listing";
+import { useToast } from "@/components/ui/Toast";
 
 type PaymentStatus = 'paid' | 'deposit_paid' | 'payment_due' | 'overdue' | 'failed' | 'refunded' | null;
 
@@ -26,6 +27,7 @@ interface PaymentTransaction {
 type FilterType = ReservationStatus | 'all' | 'maintenance';
 
 export default function AdminPage() {
+    const { showToast } = useToast();
     const [items, setItems] = useState<OverviewItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -37,6 +39,7 @@ export default function AdminPage() {
     const [showArchived, setShowArchived] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const searchInputRef = useRef<HTMLInputElement>(null);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const fetchReservations = useCallback(async () => {
         setLoading(true);
@@ -91,6 +94,16 @@ export default function AdminPage() {
     }, [searchQuery]);
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
+        if (isSubmitting) return;
+
+        // Add confirmation for cancel action
+        if (status === 'cancelled') {
+            if (!confirm('Are you sure you want to cancel this reservation?')) {
+                return;
+            }
+        }
+
+        setIsSubmitting(true);
         try {
             const response = await fetch(`/api/admin/reservations/${id}`, {
                 method: 'PATCH',
@@ -103,25 +116,39 @@ export default function AdminPage() {
             }
 
             await fetchReservations();
+            showToast(`Reservation ${status.replace('_', ' ')}`, 'success');
         } catch (error) {
             console.error('Error updating status:', error);
-            alert('Failed to update status');
+            showToast('Failed to update status', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleAssignCampsite = async (reservationId: string, campsiteId: string) => {
-        const res = await fetch(`/api/admin/reservations/${reservationId}/assign`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ campsiteId }),
-        });
+        if (isSubmitting) return;
 
-        if (!res.ok) {
-            const data = await res.json();
-            throw new Error(data.error || 'Failed to assign campsite');
+        setIsSubmitting(true);
+        try {
+            const res = await fetch(`/api/admin/reservations/${reservationId}/assign`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ campsiteId }),
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Failed to assign campsite');
+            }
+
+            await fetchReservations();
+            showToast('Campsite assigned successfully', 'success');
+        } catch (error) {
+            showToast(error instanceof Error ? error.message : 'Failed to assign campsite', 'error');
+            throw error;
+        } finally {
+            setIsSubmitting(false);
         }
-
-        await fetchReservations();
     };
 
     // Filter by status
@@ -198,32 +225,38 @@ export default function AdminPage() {
     };
 
     const handleBulkAction = async (action: 'check_in' | 'check_out' | 'cancel') => {
+        if (isSubmitting) return;
         if (!confirm(`Are you sure you want to ${action.replace('_', ' ')} ${selectedIds.size} reservations?`)) return;
 
+        setIsSubmitting(true);
         try {
             const res = await fetch('/api/admin/reservations/bulk-status', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     reservationIds: Array.from(selectedIds),
-                    status: action 
+                    status: action
                 }),
             });
 
             if (!res.ok) throw new Error('Bulk update failed');
-            
-            // Optionally could use returned data to reconcile, but refetch is safer for MVP
+
             await fetchReservations();
-            setSelectedIds(new Set()); // Clear selection on success
+            setSelectedIds(new Set());
+            showToast(`${selectedIds.size} reservations ${action.replace('_', ' ')}`, 'success');
         } catch (error) {
             console.error(error);
-            alert("Failed to perform bulk action");
+            showToast("Failed to perform bulk action", 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleBulkAssignRandom = async () => {
+        if (isSubmitting) return;
         if (!confirm(`Auto-assign campsites for ${selectedIds.size} reservations?`)) return;
-        
+
+        setIsSubmitting(true);
         try {
             const res = await fetch('/api/admin/reservations/bulk-assign-random', {
                 method: 'POST',
@@ -232,19 +265,17 @@ export default function AdminPage() {
             });
 
             const data = await res.json();
-            
+
             // Report results
             const successCount = (data.results || []).filter((r: unknown) => {
                 return r && typeof r === 'object' && (r as Record<string, unknown>).success;
             }).length;
             const failCount = (data.results || []).length - successCount;
-            
-            alert(`Assigned ${successCount} reservations. ${failCount} failed or no spots available.`);
-            
+
+            showToast(`Assigned ${successCount} reservations. ${failCount} failed.`, successCount > 0 ? 'success' : 'warning');
+
             await fetchReservations();
-            
-            // Keep failures selected? For now clear all to be simple, 
-            // but advanced UX would be: set selection to just the failed IDs.
+
             if (failCount === 0) {
                 setSelectedIds(new Set());
             } else {
@@ -258,13 +289,17 @@ export default function AdminPage() {
 
         } catch (error) {
             console.error("Bulk Assign Error:", error);
-            alert("Failed to run bulk assignment");
+            showToast("Failed to run bulk assignment", 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleBulkArchive = async (action: 'archive' | 'restore') => {
+        if (isSubmitting) return;
         if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} reservations?`)) return;
 
+        setIsSubmitting(true);
         try {
             const res = await fetch('/api/admin/reservations/bulk-archive', {
                 method: 'POST',
@@ -279,15 +314,20 @@ export default function AdminPage() {
 
             await fetchReservations();
             setSelectedIds(new Set());
+            showToast(`${selectedIds.size} reservations ${action}d`, 'success');
         } catch (error) {
             console.error(error);
-            alert(`Failed to ${action} items`);
+            showToast(`Failed to ${action} items`, 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleArchive = async (reservationId: string) => {
+        if (isSubmitting) return;
         if (!confirm('Archive this reservation?')) return;
 
+        setIsSubmitting(true);
         try {
             const res = await fetch('/api/admin/reservations/bulk-archive', {
                 method: 'POST',
@@ -301,15 +341,20 @@ export default function AdminPage() {
             if (!res.ok) throw new Error('Archive failed');
 
             await fetchReservations();
+            showToast('Reservation archived', 'success');
         } catch (error) {
             console.error(error);
-            alert('Failed to archive reservation');
+            showToast('Failed to archive reservation', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
     const handleDeleteMaintenance = async (maintenanceId: string) => {
+        if (isSubmitting) return;
         if (!confirm('Delete this maintenance block? This action cannot be undone.')) return;
 
+        setIsSubmitting(true);
         try {
             const res = await fetch(`/api/admin/blackout-dates/${maintenanceId}`, {
                 method: 'DELETE',
@@ -321,9 +366,12 @@ export default function AdminPage() {
             }
 
             await fetchReservations();
+            showToast('Maintenance block deleted', 'success');
         } catch (error) {
             console.error(error);
-            alert(error instanceof Error ? error.message : 'Failed to delete maintenance block');
+            showToast(error instanceof Error ? error.message : 'Failed to delete maintenance block', 'error');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -619,18 +667,21 @@ export default function AdminPage() {
                                     <th className="px-3 pl-4 py-3 w-10 text-left font-medium text-gray-500 shrink-0">
                                         <input
                                             type="checkbox"
-                                            className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                            disabled={isSubmitting}
+                                            className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
+                                                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                            }`}
                                             checked={selectedIds.size > 0 && selectedIds.size === selectableReservations.length}
                                             ref={input => { if (input) input.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableReservations.length; }}
                                             onChange={toggleAll}
                                         />
                                     </th>
-                            <th className="px-5 py-3 w-[260px]">Guest</th>
-                                    <th className="px-5 py-3 w-[180px] whitespace-nowrap">Dates</th>
-                                    <th className="px-5 py-3 min-w-0">Details</th>
+                            <th className="px-5 py-3 w-[260px] border-l border-[var(--color-border-default)]/30">Guest</th>
+                                    <th className="px-5 py-3 w-[180px] whitespace-nowrap border-l border-[var(--color-border-default)]/30">Dates</th>
+                                    <th className="px-5 py-3 min-w-0 border-l border-[var(--color-border-default)]/30">Details</th>
                                     <th className="px-5 py-3 w-[110px] text-center border-l border-[var(--color-border-default)]/30">Campsite</th>
-                                    <th className="px-5 py-3 w-[180px] text-center">Status</th>
-                                    <th className="px-5 py-3 w-[90px] text-center">Actions</th>
+                                    <th className="px-5 py-3 w-[180px] text-center border-l border-[var(--color-border-default)]/30">Status</th>
+                                    <th className="px-5 py-3 w-[90px] text-center border-l border-[var(--color-border-default)]/30">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--color-border-subtle)] text-sm">
@@ -661,7 +712,10 @@ export default function AdminPage() {
                                                         <div className="flex items-center min-h-[28px]">
                                                             <input
                                                                 type="checkbox"
-                                                                className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                                                disabled={isSubmitting}
+                                                                className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
+                                                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                                                }`}
                                                                 checked={selectedIds.has(item.id)}
                                                                 onChange={() => toggleSelection(item.id, item.type)}
                                                             />
@@ -669,7 +723,7 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Guest Column - Show "—" for maintenance */}
-                                                    <td className="px-5 py-4 align-top">
+                                                    <td className="px-5 py-4 align-top border-l border-[var(--color-border-default)]/30">
                                                         <div className="flex items-center gap-2">
                                                             <Wrench size={16} className="text-[var(--color-text-muted)]" />
                                                             <span className="text-[var(--color-text-muted)] italic">Maintenance Block</span>
@@ -677,7 +731,7 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Dates Column */}
-                                                    <td className="px-5 py-4 align-top whitespace-nowrap">
+                                                    <td className="px-5 py-4 align-top whitespace-nowrap border-l border-[var(--color-border-default)]/30">
                                                         <div className="text-[var(--color-text-primary)]">
                                                             {new Date(item.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
                                                             <span className="text-[var(--color-text-muted)] mx-2">→</span>
@@ -689,7 +743,7 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Details Column - Show reason */}
-                                                    <td className="px-5 py-4 align-top min-w-0">
+                                                    <td className="px-5 py-4 align-top min-w-0 border-l border-[var(--color-border-default)]/30">
                                                         <div
                                                             className="text-[var(--color-text-muted)] text-sm truncate max-w-[260px]"
                                                             title={item.reason || 'No reason specified'}
@@ -712,7 +766,7 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Status Column - Show maintenance pill */}
-                                                    <td className="px-5 py-4 align-middle text-center">
+                                                    <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
                                                         <div className="inline-flex justify-center items-center min-h-[28px]">
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                                                                 🛠️ Blocked
@@ -721,14 +775,17 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Actions Column */}
-                                                    <td className="px-5 py-4 align-middle text-center">
+                                                    <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
                                                         <div className="inline-flex items-center justify-center gap-2 min-h-[28px]">
                                                             <button
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     handleDeleteMaintenance(item.id);
                                                                 }}
-                                                                className="p-2 rounded-full text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                                                                disabled={isSubmitting}
+                                                                className={`p-2 rounded-full text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors ${
+                                                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                                                }`}
                                                                 title="Delete Maintenance Block"
                                                             >
                                                                 <Trash2 size={16} />
@@ -748,17 +805,20 @@ export default function AdminPage() {
                                         const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
                                         const isCheckedIn = reservation.status === 'checked_in';
                                         const isSelected = selectedIds.has(reservation.id!);
+                                        const isArchived = !!(reservation as unknown as { archived_at?: string }).archived_at;
 
                                         const rowClass = `group transition-colors cursor-pointer border-l-2 ${
                                             isSelected
                                                 ? 'border-l-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/5'
                                                 : 'border-l-transparent'
                                         } ${
-                                            isCancelled
-                                                ? 'opacity-60 grayscale bg-gray-50/50 dark:bg-gray-900/20'
-                                                : isCheckedIn
-                                                    ? 'bg-green-50/30 hover:bg-green-50/60 dark:bg-green-900/10 dark:hover:bg-green-900/20'
-                                                    : 'hover:bg-[var(--color-surface-elevated)]'
+                                            isArchived
+                                                ? 'opacity-50 bg-gray-50/30 dark:bg-gray-900/10'
+                                                : isCancelled
+                                                    ? 'opacity-60 grayscale bg-gray-50/50 dark:bg-gray-900/20'
+                                                    : isCheckedIn
+                                                        ? 'bg-green-50/30 hover:bg-green-50/60 dark:bg-green-900/10 dark:hover:bg-green-900/20'
+                                                        : 'hover:bg-[var(--color-surface-elevated)]'
                                         }`;
 
                                         return (
@@ -772,7 +832,10 @@ export default function AdminPage() {
                                                     <div className="flex items-center min-h-[28px]">
                                                         <input
                                                             type="checkbox"
-                                                            className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                                            disabled={isSubmitting}
+                                                            className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
+                                                                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                                            }`}
                                                             checked={selectedIds.has(reservation.id!)}
                                                             onChange={() => toggleSelection(reservation.id!, 'reservation')}
                                                         />
@@ -780,7 +843,7 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Guest Column */}
-                                                <td className="px-5 py-4 align-top">
+                                                <td className="px-5 py-4 align-top border-l border-[var(--color-border-default)]/30">
                                                     <div className="font-semibold text-[var(--color-text-primary)] text-base">
                                                         {reservation.first_name} {reservation.last_name}
                                                     </div>
@@ -791,7 +854,7 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Dates Column */}
-                                                <td className="px-5 py-4 align-top whitespace-nowrap">
+                                                <td className="px-5 py-4 align-top whitespace-nowrap border-l border-[var(--color-border-default)]/30">
                                                     <div className="text-[var(--color-text-primary)]">
                                                         {new Date(reservation.check_in).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
                                                         <span className="text-[var(--color-text-muted)] mx-2">→</span>
@@ -803,7 +866,7 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Details Column */}
-                                                <td className="px-5 py-4 align-top min-w-0">
+                                                <td className="px-5 py-4 align-top min-w-0 border-l border-[var(--color-border-default)]/30">
                                                     <div className="flex flex-col gap-1 max-w-[260px]">
                                                          <div className="flex items-center gap-1.5 text-[var(--color-text-primary)]">
                                                             <span className="text-base text-[var(--color-text-muted)]">
@@ -848,7 +911,10 @@ export default function AdminPage() {
                                                             </span>
                                                         ) : (
                                                             <button
-                                                                className="flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded font-medium text-xs transition-colors group/unassigned border border-amber-200/50 dark:border-amber-800/50 h-7"
+                                                                disabled={isSubmitting}
+                                                                className={`flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded font-medium text-xs transition-colors group/unassigned border border-amber-200/50 dark:border-amber-800/50 h-7 ${
+                                                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
+                                                                }`}
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
                                                                     setAssigningReservation(reservation);
@@ -862,7 +928,7 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Status Column */}
-                                                <td className="px-5 py-4 align-middle text-center">
+                                                <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
                                                     <div className="inline-flex justify-center items-center gap-2">
                                                         <StatusPill status={reservation.status} />
                                                         {(() => {
@@ -881,12 +947,13 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Actions Column */}
-                                                <td className="px-5 py-4 align-middle text-center">
+                                                <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
                                                     <div className="inline-flex items-center justify-center gap-2 min-h-[28px]">
                                                         <RowActions
                                                             reservation={reservation}
                                                             updateStatus={updateStatus}
                                                             onArchive={handleArchive}
+                                                            isSubmitting={isSubmitting}
                                                         />
                                                     </div>
                                                 </td>
@@ -916,6 +983,7 @@ export default function AdminPage() {
             <BulkBar
                 selectedCount={selectedIds.size}
                 showArchived={showArchived}
+                isSubmitting={isSubmitting}
                 onCheckIn={() => handleBulkAction('check_in')}
                 onCheckOut={() => handleBulkAction('check_out')}
                 onCancel={() => handleBulkAction('cancel')}
