@@ -5,7 +5,7 @@
  * User clicks and drags across calendar cells to select a date range.
  */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useRef, useEffect } from 'react';
 
 export interface SelectionRange {
   start: string; // yyyy-MM-dd
@@ -67,14 +67,20 @@ export function useCalendarSelection(enabled: boolean): UseCalendarSelectionRetu
   const [creationStart, setCreationStart] = useState<{ campsiteId: string; date: string } | null>(null);
   const [creationEnd, setCreationEnd] = useState<{ campsiteId: string; date: string } | null>(null);
 
+  // Use ref to keep handlers stable when enabled state changes
+  const enabledRef = useRef(enabled);
+  useEffect(() => {
+    enabledRef.current = enabled;
+  }, [enabled]);
+
   const handleCellMouseDown = useCallback((campsiteId: string, dateStr: string) => {
     // Only start if selection is enabled
-    if (!enabled) return;
+    if (!enabledRef.current) return;
 
     setIsCreating(true);
     setCreationStart({ campsiteId, date: dateStr });
     setCreationEnd({ campsiteId, date: dateStr });
-  }, [enabled]);
+  }, []); // Stable handler
 
   const handleCellMouseEnter = useCallback((campsiteId: string, dateStr: string) => {
     if (!isCreating || !creationStart) return;

@@ -1,6 +1,3 @@
-import { LogIn, LogOut, Ban, Archive, RotateCcw, UserPlus } from "lucide-react";
-import Tooltip from "@/components/ui/Tooltip";
-
 type BulkBarProps = {
     selectedCount: number;
     showArchived: boolean;
@@ -27,85 +24,74 @@ export default function BulkBar({
     if (selectedCount === 0) return null;
 
     return (
-        <div className="w-fit mx-auto bg-[var(--color-surface-elevated)] dark:bg-gray-800/90 backdrop-blur-md border border-[var(--color-accent-gold)]/30 shadow-2xl rounded-full pl-6 pr-4 py-3 flex items-center gap-4 animate-in slide-in-from-top-2 fade-in duration-300 ring-1 ring-black/5">
+        <div className="fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 shadow-xl rounded-full px-6 py-3 flex items-center gap-6 z-40 animate-in slide-in-from-bottom-4 fade-in duration-300">
             <div className="flex items-center gap-3">
-                <span className="bg-[var(--color-accent-gold)] text-[var(--color-background)] w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
+                <span className="bg-gray-900 dark:bg-white text-white dark:text-gray-900 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold shadow-sm">
                     {selectedCount}
                 </span>
-                <span className="font-medium text-[var(--color-text-primary)] text-sm hidden sm:inline">Selected</span>
+                <span className="font-medium text-gray-700 dark:text-gray-200">Selected</span>
             </div>
             
-            <div className="h-5 w-px bg-[var(--color-border-default)]" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
             
-            <div className="flex items-center gap-1">
-                <Tooltip content="Check In" side="bottom">
-                    <button 
-                        onClick={onCheckIn}
-                        className="p-2 hover:bg-[var(--color-surface-card)] rounded-lg text-[var(--color-text-primary)] transition-colors"
-                    >
-                        <LogIn size={18} />
-                    </button>
-                </Tooltip>
-                <Tooltip content="Check Out" side="bottom">
-                    <button 
-                        onClick={onCheckOut}
-                        className="p-2 hover:bg-[var(--color-surface-card)] rounded-lg text-[var(--color-text-primary)] transition-colors"
-                    >
-                        <LogOut size={18} />
-                    </button>
-                </Tooltip>
+            <div className="flex items-center gap-2">
+                <button 
+                     onClick={onCheckIn}
+                     className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors text-gray-700 dark:text-gray-200"
+                >
+                    Check In
+                </button>
+                <button 
+                     onClick={onCheckOut}
+                     className="px-3 py-1.5 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg text-sm font-medium transition-colors text-gray-700 dark:text-gray-200"
+                >
+                    Check Out
+                </button>
             </div>
 
-            <div className="h-5 w-px bg-[var(--color-border-default)]" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
             
             {!showArchived ? (
-                 <div className="flex items-center gap-1">
-                    <Tooltip content="Auto-Assign" side="bottom">
-                        <button 
-                            onClick={onAssign}
-                            className="p-2 hover:bg-amber-50 dark:hover:bg-amber-900/20 text-amber-600 dark:text-amber-400 rounded-lg transition-colors"
-                        >
-                            <UserPlus size={18} />
-                        </button>
-                    </Tooltip>
-                    <Tooltip content="Archive" side="bottom">
-                        <button 
-                            onClick={onArchive}
-                            className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-gray-600 dark:text-gray-400 rounded-lg transition-colors"
-                        >
-                            <Archive size={18} />
-                        </button>
-                    </Tooltip>
-                </div>
-            ) : (
-                <Tooltip content="Restore" side="bottom">
+                 <>
                     <button 
-                        onClick={onRestore}
-                        className="p-2 hover:bg-green-50 dark:hover:bg-green-900/20 text-green-600 dark:text-green-400 rounded-lg transition-colors"
+                        onClick={onAssign}
+                        className="px-3 py-1.5 hover:bg-amber-50 text-amber-600 rounded-lg text-sm font-medium transition-colors"
                     >
-                        <RotateCcw size={18} />
+                        Auto-Assign
                     </button>
-                </Tooltip>
+                    <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
+                    <button 
+                        onClick={onArchive}
+                        className="px-3 py-1.5 hover:bg-gray-100 text-gray-600 rounded-lg text-sm font-medium transition-colors"
+                    >
+                        Archive
+                    </button>
+                </>
+            ) : (
+                <button 
+                    onClick={onRestore}
+                    className="px-3 py-1.5 hover:bg-green-50 text-green-600 rounded-lg text-sm font-medium transition-colors"
+                >
+                    Restore
+                </button>
             )}
 
-            <div className="h-5 w-px bg-[var(--color-border-default)]" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
 
-            <Tooltip content="Cancel Reservation" side="bottom">
-                <button 
-                    onClick={onCancel}
-                    className="p-2 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg transition-colors"
-                >
-                    <Ban size={18} />
-                </button>
-            </Tooltip>
+            <button 
+                onClick={onCancel}
+                 className="px-3 py-1.5 hover:bg-red-50 dark:hover:bg-red-900/20 text-red-600 dark:text-red-400 rounded-lg text-sm font-medium transition-colors"
+            >
+                Cancel
+            </button>
 
-            <div className="h-5 w-px bg-[var(--color-border-default)]" />
+            <div className="h-6 w-px bg-gray-200 dark:bg-gray-700" />
 
             <button 
                 onClick={onClearSelection}
-                className="ml-2 text-xs font-medium text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors uppercase tracking-wide"
+                className="text-gray-400 hover:text-gray-600 dark:text-gray-500 dark:hover:text-gray-300 transition-colors"
             >
-                Clear
+                ×
             </button>
         </div>
     );

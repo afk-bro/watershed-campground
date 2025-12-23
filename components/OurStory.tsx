@@ -78,6 +78,7 @@ export default function OurStory() {
               src="/gallery/landing_page.avif"
               alt="The Watershed Campground on Kootenay Lake"
               fill
+              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
               className="object-cover"
               priority
             />

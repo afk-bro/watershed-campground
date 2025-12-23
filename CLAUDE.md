@@ -29,7 +29,8 @@ npx playwright test tests/admin/smoke.spec.ts
 # Database (Supabase Local - installed via npm)
 npx supabase start          # Start local Supabase (requires Docker)
 npx supabase stop           # Stop local instance
-npx supabase db reset       # Reset DB and run all migrations
+npx supabase db reset       # Reset DB with migrations + test data (campsites, reservations)
+./scripts/db-reset-clean.sh # Reset DB with migrations + admin user only (clean slate)
 npx supabase migration new <name>  # Create new migration
 npx supabase db push        # Push local schema to remote (use carefully)
 ```
