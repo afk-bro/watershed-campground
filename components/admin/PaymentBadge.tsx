@@ -8,43 +8,43 @@ interface PaymentBadgeProps {
 export default function PaymentBadge({ status, amount }: PaymentBadgeProps) {
     const config = {
         paid: {
-            icon: '✅',
+            icon: '✓',
             label: 'Paid',
-            className: 'bg-green-50 text-green-700 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800/50'
+            className: 'bg-green-500/10 text-green-600 dark:text-green-400'
         },
         deposit_paid: {
             icon: '💳',
-            label: 'Deposit Paid',
-            className: 'bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800/50'
+            label: 'Deposit',
+            className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
         },
         payment_due: {
-            icon: '⚠️',
-            label: 'Payment Due',
-            className: 'bg-yellow-50 text-yellow-700 border-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:border-yellow-800/50'
+            icon: '⏳',
+            label: 'Due',
+            className: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
         },
         overdue: {
-            icon: '⚠️',
+            icon: '!',
             label: 'Overdue',
-            className: 'bg-orange-50 text-orange-700 border-orange-200 dark:bg-orange-900/20 dark:text-orange-400 dark:border-orange-800/50'
+            className: 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
         },
         failed: {
-            icon: '❌',
+            icon: '✕',
             label: 'Failed',
-            className: 'bg-red-50 text-red-700 border-red-200 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800/50'
+            className: 'bg-red-500/10 text-red-600 dark:text-red-400'
         },
         refunded: {
             icon: '↩',
-            label: 'Refunded',
-            className: 'bg-gray-50 text-gray-600 border-gray-200 dark:bg-gray-900/20 dark:text-gray-400 dark:border-gray-800/50'
+            label: 'Refund',
+            className: 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
         }
     };
 
     const { icon, label, className } = config[status];
 
     return (
-        <div className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-medium border ${className}`}>
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${className}`}>
             <span className="text-[11px] leading-none">{icon}</span>
             <span>{label}</span>
-        </div>
+        </span>
     );
 }

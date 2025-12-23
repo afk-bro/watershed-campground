@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { AlertTriangle, X, Wrench, Search } from "lucide-react";
+import { AlertTriangle, X, Wrench, Search, Trash2 } from "lucide-react";
 import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
 import StatusPill from "@/components/admin/StatusPill";
 import PaymentBadge from "@/components/admin/PaymentBadge";
@@ -180,9 +180,6 @@ export default function AdminPage() {
     const selectableReservations = sortedItems.filter(item => item.type === 'reservation');
 
     const toggleSelection = (id: string, itemType: 'reservation' | 'maintenance' | 'blackout') => {
-        // Only allow selecting reservations
-        if (itemType !== 'reservation') return;
-
         const newSet = new Set(selectedIds);
         if (newSet.has(id)) {
             newSet.delete(id);
@@ -272,19 +269,61 @@ export default function AdminPage() {
             const res = await fetch('/api/admin/reservations/bulk-archive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ 
+                body: JSON.stringify({
                     reservationIds: Array.from(selectedIds),
-                    action 
+                    action
                 }),
             });
 
             if (!res.ok) throw new Error(`${action} failed`);
-            
+
             await fetchReservations();
             setSelectedIds(new Set());
         } catch (error) {
             console.error(error);
             alert(`Failed to ${action} items`);
+        }
+    };
+
+    const handleArchive = async (reservationId: string) => {
+        if (!confirm('Archive this reservation?')) return;
+
+        try {
+            const res = await fetch('/api/admin/reservations/bulk-archive', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    reservationIds: [reservationId],
+                    action: 'archive'
+                }),
+            });
+
+            if (!res.ok) throw new Error('Archive failed');
+
+            await fetchReservations();
+        } catch (error) {
+            console.error(error);
+            alert('Failed to archive reservation');
+        }
+    };
+
+    const handleDeleteMaintenance = async (maintenanceId: string) => {
+        if (!confirm('Delete this maintenance block? This action cannot be undone.')) return;
+
+        try {
+            const res = await fetch(`/api/admin/blackout-dates/${maintenanceId}`, {
+                method: 'DELETE',
+            });
+
+            if (!res.ok) {
+                const data = await res.json();
+                throw new Error(data.error || 'Delete failed');
+            }
+
+            await fetchReservations();
+        } catch (error) {
+            console.error(error);
+            alert(error instanceof Error ? error.message : 'Failed to delete maintenance block');
         }
     };
 
@@ -574,7 +613,7 @@ export default function AdminPage() {
                 {/* Reservations Table */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left border-collapse">
+                        <table className="w-full table-fixed border-collapse">
                             <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 <tr>
                                     <th className="px-3 pl-4 py-3 w-10 text-left font-medium text-gray-500 shrink-0">
@@ -586,12 +625,12 @@ export default function AdminPage() {
                                             onChange={toggleAll}
                                         />
                                     </th>
-                            <th className="px-5 py-3 w-[20%]">Guest</th>
-                                    <th className="px-5 py-3 w-[15%] whitespace-nowrap">Dates</th>
-                                    <th className="px-5 py-3 w-[20%]">Details</th>
-                                    <th className="px-5 py-3 w-[15%]">Campsite</th>
-                                    <th className="px-5 py-3 w-[12%]">Status</th>
-                                    <th className="px-5 py-3 w-[13%] text-right">Actions</th>
+                            <th className="px-5 py-3 w-[260px]">Guest</th>
+                                    <th className="px-5 py-3 w-[180px] whitespace-nowrap">Dates</th>
+                                    <th className="px-5 py-3 min-w-0">Details</th>
+                                    <th className="px-5 py-3 w-[110px] text-center border-l border-[var(--color-border-default)]/30">Campsite</th>
+                                    <th className="px-5 py-3 w-[180px] text-center">Status</th>
+                                    <th className="px-5 py-3 w-[90px] text-center">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--color-border-subtle)] text-sm">
@@ -616,16 +655,15 @@ export default function AdminPage() {
                                                 <tr
                                                     key={item.id}
                                                     className={rowClass}
-                                                    title="Maintenance blocks cannot be bulk-operated"
                                                 >
-                                                    {/* Checkbox - Disabled for maintenance */}
+                                                    {/* Checkbox - Enabled for maintenance */}
                                                     <td className="px-3 pl-4 py-4 w-10 align-middle" onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex items-center min-h-[28px]">
                                                             <input
                                                                 type="checkbox"
-                                                                className="rounded-md border-2 border-[var(--color-border-subtle)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 w-5 h-5 opacity-30 cursor-not-allowed"
-                                                                disabled
-                                                                checked={false}
+                                                                className="rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60"
+                                                                checked={selectedIds.has(item.id)}
+                                                                onChange={() => toggleSelection(item.id, item.type)}
                                                             />
                                                         </div>
                                                     </td>
@@ -651,9 +689,9 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Details Column - Show reason */}
-                                                    <td className="px-5 py-4 align-top">
+                                                    <td className="px-5 py-4 align-top min-w-0">
                                                         <div
-                                                            className="text-[var(--color-text-muted)] text-sm truncate max-w-xs"
+                                                            className="text-[var(--color-text-muted)] text-sm truncate max-w-[260px]"
                                                             title={item.reason || 'No reason specified'}
                                                         >
                                                             {item.reason || 'No reason specified'}
@@ -661,8 +699,8 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Campsite Column */}
-                                                    <td className="px-5 py-4 align-middle">
-                                                        <div className="flex items-center min-h-[28px]">
+                                                    <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
+                                                        <div className="inline-flex justify-center items-center min-h-[28px]">
                                                             {item.campsite_code ? (
                                                                 <span className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-muted)] text-xs h-7">
                                                                     {item.campsite_code}
@@ -674,8 +712,8 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Status Column - Show maintenance pill */}
-                                                    <td className="px-5 py-4 align-middle">
-                                                        <div className="flex items-center min-h-[28px]">
+                                                    <td className="px-5 py-4 align-middle text-center">
+                                                        <div className="inline-flex justify-center items-center min-h-[28px]">
                                                             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
                                                                 🛠️ Blocked
                                                             </span>
@@ -683,10 +721,17 @@ export default function AdminPage() {
                                                     </td>
 
                                                     {/* Actions Column */}
-                                                    <td className="px-5 py-4 align-middle text-right">
-                                                        <div className="flex items-center justify-end min-h-[28px]">
-                                                            <button className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] text-xs">
-                                                                Edit
+                                                    <td className="px-5 py-4 align-middle text-center">
+                                                        <div className="inline-flex items-center justify-center gap-2 min-h-[28px]">
+                                                            <button
+                                                                onClick={(e) => {
+                                                                    e.stopPropagation();
+                                                                    handleDeleteMaintenance(item.id);
+                                                                }}
+                                                                className="p-2 rounded-full text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors"
+                                                                title="Delete Maintenance Block"
+                                                            >
+                                                                <Trash2 size={16} />
                                                             </button>
                                                         </div>
                                                     </td>
@@ -739,8 +784,9 @@ export default function AdminPage() {
                                                     <div className="font-semibold text-[var(--color-text-primary)] text-base">
                                                         {reservation.first_name} {reservation.last_name}
                                                     </div>
-                                                    <div className="text-[var(--color-text-muted)] text-xs mt-0.5">
-                                                        {[reservation.email, reservation.phone].filter(Boolean).join(" • ")}
+                                                    <div className="text-[var(--color-text-muted)] text-xs mt-0.5 flex flex-col gap-0.5">
+                                                        {reservation.email && <div>{reservation.email}</div>}
+                                                        {reservation.phone && <div>{reservation.phone}</div>}
                                                     </div>
                                                 </td>
 
@@ -757,8 +803,8 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Details Column */}
-                                                <td className="px-5 py-4 align-top">
-                                                    <div className="flex flex-col gap-1">
+                                                <td className="px-5 py-4 align-top min-w-0">
+                                                    <div className="flex flex-col gap-1 max-w-[260px]">
                                                          <div className="flex items-center gap-1.5 text-[var(--color-text-primary)]">
                                                             <span className="text-base text-[var(--color-text-muted)]">
                                                                  {reservation.camping_unit?.includes('Tent') ? '⛺' : '🚐'}
@@ -768,12 +814,34 @@ export default function AdminPage() {
                                                         <div className="text-xs text-[var(--color-text-muted)] flex gap-2">
                                                             <span>👥 {reservation.adults} Adults, {reservation.children} Kids</span>
                                                         </div>
+                                                        {(() => {
+                                                            const paymentStatus = getPaymentStatus(reservation);
+                                                            if (!paymentStatus) return null;
+
+                                                            const paymentConfig = {
+                                                                paid: { icon: '✓', label: 'Paid in full', color: 'text-green-600/60 dark:text-green-400/60' },
+                                                                deposit_paid: { icon: '💳', label: 'Deposit paid', color: 'text-blue-600/60 dark:text-blue-400/60' },
+                                                                payment_due: { icon: '⏳', label: 'Payment due', color: 'text-amber-600/80 dark:text-amber-400/80' },
+                                                                overdue: { icon: '⚠️', label: 'Payment overdue', color: 'text-red-600/80 dark:text-red-400/80' },
+                                                                failed: { icon: '✕', label: 'Payment failed', color: 'text-red-600/80 dark:text-red-400/80' },
+                                                                refunded: { icon: '↩', label: 'Refunded', color: 'text-gray-600/60 dark:text-gray-400/60' }
+                                                            };
+
+                                                            const config = paymentConfig[paymentStatus];
+
+                                                            return (
+                                                                <div className={`mt-0.5 flex items-center gap-1 text-xs ${config.color}`}>
+                                                                    <span className="opacity-70">{config.icon}</span>
+                                                                    <span>{config.label}</span>
+                                                                </div>
+                                                            );
+                                                        })()}
                                                     </div>
                                                 </td>
 
                                                 {/* Campsite Column */}
-                                                <td className="px-5 py-4 align-middle">
-                                                    <div className="flex items-center min-h-[28px]">
+                                                <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
+                                                    <div className="inline-flex justify-center items-center min-h-[28px]">
                                                         {reservation.campsites ? (
                                                             <span className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-primary)] text-xs h-7">
                                                                 {reservation.campsites.code}
@@ -794,22 +862,31 @@ export default function AdminPage() {
                                                 </td>
 
                                                 {/* Status Column */}
-                                                <td className="px-5 py-4 align-top">
-                                                    <div className="flex flex-col gap-1.5 min-h-[28px]">
+                                                <td className="px-5 py-4 align-middle text-center">
+                                                    <div className="inline-flex justify-center items-center gap-2">
                                                         <StatusPill status={reservation.status} />
                                                         {(() => {
                                                             const paymentStatus = getPaymentStatus(reservation);
-                                                            return paymentStatus && <PaymentBadge status={paymentStatus} />;
+                                                            const needsAttention = paymentStatus === 'overdue' || paymentStatus === 'failed' || paymentStatus === 'payment_due';
+
+                                                            if (!needsAttention) return null;
+
+                                                            return (
+                                                                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400" title="Payment needs attention">
+                                                                    <span className="text-xs font-bold">!</span>
+                                                                </span>
+                                                            );
                                                         })()}
                                                     </div>
                                                 </td>
 
                                                 {/* Actions Column */}
-                                                <td className="px-5 py-4 align-middle text-right">
-                                                    <div className="flex items-center justify-end min-h-[28px]">
+                                                <td className="px-5 py-4 align-middle text-center">
+                                                    <div className="inline-flex items-center justify-center gap-2 min-h-[28px]">
                                                         <RowActions
                                                             reservation={reservation}
                                                             updateStatus={updateStatus}
+                                                            onArchive={handleArchive}
                                                         />
                                                     </div>
                                                 </td>
