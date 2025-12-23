@@ -1,9 +1,9 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
-// Load .env.local for E2E tests (local Supabase credentials)
-// CI creates .env.local with local Supabase credentials, local dev has it already
-dotenv.config({ path: '.env.local' });
+// Load .env.test for E2E tests (local Supabase credentials)
+// This ensures tests use the local Supabase instance, not production
+dotenv.config({ path: '.env.test' });
 
 // Debug: Verify env vars are present (for CI troubleshooting)
 if (process.env.CI) {

@@ -110,6 +110,9 @@ alter table "public"."addons" alter column "price" set default 0.00;
 
 alter table "public"."payment_policies" drop column "updated_at";
 
+-- Fix the problematic 'default' id before converting to UUID
+DELETE FROM "public"."payment_policies" WHERE "id" = 'default';
+
 alter table "public"."payment_policies" alter column "deposit_value" set default 0.00;
 
 alter table "public"."payment_policies" alter column "due_days_before_checkin" set default 0;
@@ -169,7 +172,7 @@ CREATE INDEX idx_reservations_status ON public.reservations USING btree (status)
 
 alter table "public"."reservation_addons" add constraint "reservation_addons_pkey" PRIMARY KEY using index "reservation_addons_pkey";
 
-alter table "public"."addons" add constraint "addons_category_check" CHECK ((category = ANY (ARRAY['merchandise'::text, 'service'::text, 'rental'::text, 'other'::text]))) not valid;
+alter table "public"."addons" add constraint "addons_category_check" CHECK ((category = ANY (ARRAY['Camping Essentials'::text, 'Water Activities'::text, 'Services'::text, 'merchandise'::text, 'service'::text, 'rental'::text, 'other'::text]))) not valid;
 
 alter table "public"."addons" validate constraint "addons_category_check";
 
