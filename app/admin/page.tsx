@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
 import Link from "next/link";
-import { AlertTriangle, X, Wrench } from "lucide-react";
+import { AlertTriangle, X, Wrench, Search } from "lucide-react";
 import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
 import StatusPill from "@/components/admin/StatusPill";
 import RowActions from "@/components/admin/RowActions";
@@ -25,6 +25,8 @@ export default function AdminPage() {
     const [assigningReservation, setAssigningReservation] = useState<Reservation | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [showArchived, setShowArchived] = useState(false);
+    const [searchQuery, setSearchQuery] = useState('');
+    const searchInputRef = useRef<HTMLInputElement>(null);
 
     const fetchReservations = useCallback(async () => {
         setLoading(true);
@@ -65,6 +67,19 @@ export default function AdminPage() {
         void fetchReservations();
     }, [fetchReservations]);
 
+    // Keyboard shortcuts
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && searchQuery) {
+                setSearchQuery('');
+                searchInputRef.current?.blur();
+            }
+        };
+
+        window.addEventListener('keydown', handleKeyDown);
+        return () => window.removeEventListener('keydown', handleKeyDown);
+    }, [searchQuery]);
+
     const updateStatus = async (id: string, status: ReservationStatus) => {
         try {
             const response = await fetch(`/api/admin/reservations/${id}`, {
@@ -99,12 +114,37 @@ export default function AdminPage() {
         await fetchReservations();
     };
 
-    const filteredItems = (() => {
+    // Filter by status
+    const statusFilteredItems = (() => {
         if (filter === 'all') return items;
         if (filter === 'maintenance') return items.filter(item => item.type === 'maintenance' || item.type === 'blackout');
         // Filter by reservation status
         return items.filter(item => item.type === 'reservation' && item.status === filter);
     })();
+
+    // Apply search filter
+    const filteredItems = useMemo(() => {
+        if (!searchQuery.trim()) return statusFilteredItems;
+
+        const query = searchQuery.toLowerCase();
+        return statusFilteredItems.filter(item => {
+            if (item.type !== 'reservation') return false;
+
+            // Type guard: we know it's a reservation now
+            const reservation = item as Extract<OverviewItem, { type: 'reservation' }>;
+
+            // Search across name, email, phone, ID, and campsite code
+            const searchableText = [
+                reservation.guest_name,
+                reservation.guest_email,
+                reservation.guest_phone,
+                reservation.id,
+                reservation.campsite_code,
+            ].filter(Boolean).join(' ').toLowerCase();
+
+            return searchableText.includes(query);
+        });
+    }, [statusFilteredItems, searchQuery]);
 
     const sortedItems = [...filteredItems].sort((a, b) => {
         const getDateValue = (item: OverviewItem) => {
@@ -245,6 +285,14 @@ export default function AdminPage() {
         return Math.ceil(diff / (1000 * 3600 * 24));
     };
 
+    // Get current filter label for "Showing:" text
+    const getFilterLabel = () => {
+        if (showArchived) return 'Archived';
+        if (filter === 'all') return 'All';
+        if (filter === 'maintenance') return 'Maintenance';
+        return filter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
+    };
+
     if (loading) {
         return (
             <div className="py-12">
@@ -282,82 +330,171 @@ export default function AdminPage() {
     return (
         <div className="py-8 min-h-screen bg-[var(--color-background)]">
             <Container>
-                {/* Header */}
+                {/* Row 1: Title Only */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-bold text-[var(--color-text-primary)]">
+                    <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
                         Reservations
                     </h1>
+                    <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
+                        Manage bookings and blocks
+                    </p>
                 </div>
 
                 <OnboardingChecklist />
 
-                {/* Filter Tabs & Actions */}
-                <div className="mb-6 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[var(--color-border-default)] pb-2">
-                    <div className="flex overflow-x-auto gap-1 items-center">
-                        <button
-                            onClick={() => setFilter('all')}
-                            className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                                filter === 'all'
-                                    ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
-                                    : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-                            }`}
-                        >
-                            {showArchived ? 'Archived' : 'All'} ({items.length})
-                        </button>
-                        {!showArchived && (
-                            <>
-                                {(['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'] as ReservationStatus[]).map(status => (
+                {/* Row 2: Full-width Status Tabs */}
+                <div className="w-full border-b border-[var(--color-border-default)]/10 mb-6">
+                    <div className="flex w-full items-center justify-between gap-4">
+                        {/* Left: Tabs */}
+                        <div className="flex min-w-0 flex-1 gap-6 overflow-x-auto scrollbar-hide pb-2">
+                            <button
+                                onClick={() => setFilter('all')}
+                                className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                                    filter === 'all'
+                                        ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
+                                        : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                                }`}
+                            >
+                                {showArchived ? 'Archived' : 'All'}
+                                <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${
+                                    filter === 'all'
+                                        ? 'bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]'
+                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                                }`}>
+                                    {items.length}
+                                </span>
+                            </button>
+                            {!showArchived && (
+                                <>
+                                    {(['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'] as ReservationStatus[]).map(status => (
+                                        <button
+                                            key={status}
+                                            onClick={() => setFilter(status)}
+                                            className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
+                                                filter === status
+                                                    ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
+                                                    : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
+                                            }`}
+                                        >
+                                            {status.replace('_', ' ')}
+                                            <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${
+                                                filter === status
+                                                    ? 'bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]'
+                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                                            }`}>
+                                                {statusCounts[status] || 0}
+                                            </span>
+                                        </button>
+                                    ))}
                                     <button
-                                        key={status}
-                                        onClick={() => setFilter(status)}
-                                        className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
-                                            filter === status
-                                                ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
+                                        onClick={() => setFilter('maintenance')}
+                                        className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
+                                            filter === 'maintenance'
+                                                ? 'border-amber-500 text-amber-600 dark:text-amber-500'
                                                 : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
                                         }`}
                                     >
-                                        {status.replace('_', ' ')} <span className="text-xs opacity-70 ml-1">({statusCounts[status] || 0})</span>
+                                        🛠️ Maintenance
+                                        <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${
+                                            filter === 'maintenance'
+                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
+                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
+                                        }`}>
+                                            {maintenanceCount}
+                                        </span>
                                     </button>
-                                ))}
-                                <button
-                                    onClick={() => setFilter('maintenance')}
-                                    className={`px-3 py-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
-                                        filter === 'maintenance'
-                                            ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
-                                            : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-                                    }`}
-                                >
-                                    🛠️ Maintenance <span className="text-xs opacity-70 ml-1">({maintenanceCount})</span>
-                                </button>
-                            </>
-                        )}
+                                </>
+                            )}
+                        </div>
+
+                        {/* Right: Meta info */}
+                        <div className="shrink-0 text-xs text-[var(--color-text-muted)]/50 whitespace-nowrap pb-2">
+                            Showing: <span className="font-semibold text-[var(--color-text-primary)]">{getFilterLabel()}</span>
+                            {searchQuery ? (
+                                <>
+                                    {' · '}
+                                    <span className="font-semibold text-[var(--color-text-primary)]">{sortedItems.length}</span>
+                                    {' '}{sortedItems.length === 1 ? 'result' : 'results'}
+                                </>
+                            ) : (
+                                <>
+                                    {' · '}
+                                    <span className="font-semibold text-[var(--color-text-primary)]">{sortedItems.length}</span>
+                                    {' total'}
+                                </>
+                            )}
+                            {searchQuery && (
+                                <>
+                                    {' · '}
+                                    <button
+                                        onClick={() => setSearchQuery('')}
+                                        className="text-[var(--color-text-muted)]/50 hover:text-[var(--color-text-primary)] transition-colors underline"
+                                    >
+                                        clear
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     </div>
-                    
-                    <div className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)]">
-                            <span className="whitespace-nowrap">Sort</span>
+                </div>
+
+                {/* Row 3: Search + Controls */}
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+                    <div className="min-w-[260px] flex-1 max-w-[520px]">
+                        <div className="relative group">
+                            <Search
+                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-accent-gold)] transition-colors"
+                                size={16}
+                            />
+                            <input
+                                ref={searchInputRef}
+                                type="text"
+                                placeholder="Search name, email, phone, ref..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-10 pr-10 py-2 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-gold)] transition-all"
+                            />
+                            {searchQuery && (
+                                <button
+                                    onClick={() => setSearchQuery('')}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                                    aria-label="Clear search"
+                                >
+                                    <X size={16} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
+                            <span>Sort</span>
                             <select
                                 value={sortMode}
                                 onChange={(e) => setSortMode(e.target.value as SortMode)}
-                                className="rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] px-2 py-1 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-gold)]"
+                                className="rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-gold)]"
                             >
-                                <option value="start_date">Start date (newest)</option>
-                                <option value="created_at">Created (most recent)</option>
+                                <option value="start_date">Start date</option>
+                                <option value="created_at">Created date</option>
                             </select>
                         </div>
-                        <label className="flex items-center gap-2 text-sm text-[var(--color-text-secondary)] cursor-pointer">
-                            <input 
-                                type="checkbox" 
+
+                        <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)] cursor-pointer hover:text-[var(--color-text-primary)] transition-colors">
+                            <input
+                                type="checkbox"
                                 checked={showArchived}
                                 onChange={(e) => setShowArchived(e.target.checked)}
                                 className="rounded border-gray-300 text-[var(--color-accent-gold)] focus:ring-[var(--color-accent-gold)]"
                             />
-                            Show Archived
+                            Show archived
                         </label>
-                        <Link href="/admin/calendar">
-                            <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] rounded-md transition-colors whitespace-nowrap cursor-pointer">
-                                <span>📅</span> Calendar
-                            </button>
+
+                        <Link
+                            href="/admin/calendar"
+                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-elevated)]/80 border border-[var(--color-border-subtle)] rounded-lg transition-all"
+                        >
+                            <span>📅</span>
+                            <span>Calendar</span>
                         </Link>
                     </div>
                 </div>

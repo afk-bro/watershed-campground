@@ -1,8 +1,9 @@
 import type { OverviewItem, ReservationStatus } from "@/lib/supabase";
 
 type SortMode = "start_date" | "created_at";
+type FilterType = ReservationStatus | 'all' | 'maintenance';
 
-export { type SortMode };
+export { type SortMode, type FilterType };
 
 export function getNights(checkIn: string, checkOut: string): number {
     const diff = new Date(checkOut).getTime() - new Date(checkIn).getTime();
