@@ -26,6 +26,8 @@ import SyncedScrollbar from "./SyncedScrollbar";
 import CalendarControls from "./CalendarControls";
 import BlackoutDrawer from "./BlackoutDrawer";
 import CalendarLegend from "./CalendarLegend";
+import NoCampsitesCTA from "./NoCampsitesCTA";
+
 
 interface CalendarGridProps {
   campsites: Campsite[];
@@ -450,9 +452,15 @@ export default function CalendarGrid({
         hideBlackouts={hideBlackouts}
         onHideBlackoutsChange={setHideBlackouts}
       />
-      {visibleBlackoutDates.length === 0 && filteredReservations.length === 0 && <EmptyStateHelper />}
       
-      {selection && showCreationDialog && (
+      {campsites.length === 0 ? (
+        <NoCampsitesCTA />
+      ) : (
+        <>
+          {visibleBlackoutDates.length === 0 && filteredReservations.length === 0 && <EmptyStateHelper />}
+          
+          {selection && showCreationDialog && (
+
         <CreationDialog
           isOpen={showCreationDialog}
           onClose={() => {
@@ -466,9 +474,13 @@ export default function CalendarGrid({
           onCreateBlackout={handleCreateBlackout}
           onCreateReservation={() => router.push(`/admin/reservations/new?start=${selection.start}&end=${selection.end}&campsite=${selection.campsiteId}`)}
         />
+          )}
+        </>
       )}
+
       {/* Header Controls */}
-      <div className="flex items-center justify-between p-4 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)]">
+      <div className="flex flex-col lg:flex-row lg:items-center justify-between p-4 sm:p-6 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)] gap-4">
+
         <div className="flex items-center gap-6">
           <h2 className="text-2xl font-heading font-bold text-[var(--color-text-primary)] tracking-tight">
             {format(date, "MMMM yyyy")}
