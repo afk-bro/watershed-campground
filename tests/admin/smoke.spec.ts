@@ -45,8 +45,8 @@ test.describe('Admin Smoke Tests', () => {
         test('/admin/campsites loads', async ({ page }) => {
             await page.goto('/admin/campsites', { waitUntil: 'networkidle' });
             await expect(page).toHaveURL('/admin/campsites');
-            // Use specific heading instead of generic text that matches multiple elements
-            await expect(page.getByRole('heading', { name: /Campsite Management/i })).toBeVisible({ timeout: 10000 });
+            // Check for the Campsites heading
+            await expect(page.getByRole('heading', { name: /Campsites/i })).toBeVisible({ timeout: 10000 });
         });
     });
 });

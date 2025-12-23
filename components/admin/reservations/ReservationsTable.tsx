@@ -69,14 +69,21 @@ export default function ReservationsTable({
         <div className="bg-[var(--color-surface-card)] dark:bg-white/5 rounded-xl border border-[var(--color-border-subtle)] dark:border-white/10 shadow-sm overflow-hidden">
             <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse table-fixed min-w-[900px]">
-                     <colgroup>
-                        <col className="w-10" />      {/* checkbox */}
-                        <col className="w-[260px]" /> {/* guest */}
-                        <col className="w-[180px]" /> {/* dates */}
-                        <col />                       {/* details flexible */}
-                        <col className="w-[130px]" /> {/* campsite */}
-                        <col className="w-[150px]" /> {/* status */}
-                        <col className="w-[100px]" /> {/* actions */}
+                    <colgroup>
+                        {/* Checkbox */}
+                        <col className="w-10" />
+                        {/* Guest */}
+                        <col className="w-[260px]" />
+                        {/* Dates */}
+                        <col className="w-[180px]" />
+                        {/* Details */}
+                        <col />
+                        {/* Campsite */}
+                        <col className="w-[130px]" />
+                        {/* Status */}
+                        <col className="w-[150px]" />
+                        {/* Actions */}
+                        <col className="w-[100px]" />
                     </colgroup>
                     <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                         <tr>
