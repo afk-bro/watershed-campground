@@ -757,3 +757,86 @@ input[type="checkbox"]:disabled {
 .dropdown-menu {
   z-index: 999;
 }
+/* ============================================================================
+   CALENDAR SCROLLBAR CUSTOMIZATION
+   ============================================================================ */
+
+/* Firefox */
+.calendar-hscroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.55) transparent;
+}
+
+/* Chrome / Edge / Safari */
+.calendar-hscroll::-webkit-scrollbar {
+  height: 10px;              /* horizontal thickness */
+}
+
+.calendar-hscroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-hscroll::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 120, 120, 0.40);
+  border-radius: 999px;
+  border: 2px solid transparent;   /* gives “pill” padding */
+  background-clip: content-box;     /* keeps the padding clean */
+  
+  /* Fade effect */
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.calendar-hscroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(120, 120, 120, 0.60);
+}
+
+.calendar-hscroll:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+.calendar-hscroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+/* Thinner variant for top scrollbar */
+.calendar-hscroll-thin {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(120, 120, 120, 0.55) transparent;
+}
+
+.calendar-hscroll-thin::-webkit-scrollbar {
+  height: 4px;
+}
+
+.calendar-hscroll-thin::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.calendar-hscroll-thin::-webkit-scrollbar-thumb {
+  background-color: rgba(120, 120, 120, 0.50);
+  border-radius: 999px;
+  border: none;
+  opacity: 0;
+  transition: opacity 150ms ease;
+}
+
+.calendar-hscroll-thin::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(120, 120, 120, 0.70);
+}
+
+.calendar-hscroll-thin:hover::-webkit-scrollbar-thumb {
+  opacity: 1;
+}
+
+.calendar-hscroll-thin::-webkit-scrollbar-corner {
+  background: transparent;
+}
+/* Utility to hide native scrollbar */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
