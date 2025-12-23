@@ -1,4 +1,4 @@
-import { Check, X, LogIn, LogOut } from "lucide-react";
+import { Check, X, LogIn, LogOut, Archive } from "lucide-react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import type { LucideIcon } from "lucide-react";
 import Tooltip from "@/components/ui/Tooltip";
@@ -6,6 +6,7 @@ import Tooltip from "@/components/ui/Tooltip";
 type Props = {
     reservation: Reservation;
     updateStatus: (id: string, status: ReservationStatus) => void;
+    onArchive?: (id: string) => void;
 };
 
 type ActionButtonProps = {
@@ -33,7 +34,7 @@ function ActionButton({ onClick, icon: Icon, colorClass, title }: ActionButtonPr
     );
 }
 
-export default function RowActions({ reservation, updateStatus }: Props) {
+export default function RowActions({ reservation, updateStatus, onArchive }: Props) {
     const { id, status } = reservation;
 
     if (!id) return null;
@@ -89,6 +90,19 @@ export default function RowActions({ reservation, updateStatus }: Props) {
         );
     }
 
-    // For checked_out / cancelled / no_show: no main actions for now
-    return <span className="text-xs text-[var(--color-text-muted)] italic">--</span>;
+    // For checked_out / cancelled / no_show: show archive button
+    if (onArchive) {
+        return (
+            <div className="flex gap-2 justify-end">
+                <ActionButton
+                    onClick={() => onArchive(id)}
+                    icon={Archive}
+                    colorClass="text-gray-600 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-800"
+                    title="Archive Reservation"
+                />
+            </div>
+        );
+    }
+
+    return null;
 }

@@ -42,8 +42,8 @@ export default function StatusPill({ status }: Props) {
     const { label, icon: Icon, classes } = config[status];
 
     return (
-        <span className={`inline-flex items-center gap-1.5 px-2.5 h-6 rounded-full text-[10px] uppercase font-bold tracking-wide border w-[110px] justify-center ${classes}`}>
-            <Icon size={12} className="shrink-0" />
+        <span className={`inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-full text-[9px] uppercase font-bold tracking-wide border ${classes}`}>
+            <Icon size={11} className="shrink-0" />
             {label}
         </span>
     );
