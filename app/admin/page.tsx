@@ -276,7 +276,10 @@ export default function AdminPage() {
                 </div>
 
                 <DemoDataBanner 
-                    hasReservations={items.length > 0}
+                    hasNonDemoReservations={items.some(item => 
+                        item.type === 'reservation' && 
+                        (!(item as any).metadata || (item as any).metadata.is_demo !== true)
+                    )}
                     onSeedComplete={() => fetchReservations()}
                 />
 

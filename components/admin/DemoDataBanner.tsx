@@ -4,11 +4,11 @@ import { useState } from 'react';
 import { Sparkles, Trash2, Loader2 } from 'lucide-react';
 
 interface DemoDataBannerProps {
-    hasReservations: boolean;
+    hasNonDemoReservations: boolean;
     onSeedComplete?: () => void;
 }
 
-export function DemoDataBanner({ hasReservations, onSeedComplete }: DemoDataBannerProps) {
+export function DemoDataBanner({ hasNonDemoReservations, onSeedComplete }: DemoDataBannerProps) {
     const [isSeeding, setIsSeeding] = useState(false);
     const [isClearing, setIsClearing] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -69,8 +69,8 @@ export function DemoDataBanner({ hasReservations, onSeedComplete }: DemoDataBann
         }
     };
 
-    // Show empty state banner if no reservations
-    if (!hasReservations) {
+    // Show empty state banner if no non-demo reservations exist
+    if (!hasNonDemoReservations) {
         return (
             <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-6 mb-6">
                 <div className="flex items-start gap-4">

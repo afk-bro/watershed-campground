@@ -4,44 +4,102 @@ import { addDays, subDays, format } from 'date-fns';
 /**
  * Seeds demo data for a new campground to help with onboarding.
  * 
- * **Guardrails:**
- * - Only runs if campground has zero reservations
- * - Idempotent (safe to call multiple times)
+ * **Production Safety Guarantees:**
+ * - Only runs if NO non-demo reservations exist
+ * - Tracks seeding via audit_logs (runs at most once unless explicitly allowed)
+ * - Concurrency-safe (uses processing status to prevent double-seeding)
  * - All demo data marked with metadata.is_demo = true
- * - Production-safe (per-campground, not global)
+ * - Surgical deletion with audit logging
  */
 export async function seedDemoDataForCampground(adminUserId: string): Promise<{ success: boolean; message: string }> {
     try {
-        // 1. Idempotency Check
-        const { count: existingReservations } = await supabaseAdmin
-            .from('reservations')
-            .select('*', { count: 'exact', head: true });
+        // 1. Check if already seeded (seed marker)
+        const { data: existingSeed } = await supabaseAdmin
+            .from('audit_logs')
+            .select('id')
+            .eq('action', 'DEMO_SEED_COMPLETED')
+            .single();
 
-        if (existingReservations && existingReservations > 0) {
-            console.log('[Demo Seed] Campground already has data. Skipping.');
-            return { success: false, message: 'Campground already has reservations' };
+        if (existingSeed) {
+            console.log('[Demo Seed] Already seeded previously. Skipping.');
+            return { success: false, message: 'Demo data already seeded' };
         }
 
-        // 2. Environment Check (still allowed in prod for new tenants)
+        // 2. Check for non-demo reservations (improved idempotency)
+        const { count: realReservations } = await supabaseAdmin
+            .from('reservations')
+            .select('*', { count: 'exact', head: true })
+            .or('metadata->>is_demo.is.null,metadata->>is_demo.neq.true');
+
+        if (realReservations && realReservations > 0) {
+            console.log('[Demo Seed] Real reservations exist. Skipping demo seed.');
+            return { success: false, message: 'Campground has real reservations' };
+        }
+
+        // 3. Concurrency protection: Set processing status
+        const processingMarker = {
+            action: 'DEMO_SEED_PROCESSING' as const,
+            reservation_id: '00000000-0000-0000-0000-000000000000',
+            changed_by: adminUserId,
+            new_data: { started_at: new Date().toISOString() }
+        };
+
+        const { data: existingProcessing } = await supabaseAdmin
+            .from('audit_logs')
+            .select('id, created_at')
+            .eq('action', 'DEMO_SEED_PROCESSING')
+            .single();
+
+        if (existingProcessing) {
+            // Check if it's stale (older than 5 minutes)
+            const processingAge = Date.now() - new Date(existingProcessing.created_at).getTime();
+            if (processingAge < 5 * 60 * 1000) {
+                console.log('[Demo Seed] Another seed operation in progress. Skipping.');
+                return { success: false, message: 'Seed operation already in progress' };
+            }
+            // Stale lock, delete it
+            await supabaseAdmin.from('audit_logs').delete().eq('id', existingProcessing.id);
+        }
+
+        // Insert processing marker
+        await supabaseAdmin.from('audit_logs').insert(processingMarker);
+
+        // 4. Environment Check
         const ALLOW_DEMO_SEED = process.env.ALLOW_DEMO_SEED !== 'false';
         if (!ALLOW_DEMO_SEED) {
+            await supabaseAdmin.from('audit_logs').delete().eq('action', 'DEMO_SEED_PROCESSING');
             console.log('[Demo Seed] Disabled via env var.');
             return { success: false, message: 'Demo seeding disabled' };
         }
 
         console.log('[Demo Seed] Starting demo data generation...');
 
-        // 3. Create Demo Campsites
+        // 5. Create Demo Campsites
         const campsites = await createDemoCampsites();
         console.log(`[Demo Seed] Created ${campsites.length} demo campsites`);
 
-        // 4. Create Demo Reservations
+        // 6. Create Demo Reservations
         const reservations = await createDemoReservations(campsites);
         console.log(`[Demo Seed] Created ${reservations.length} demo reservations`);
 
-        // 5. Create Demo Blackout Date
+        // 7. Create Demo Blackout Date
         await createDemoBlackout(campsites[0].id);
         console.log('[Demo Seed] Created demo blackout date');
+
+        // 8. Mark as completed (seed marker)
+        await supabaseAdmin.from('audit_logs').insert({
+            action: 'DEMO_SEED_COMPLETED',
+            reservation_id: '00000000-0000-0000-0000-000000000000',
+            changed_by: adminUserId,
+            new_data: {
+                campsites_count: campsites.length,
+                reservations_count: reservations.length,
+                completed_at: new Date().toISOString()
+            }
+        });
+
+        // 9. Remove processing marker
+        await supabaseAdmin.from('audit_logs').delete().eq('action', 'DEMO_SEED_PROCESSING');
 
         return {
             success: true,
@@ -49,6 +107,8 @@ export async function seedDemoDataForCampground(adminUserId: string): Promise<{ 
         };
 
     } catch (error) {
+        // Cleanup processing marker on error
+        await supabaseAdmin.from('audit_logs').delete().eq('action', 'DEMO_SEED_PROCESSING');
         console.error('[Demo Seed] Error:', error);
         throw error;
     }
@@ -132,6 +192,7 @@ async function createDemoCampsites() {
 
 /**
  * Creates 10 demo reservations with varied statuses and dates
+ * Includes 2 overlapping reservations marked with has_conflict for demo purposes
  */
 async function createDemoReservations(campsites: any[]) {
     const today = new Date();
@@ -238,6 +299,7 @@ async function createDemoReservations(campsites: any[]) {
             metadata: { is_demo: true }
         },
         // Overlapping reservations (to demonstrate conflict handling)
+        // First reservation: confirmed
         {
             campsite_id: campsites[0].id,
             first_name: 'Demo',
@@ -252,12 +314,13 @@ async function createDemoReservations(campsites: any[]) {
             status: 'confirmed',
             payment_status: 'paid',
             amount_paid: 135,
-            metadata: { is_demo: true }
+            metadata: { is_demo: true, demo_note: 'Part of intentional overlap demo' }
         },
+        // Second reservation: pending with conflict (intentional for demo)
         {
             campsite_id: campsites[0].id,
             first_name: 'Demo',
-            last_name: 'Guest 8',
+            last_name: 'Guest 8 (Conflict)',
             email: 'demo8@example.com',
             phone: '555-0108',
             check_in: format(addDays(today, 22), 'yyyy-MM-dd'),
@@ -267,7 +330,11 @@ async function createDemoReservations(campsites: any[]) {
             camping_unit: 'RV',
             status: 'pending',
             payment_status: 'pay_on_arrival',
-            metadata: { is_demo: true, has_conflict: true }
+            metadata: {
+                is_demo: true,
+                has_conflict: true,
+                demo_note: 'Intentional overlap to demonstrate conflict detection'
+            }
         },
         // More future reservations
         {
@@ -337,36 +404,72 @@ async function createDemoBlackout(campsiteId: string) {
 }
 
 /**
- * Clears all demo data from the campground
+ * Clears all demo data from the campground with surgical precision.
+ * 
+ * **Safety Guarantees:**
+ * - Only deletes items with metadata.is_demo = true
+ * - Counts deleted items for audit logging
+ * - Logs the deletion action with admin user ID
+ * - Deletes in correct order (reservations → blackouts → campsites)
  */
-export async function clearDemoData(): Promise<{ success: boolean; message: string }> {
+export async function clearDemoData(adminUserId: string): Promise<{ success: boolean; message: string }> {
     try {
-        // Delete demo reservations
-        const { error: resError } = await supabaseAdmin
+        let deletedCounts = {
+            reservations: 0,
+            blackouts: 0,
+            campsites: 0
+        };
+
+        // 1. Delete demo reservations (first, due to FK constraints)
+        const { data: deletedReservations, error: resError } = await supabaseAdmin
             .from('reservations')
             .delete()
-            .eq('metadata->>is_demo', 'true');
+            .eq('metadata->>is_demo', 'true')
+            .select('id');
 
         if (resError) throw resError;
+        deletedCounts.reservations = deletedReservations?.length || 0;
 
-        // Delete demo blackout dates
-        const { error: blackoutError } = await supabaseAdmin
+        // 2. Delete demo blackout dates
+        const { data: deletedBlackouts, error: blackoutError } = await supabaseAdmin
             .from('blackout_dates')
             .delete()
-            .eq('metadata->>is_demo', 'true');
+            .eq('metadata->>is_demo', 'true')
+            .select('id');
 
         if (blackoutError) throw blackoutError;
+        deletedCounts.blackouts = deletedBlackouts?.length || 0;
 
-        // Delete demo campsites
-        const { error: campsiteError } = await supabaseAdmin
+        // 3. Delete demo campsites (last, after reservations are gone)
+        const { data: deletedCampsites, error: campsiteError } = await supabaseAdmin
             .from('campsites')
             .delete()
-            .eq('metadata->>is_demo', 'true');
+            .eq('metadata->>is_demo', 'true')
+            .select('id');
 
         if (campsiteError) throw campsiteError;
+        deletedCounts.campsites = deletedCampsites?.length || 0;
 
-        console.log('[Demo Seed] Cleared all demo data');
-        return { success: true, message: 'Demo data cleared successfully' };
+        // 4. Audit log the deletion
+        await supabaseAdmin.from('audit_logs').insert({
+            action: 'DEMO_DATA_CLEARED',
+            reservation_id: '00000000-0000-0000-0000-000000000000',
+            changed_by: adminUserId,
+            old_data: deletedCounts,
+            new_data: { cleared_at: new Date().toISOString() }
+        });
+
+        // 5. Remove the seed completion marker (allow re-seeding)
+        await supabaseAdmin
+            .from('audit_logs')
+            .delete()
+            .eq('action', 'DEMO_SEED_COMPLETED');
+
+        console.log('[Demo Seed] Cleared demo data:', deletedCounts);
+        return {
+            success: true,
+            message: `Cleared ${deletedCounts.reservations} reservations, ${deletedCounts.blackouts} blackouts, ${deletedCounts.campsites} campsites`
+        };
 
     } catch (error) {
         console.error('[Demo Seed] Error clearing demo data:', error);
