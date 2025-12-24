@@ -72,14 +72,15 @@ export function getConflicts(
   targetCampsiteId: string,
   targetCheckIn: string,
   targetCheckOut: string,
-  reservations: Reservation[]
+  reservations: Reservation[],
+  isAlreadyScoped?: boolean
 ): Reservation[] {
   return reservations.filter(r => {
     // Exclude current reservation
     if (r.id === candidateId) return false;
 
-    // Only check reservations on the same campsite
-    if (r.campsite_id !== targetCampsiteId) return false;
+    // Only check reservations on the same campsite (skip if already scoped)
+    if (!isAlreadyScoped && r.campsite_id !== targetCampsiteId) return false;
 
     // Exclude cancelled/no-show reservations
     if (r.status === 'cancelled' || r.status === 'no_show') return false;
@@ -105,14 +106,16 @@ export function getBlackoutConflicts(
   targetCampsiteId: string,
   targetStartDate: string,
   targetEndDate: string,
-  blackoutDates: BlackoutDate[]
+  blackoutDates: BlackoutDate[],
+  isAlreadyScoped?: boolean
 ): BlackoutDate[] {
   return blackoutDates.filter(b => {
     // Exclude current blackout (if moving/resizing blackout)
     if (b.id === candidateId) return false;
 
     // Only check blackouts on the same campsite (null means all sites)
-    if (b.campsite_id !== targetCampsiteId && b.campsite_id !== null) return false;
+    // skip if already scoped
+    if (!isAlreadyScoped && b.campsite_id !== targetCampsiteId && b.campsite_id !== null) return false;
 
     // Treat b.end_date as inclusive (last day of block)
     // Overlap requires exclusive end date for comparison
@@ -153,7 +156,8 @@ export function validateMove(
   targetEndDate: string,
   campsites: Campsite[],
   reservations: Reservation[] = [],
-  blackoutDates: BlackoutDate[] = []
+  blackoutDates: BlackoutDate[] = [],
+  isAlreadyScoped?: boolean
 ): ValidationResult {
   // Special case: Moving to Unassigned is always valid
   if (targetCampsiteId === 'UNASSIGNED') {
@@ -181,7 +185,8 @@ export function validateMove(
       targetCampsiteId,
       targetStartDate,
       targetEndDate,
-      reservations
+      reservations,
+      isAlreadyScoped
     );
 
     if (reservationConflicts.length > 0) {
@@ -201,7 +206,8 @@ export function validateMove(
       targetCampsiteId,
       targetStartDate,
       targetEndDate,
-      blackoutDates
+      blackoutDates,
+      isAlreadyScoped
     );
 
     if (blackoutConflicts.length > 0) {

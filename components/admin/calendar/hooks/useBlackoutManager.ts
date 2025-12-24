@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { BlackoutDate } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import type { CalendarData } from "@/lib/calendar/calendar-types";
+import { calendarService } from "@/lib/calendar/calendar-service";
 
 interface UseBlackoutManagerProps {
     onDataMutate?: (
@@ -14,6 +15,14 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
     const { showToast } = useToast();
     const [selectedBlackout, setSelectedBlackout] = useState<BlackoutDate | null>(null);
     const [isBlackoutDrawerOpen, setIsBlackoutDrawerOpen] = useState(false);
+    const abortControllerRef = useRef<AbortController | null>(null);
+
+    // Cleanup on unmount
+    useEffect(() => {
+        return () => {
+            abortControllerRef.current?.abort();
+        };
+    }, []);
 
     // Handlers
     const openDrawer = (blackout: BlackoutDate) => {
@@ -26,27 +35,21 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
         setSelectedBlackout(null);
     };
 
-    const updateBlackout = async (id: string, reason: string) => {
+    const updateBlackout = useCallback(async (id: string, reason: string, extraParams: Partial<{ start_date: string, end_date: string, campsite_id: string | null }> = {}) => {
         // Fallback if no onDataMutate (Standard Fetch)
         if (!onDataMutate) {
             console.warn('[UPDATE BLACKOUT] No mutate function provided, falling back to reload');
             try {
-                const response = await fetch(`/api/admin/blackout-dates/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reason }),
-                });
+                abortControllerRef.current?.abort();
+                abortControllerRef.current = new AbortController();
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Update failed');
-                }
-
+                await calendarService.updateBlackoutDate(id, { reason, ...extraParams }, abortControllerRef.current.signal);
                 showToast('Blackout updated', 'success');
                 setTimeout(() => window.location.reload(), 500);
-            } catch (e) {
+            } catch (e: any) {
+                if (e.name === 'AbortError') return;
                 console.error('[UPDATE BLACKOUT ERROR]', e);
-                showToast(e instanceof Error ? e.message : 'Failed to update blackout', 'error');
+                showToast(e.message || 'Failed to update blackout', 'error');
                 throw e;
             }
             return;
@@ -54,23 +57,15 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
         // Optimistic Update
         try {
-            console.log('[UPDATE BLACKOUT] Optimistic update', { id, reason });
+            console.log('[UPDATE BLACKOUT] Optimistic update', { id, reason, ...extraParams });
 
             await onDataMutate(async (current) => {
                 if (!current) throw new Error('No current data');
 
-                const response = await fetch(`/api/admin/blackout-dates/${id}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ reason }),
-                });
+                abortControllerRef.current?.abort();
+                abortControllerRef.current = new AbortController();
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to update blackout');
-                }
-
-                const updated = await response.json();
+                const updated = await calendarService.updateBlackoutDate(id, { reason, ...extraParams }, abortControllerRef.current.signal);
                 console.log('[UPDATE BLACKOUT] Server confirmed:', updated);
 
                 return {
@@ -79,15 +74,16 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                 };
             }, { rollbackOnError: true, revalidate: false });
 
-            showToast('Blackout updated', 'success');
-        } catch (e) {
+            showToast('Blackout updated successfully', 'success');
+        } catch (e: any) {
+            if (e.name === 'AbortError') return;
             console.error('[UPDATE BLACKOUT ERROR]', e);
-            showToast(e instanceof Error ? e.message : 'Failed to update blackout', 'error');
+            showToast(e.message || 'Failed to update blackout', 'error');
             throw e;
         }
-    };
+    }, [onDataMutate, showToast]);
 
-    const createBlackout = async (startDate: string, endDate: string, campsiteId: string, reason: string) => {
+    const createBlackout = useCallback(async (startDate: string, endDate: string, campsiteId: string, reason: string) => {
         // Ensure start is before end
         let start = startDate;
         let end = endDate;
@@ -99,22 +95,20 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
         if (!onDataMutate) {
             console.warn('[CREATE BLACKOUT] No mutate function provided, falling back to reload');
             try {
-                const response = await fetch('/api/admin/blackout-dates', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        start_date: start,
-                        end_date: end,
-                        campsite_id: campsiteId,
-                        reason
-                    }),
-                });
+                abortControllerRef.current?.abort();
+                abortControllerRef.current = new AbortController();
 
-                if (!response.ok) throw new Error('Failed to create blackout');
+                await calendarService.createBlackoutDate({
+                    start_date: start,
+                    end_date: end,
+                    campsite_id: campsiteId,
+                    reason
+                }, abortControllerRef.current.signal);
 
                 showToast('Blackout dates added', 'success');
                 setTimeout(() => window.location.reload(), 500);
-            } catch (error) {
+            } catch (error: any) {
+                if (error.name === 'AbortError') return;
                 console.error(error);
                 showToast('Failed to create blackout', 'error');
                 throw error;
@@ -124,62 +118,43 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
         // Optimistic update
         try {
-            console.log('[CREATE BLACKOUT] Optimistic update', {
-                start,
-                end,
-                campsite_id: campsiteId,
-                reason
-            });
+            console.log('[CREATE BLACKOUT] Optimistic update', { start, end, campsite_id: campsiteId, reason });
 
             // Create optimistic blackout with temporary ID
             const optimisticBlackout = {
-                id: `temp_${crypto.randomUUID()}`, // Collision-proof temporary ID
+                id: `temp_${crypto.randomUUID()}`,
                 start_date: start,
                 end_date: end,
                 campsite_id: campsiteId,
                 reason,
                 created_at: new Date().toISOString(),
-                _saving: true, // Visual feedback flag
+                _saving: true,
             };
 
-            // Get current data for optimistic update
             const currentData = await onDataMutate();
-            if (!currentData) {
-                console.error('[CREATE BLACKOUT] No current data available');
-                throw new Error('No current data available');
-            }
+            if (!currentData) throw new Error('No current data available');
 
             const optimisticData: CalendarData = {
                 ...currentData,
                 blackoutDates: [...currentData.blackoutDates, optimisticBlackout] as BlackoutDate[],
             };
 
-            // Optimistic update with SWR
             await onDataMutate(
                 async (current) => {
                     if (!current) throw new Error('No current data');
 
-                    // Make API call
-                    const response = await fetch('/api/admin/blackout-dates', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            start_date: start,
-                            end_date: end,
-                            campsite_id: campsiteId,
-                            reason
-                        }),
-                    });
+                    abortControllerRef.current?.abort();
+                    abortControllerRef.current = new AbortController();
 
-                    if (!response.ok) {
-                        const error = await response.json();
-                        throw new Error(error.error || 'Failed to create blackout');
-                    }
+                    const newBlackout = await calendarService.createBlackoutDate({
+                        start_date: start,
+                        end_date: end,
+                        campsite_id: campsiteId,
+                        reason
+                    }, abortControllerRef.current.signal);
 
-                    const newBlackout = await response.json();
                     console.log('[CREATE BLACKOUT] Server confirmed:', newBlackout);
 
-                    // Return updated data - replace temp with server response
                     return {
                         ...current,
                         blackoutDates: [
@@ -188,38 +163,34 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                         ],
                     };
                 },
-                {
-                    optimisticData,
-                    rollbackOnError: true,
-                    revalidate: false,
-                }
+                { optimisticData, rollbackOnError: true, revalidate: false }
             );
 
             showToast('Blackout dates added', 'success');
-        } catch (error: unknown) {
+        } catch (error: any) {
+            if (error.name === 'AbortError') return;
             console.error('[CREATE BLACKOUT ERROR]', error);
-            showToast(error instanceof Error ? error.message : 'Failed to create blackout', 'error');
+            showToast(error.message || 'Failed to create blackout', 'error');
             throw error;
         }
-    };
+    }, [onDataMutate, showToast]);
 
-    const deleteBlackout = async (id: string) => {
+    const deleteBlackout = useCallback(async (id: string) => {
         // Fallback
         if (!onDataMutate) {
             console.warn('[DELETE BLACKOUT] No mutate function provided, falling back to reload');
             try {
-                const response = await fetch(`/api/admin/blackout-dates/${id}`, { method: 'DELETE' });
+                abortControllerRef.current?.abort();
+                abortControllerRef.current = new AbortController();
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Delete failed');
-                }
+                await calendarService.deleteBlackoutDate(id, abortControllerRef.current.signal);
 
                 showToast('Blackout deleted', 'success');
                 setTimeout(() => window.location.reload(), 500);
-            } catch (e) {
+            } catch (e: any) {
+                if (e.name === 'AbortError') return;
                 console.error('[DELETE BLACKOUT ERROR]', e);
-                showToast(e instanceof Error ? e.message : 'Failed to delete blackout', 'error');
+                showToast(e.message || 'Failed to delete blackout', 'error');
                 throw e;
             }
             return;
@@ -232,13 +203,10 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
             await onDataMutate(async (current) => {
                 if (!current) throw new Error('No current data');
 
-                const response = await fetch(`/api/admin/blackout-dates/${id}`, { method: 'DELETE' });
+                abortControllerRef.current?.abort();
+                abortControllerRef.current = new AbortController();
 
-                if (!response.ok) {
-                    const error = await response.json();
-                    throw new Error(error.error || 'Failed to delete blackout');
-                }
-
+                await calendarService.deleteBlackoutDate(id, abortControllerRef.current.signal);
                 console.log('[DELETE BLACKOUT] Server confirmed deletion');
 
                 return {
@@ -248,12 +216,13 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
             }, { rollbackOnError: true, revalidate: false });
 
             showToast('Blackout deleted', 'success');
-        } catch (e) {
+        } catch (e: any) {
+            if (e.name === 'AbortError') return;
             console.error('[DELETE BLACKOUT ERROR]', e);
-            showToast(e instanceof Error ? e.message : 'Failed to delete blackout', 'error');
+            showToast(e.message || 'Failed to delete blackout', 'error');
             throw e;
         }
-    };
+    }, [onDataMutate, showToast]);
 
     return {
         selectedBlackout,
