@@ -9,10 +9,9 @@ import ReservationDrawer from "./ReservationDrawer";
 import RescheduleConfirmDialog from "./RescheduleConfirmDialog";
 import GhostPreview from "./GhostPreview";
 import CalendarCell from "./CalendarCell";
-import { ChevronLeft, ChevronRight, Ban, Hand, ArrowLeftToLine, Calendar as CalendarIcon, Info } from "lucide-react";
+import { ChevronLeft, ChevronRight, ArrowLeftToLine, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import InstructionalOverlay from "./InstructionalOverlay";
-import EmptyStateHelper from "./EmptyStateHelper";
 import CreationDialog from "./CreationDialog";
 import { useRouter } from "next/navigation";
 import type { GhostState, CalendarData } from "@/lib/calendar/calendar-types";
@@ -25,10 +24,11 @@ import { useSyncedScroll } from "./hooks/useSyncedScroll";
 import { useStuckSavingFailsafe } from "./hooks/useStuckSavingFailsafe";
 import { useReservationMutations } from "./hooks/useReservationMutations";
 import SyncedScrollbar from "./SyncedScrollbar";
-import CalendarControls from "./CalendarControls";
 import BlackoutDrawer from "./BlackoutDrawer";
-import CalendarLegend from "./CalendarLegend";
 import NoCampsitesCTA from "./NoCampsitesCTA";
+import CalendarMonthHeader from "./CalendarMonthHeader";
+import CalendarDaysHeader from "./CalendarDaysHeader";
+import CalendarRow from "./CalendarRow";
 
 
 interface CalendarGridProps {
@@ -201,6 +201,40 @@ export default function CalendarGrid({
       return blackoutDates;
   }, [blackoutDates, hideBlackouts]);
 
+  // Pre-calculate maps for stable references during drag operations
+  const campsiteReservationsMap = useMemo(() => {
+    const map: Record<string, Reservation[]> = {};
+    filteredReservations.forEach(r => {
+      if (r.campsite_id) {
+        if (!map[r.campsite_id]) map[r.campsite_id] = [];
+        map[r.campsite_id].push(r);
+      }
+    });
+    return map;
+  }, [filteredReservations]);
+
+  const campsiteBlackoutMap = useMemo(() => {
+    const map: Record<string, BlackoutDate[]> = {};
+    const globalBlackouts = visibleBlackoutDates.filter(b => !b.campsite_id);
+    
+    visibleBlackoutDates.forEach(b => {
+      if (b.campsite_id) {
+        if (!map[b.campsite_id]) map[b.campsite_id] = [...globalBlackouts];
+        map[b.campsite_id].push(b);
+      }
+    });
+
+    // Handle global key for unassigned row or other references if needed
+    map['GLOBAL'] = globalBlackouts;
+    
+    return map;
+  }, [visibleBlackoutDates]);
+
+  const unassignedReservations = useMemo(() => 
+    filteredReservations.filter(r => !r.campsite_id), 
+    [filteredReservations]
+  );
+
   // Auto-scroll hook
   const { scrollContainerRef, updateScrollDirection, stopAutoScroll } = useAutoScroll();
   // Panning hook
@@ -234,9 +268,6 @@ export default function CalendarGrid({
   }, []);
 
 
-  // Ref needed for HTML5 drag auto-scroll (legacy pattern)
-  const autoScrollIntervalRef = useRef<number | null>(null);
-  
   // Handle move request from drag/resize hook
   const handleMoveRequested = useCallback((
     reservation: Reservation,
@@ -260,102 +291,16 @@ export default function CalendarGrid({
     newStartDate: string,
     newEndDate: string
   ) => {
-    // Fall back to reload if no mutate function provided
-    if (!onDataMutate) {
-      console.warn('[BLACKOUT MOVE] No mutate function provided, falling back to reload');
-      try {
-        const response = await fetch(`/api/admin/blackout-dates/${blackout.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
-            start_date: newStartDate,
-            end_date: newEndDate,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.message || 'Failed to update blackout date');
-        }
-
-        showToast('Blackout date updated successfully', 'success');
-        window.location.reload();
-      } catch (error: unknown) {
-        console.error('[BLACKOUT MOVE ERROR]', error);
-        showToast(error instanceof Error ? error.message : 'Failed to update blackout date', 'error');
-      }
-      return;
-    }
-
     try {
-      console.log('[BLACKOUT MOVE] Optimistic update', {
-        blackoutId: blackout.id,
-        from: { start: blackout.start_date, end: blackout.end_date, campsite: blackout.campsite_id },
-        to: { start: newStartDate, end: newEndDate, campsite: newCampsiteId },
+      await updateBlackout(blackout.id, blackout.reason || '', {
+        campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
+        start_date: newStartDate,
+        end_date: newEndDate,
       });
-
-      // Optimistic update with SWR
-      await onDataMutate(
-        async (current) => {
-          if (!current) throw new Error('No current data');
-
-          // Create optimistic updated blackout
-          const updatedBlackout: BlackoutDate = {
-            ...blackout,
-            start_date: newStartDate,
-            end_date: newEndDate,
-            campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
-          };
-
-          // Optimistically update the local data
-          const optimisticData: CalendarData = {
-            ...current,
-            blackoutDates: current.blackoutDates.map(b =>
-              b.id === blackout.id ? updatedBlackout : b
-            ),
-          };
-
-          // Make API call
-          const response = await fetch(`/api/admin/blackout-dates/${blackout.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              campsite_id: newCampsiteId === 'UNASSIGNED' ? null : newCampsiteId,
-              start_date: newStartDate,
-              end_date: newEndDate,
-            }),
-          });
-
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to update blackout date');
-          }
-
-          const serverBlackout = await response.json();
-          console.log('[BLACKOUT MOVE] Server confirmed:', serverBlackout);
-
-          // Return updated data with server response
-          return {
-            ...current,
-            blackoutDates: current.blackoutDates.map(b =>
-              b.id === blackout.id ? serverBlackout : b
-            ),
-          };
-        },
-        {
-          rollbackOnError: true,
-          revalidate: false, // Don't revalidate immediately, we have the server response
-        }
-      );
-
-      showToast('Blackout date updated successfully', 'success');
-    } catch (error: unknown) {
+    } catch (error) {
       console.error('[BLACKOUT MOVE ERROR]', error);
-      showToast(error instanceof Error ? error.message : 'Failed to update blackout date', 'error');
-      // SWR automatically rolls back on error
     }
-  }, [onDataMutate, showToast]);
+  }, [updateBlackout]);
 
   // Drag and resize hook
   const {
@@ -364,19 +309,16 @@ export default function CalendarGrid({
     dragPreview,
     resizeState,
     validationError,
-    handleDragStart,
-    handleDragOverCell,
-    handleDrop,
-    handleDragEnd,
+    handleDragPointerDown,
     handleResizeStart,
     getGhost,
+    getDragState,
   } = useDragResize({
     monthStart,
     monthEnd,
     campsites,
     reservations,
     blackoutDates,
-    autoScrollIntervalRef,
     onReservationMoveRequested: handleMoveRequested,
     onBlackoutMoveRequested: handleBlackoutMoveRequested,
     updateScrollDirection,
@@ -517,21 +459,10 @@ export default function CalendarGrid({
   return (
     <div className="flex flex-col admin-card relative select-none overflow-x-hidden">
       <InstructionalOverlay />
-      <CalendarControls 
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        selectedType={typeFilter}
-        onTypeChange={setTypeFilter}
-        hideBlackouts={hideBlackouts}
-        onHideBlackoutsChange={setHideBlackouts}
-      />
-      
       {campsites.length === 0 ? (
         <NoCampsitesCTA />
       ) : (
         <>
-          {visibleBlackoutDates.length === 0 && filteredReservations.length === 0 && <EmptyStateHelper />}
-          
           {selection && showCreationDialog && (
             <CreationDialog
               isOpen={showCreationDialog}
@@ -550,65 +481,18 @@ export default function CalendarGrid({
         </>
       )}
 
-      {/* Header Controls */}
-      <div className="flex flex-col lg:flex-row lg:items-center justify-between p-4 sm:p-6 border-b border-[var(--color-border-default)] bg-[var(--color-surface-card)] gap-4">
-
-        <div className="flex items-center gap-6">
-          <h2 className="text-2xl font-heading font-bold text-[var(--color-text-primary)] tracking-tight">
-            {format(date, "MMMM yyyy")}
-          </h2>
-          <div className="flex items-center gap-1 bg-[var(--color-surface-elevated)] p-1 rounded-lg border border-[var(--color-border-subtle)] shadow-sm">
-            <button
-              onClick={handlePrevMonth}
-              aria-label="Previous Month"
-              className="p-1.5 hover:bg-[var(--color-surface-card)] rounded-md transition-surface text-[var(--color-text-primary)] hover:text-[var(--color-accent-gold)]"
-            >
-              <ChevronLeft size={20} />
-            </button>
-            <button
-              onClick={handleGoToToday}
-              className="px-3 py-1 text-xs font-semibold hover:bg-[var(--color-surface-card)] hover:text-[var(--color-accent-gold)] rounded-md transition-surface text-[var(--color-text-primary)] border-x border-[var(--color-border-subtle)]"
-            >
-              Today
-            </button>
-            <button
-              onClick={handleNextMonth}
-              aria-label="Next Month"
-              className="p-1.5 hover:bg-[var(--color-surface-card)] rounded-md transition-surface text-[var(--color-text-primary)] hover:text-[var(--color-accent-gold)]"
-            >
-              <ChevronRight size={20} />
-            </button>
-          </div>
-        </div>
-        <div className="flex items-center gap-6 text-xs opacity-75">
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-status-active)]"></span> Confirmed
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-status-pending)]"></span> Pending
-          </div>
-          <div className="hidden xl:flex items-center gap-1.5 text-[var(--color-text-muted)] text-xs">
-            <Info size={14} className="text-[var(--color-accent-gold)] opacity-80" />
-            <span>Drag to create reservation or blackout</span>
-            <a 
-              href="/admin/help?article=add-blackout-dates" 
-              target="_blank" 
-              className="ml-1 text-[var(--color-accent-gold)] hover:text-[var(--color-accent-gold)]/80 hover:underline font-medium transition-colors"
-            >
-              Need help?
-            </a>
-          </div>
-          <label className="flex items-center gap-2 cursor-pointer select-none opacity-100">
-            <input
-              type="checkbox"
-              checked={showAvailability}
-              onChange={(e) => setShowAvailability(e.target.checked)}
-              className="rounded text-brand-forest focus:ring-brand-forest"
-            />
-            <span className="font-medium text-[var(--color-text-primary)]">Show Availability</span>
-          </label>
-        </div>
-      </div>
+      <CalendarMonthHeader
+        date={date}
+        onPrevMonth={handlePrevMonth}
+        onNextMonth={handleNextMonth}
+        onToday={handleGoToToday}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        selectedType={typeFilter}
+        onTypeChange={setTypeFilter}
+        showAvailability={showAvailability}
+        onShowAvailabilityChange={setShowAvailability}
+      />
 
       {/* Synced Top Scrollbar */}
       <SyncedScrollbar ref={slaveRef} contentWidth={contentWidth} className="z-[60] bg-transparent border-none -mb-3 relative scrollbar-hide" />
@@ -633,39 +517,17 @@ export default function CalendarGrid({
           <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-surface-card)] to-transparent pointer-events-none z-50 opacity-60 group-hover/calendar:opacity-20 transition-opacity" />
           
         <div ref={contentRef} className="inline-block min-w-full">
-          {/* Header Row (Dates) */}
-          <div 
-            className={`flex sticky top-0 z-30 bg-[var(--color-surface-elevated)] border-b-2 border-[var(--color-border-strong)] ${headerProps.className}`}
+          <CalendarDaysHeader 
+            days={days}
+            todayX={todayX}
             onPointerDown={headerProps.onPointerDown}
             onPointerMove={headerProps.onPointerMove}
             onPointerUp={headerProps.onPointerUp}
             onPointerCancel={headerProps.onPointerCancel}
-            data-header-row="true"
-          >
-            {/* Corner Sticky */}
-            <div 
-                className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-surface-elevated)] border-r border-[var(--color-border-default)] pt-5 pb-3 px-2 lg:px-3 font-semibold text-[var(--color-text-muted)] shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-40 text-xs lg:text-sm"
-                data-no-pan="true"
-             >
-              Campsite
-            </div>
-            {/* Days */}
-            <div className="flex">
-              {days.map((day) => (
-                <div
-                  key={day.toString()}
-                  ref={isToday(day) ? headerTodayRef : null}
-                  className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] pt-5 pb-2 px-1 lg:px-2 text-xs
-                    ${isWeekend(day) ? "bg-[var(--color-surface-elevated)]/50" : ""}
-                    ${isToday(day) ? "bg-[var(--color-status-active)]/15 border-t-2 border-t-[var(--color-status-active)]" : ""}`}
-                >
-                  <div className="font-semibold text-[var(--color-text-primary)] text-[10px] lg:text-xs">{format(day, "d")}</div>
-                  <div className="text-[var(--color-text-muted)] uppercase text-[8px] lg:text-[10px] hidden sm:block">{format(day, "EEEEE")}</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
+            headerTodayRef={headerTodayRef}
+            className={headerProps.className}
+          />
+
           {/* Today Indicator Line */}
           {todayX !== null && (
             <div 
@@ -674,197 +536,77 @@ export default function CalendarGrid({
             />
           )}
 
-          {/* Body Rows */}
-          <div className="">
-            {/* Unassigned Row */}
-            {(() => {
-              const unassignedReservations = filteredReservations.filter(
-                (r) => r.campsite_id === null || r.campsite_id === undefined
-              );
+          {/* Rows Group */}
+      <div className="flex flex-col select-none">
+        {/* Unassigned Row */}
+        <CalendarRow
+          rowType="unassigned"
+          reservations={unassignedReservations}
+          blackoutDates={campsiteBlackoutMap['GLOBAL'] || []}
+          days={days}
+          monthStart={monthStart}
+          monthEnd={monthEnd}
+          totalDays={totalDays}
+          isCreating={isCreating}
+          selectionCampsiteId={selection?.campsiteId}
+          selectionStart={selection?.start}
+          selectionEnd={selection?.end}
+          isDragging={isDragging}
+          dragPreview={dragPreview}
+          draggedItemId={draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null}
+          resizeStateItemId={resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null}
+          showAvailability={showAvailability}
+          validationError={validationError}
+          onCellPointerDown={handleCellPointerDown}
+          onCellPointerEnter={handleCellPointerEnter}
+          onReservationClick={handleReservationClick}
+          onBlackoutClick={handleBlackoutClick}
+          onDragStart={handleDragPointerDown}
+          onResizeStart={handleResizeStart}
+          getGhost={getGhost}
+        />
 
-              if (unassignedReservations.length === 0) return null;
+        {/* Campsite Rows */}
+        {filteredCampsites.map((campsite) => {
+          // Pre-filtering in the loop is slightly inefficient but memoization is handled by the component.
+          // However, .filter() returns a new array every time.
+          // To fix this, we'd ideally pre-calculate a Map.
+          const campsiteReservations = campsiteReservationsMap[campsite.id] || [];
+          const campsiteBlackouts = campsiteBlackoutMap[campsite.id] || campsiteBlackoutMap['GLOBAL'] || [];
+          // Actually, let's just use the combined one from the map if we want perfect stability.
 
-              return (
-                <div key="unassigned" className="flex border-b border-[var(--color-border-default)] bg-[var(--color-status-pending-bg)] hover:bg-[var(--color-status-pending-bg)]/70 transition-surface group relative">
-                  {/* Sticky Column */}
-                  <div className="sticky left-0 w-32 sm:w-48 lg:w-64 bg-[var(--color-status-pending-bg)] group-hover:bg-[var(--color-status-pending-bg)]/70 transition-surface border-r border-[var(--color-border-default)] p-2 lg:p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20">
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-[var(--color-text-primary)] text-xs lg:text-sm truncate">Unassigned</div>
-                      <div className="text-[10px] lg:text-xs text-[var(--color-text-muted)] flex items-center gap-1">
-                        {unassignedReservations.length} reservation{unassignedReservations.length !== 1 ? 's' : ''}
-                      </div>
-                    </div>
-                    <div className="w-2 h-2 rounded-full bg-[var(--color-status-pending)] flex-shrink-0" title="Needs Assignment" />
-                  </div>
-
-                  {/* Day Cells */}
-                  <div className="flex relative">
-                    {days.map((day) => {
-                      const dayStr = format(day, "yyyy-MM-dd");
-                      const isInSelection = isCreating && selection?.campsiteId === 'UNASSIGNED' && dayStr >= selection.start && dayStr <= selection.end;
-                      const isDragHovered = isDragging && dragPreview?.campsiteId === 'UNASSIGNED' && dragPreview?.startDate === dayStr;
-
-                      return (
-                        <CalendarCell
-                          key={day.toString()}
-                          date={day}
-                          resourceId="UNASSIGNED"
-                          isWeekend={isWeekend(day)}
-                          isToday={isToday(day)}
-                          isOccupied={false}
-                          isInSelection={isInSelection}
-                          isDragHovered={isDragHovered}
-                          showAvailability={showAvailability}
-                          validationError={validationError}
-                          baseBackgroundClass="bg-[var(--color-status-pending-bg)]/50"
-                          onDragOver={handleDragOverCell}
-                          onDrop={handleDrop}
-                          onPointerDown={handleCellPointerDown}
-                          onPointerEnter={handleCellPointerEnter}
-                        />
-                      );
-                    })}
-
-                    {/* Render Unassigned Reservations */}
-                    {unassignedReservations.map((res) => (
-                      <ReservationBlock
-                        key={res.id}
-                        reservation={res}
-                        monthStart={monthStart}
-                        monthEnd={monthEnd}
-                        onSelect={handleReservationClick}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                        onResizeStart={handleResizeStart}
-                        isDragging={draggedItem?.id === res.id}
-                        isResizing={resizeState?.item.id === res.id}
-                      />
-                    ))}
-
-                    {/* Unified Ghost Preview */}
-                    <GhostPreview
-                      ghost={getGhost('UNASSIGNED')}
-                      monthStart={monthStart}
-                      monthEnd={monthEnd}
-                      totalDays={totalDays}
-                      label="Unassigned"
-                    />
-                  </div>
-                </div>
-              );
-            })()}
-
-            {/* Campsite Rows */}
-            {filteredCampsites.map((campsite) => {
-              // Get reservations for this campsite
-              const siteReservations = filteredReservations.filter(
-                (r) => r.campsite_id === campsite.id || (r.campsites && r.campsites.code === campsite.code)
-              );
-              
-              const siteBlackouts = visibleBlackoutDates.filter(
-                (b) => b.campsite_id === campsite.id
-              );
-
-              // Styling for inactive campsites
-              const isInactive = !campsite.is_active;
-              const rowBgClass = isInactive ? 'bg-[var(--color-error)]/10' : '';
-              const rowHoverClass = isInactive ? 'hover:bg-[var(--color-error)]/15' : 'hover:bg-[var(--color-surface-elevated)]/50';
-              const stickyBgClass = isInactive ? 'bg-[var(--color-error)]/10 group-hover:bg-[var(--color-error)]/15' : 'bg-[var(--color-surface-card)] group-hover:bg-[var(--color-surface-elevated)]';
-
-              return (
-                <div key={campsite.id} data-campsite-id={campsite.id} className={`flex border-b border-[var(--color-border-subtle)] ${rowHoverClass} ${rowBgClass} transition-surface group relative ${isInactive ? 'border-[var(--color-error)]/30' : ''}`}>
-                  {/* Sticky Column */}
-                  <div className={`sticky left-0 w-32 sm:w-48 lg:w-64 ${stickyBgClass} transition-surface border-r border-[var(--color-border-default)] p-2 lg:p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20 ${isInactive ? 'border-r-[var(--color-error)]/30' : ''}`}>
-                    <div className="min-w-0 flex-1">
-                      <div className="font-medium text-[var(--color-text-primary)] text-xs lg:text-sm truncate">{campsite.name}</div>
-                      <div className="text-[10px] lg:text-xs text-[var(--color-text-muted)] flex items-center gap-1">
-                        <span className="uppercase">{campsite.type}</span> • {campsite.max_guests} Guests
-                      </div>
-                    </div>
-                    <div className="w-2 h-2 rounded-full flex-shrink-0" style={{ backgroundColor: campsite.is_active ? 'var(--color-success)' : 'var(--color-status-neutral)' }} title={campsite.is_active ? 'Active' : 'Inactive'} />
-                  </div>
-
-                  {/* Day Cells */}
-                  <div className="flex relative">
-                    {days.map((day) => {
-                      // Check if day is occupied
-                      const dayStr = format(day, "yyyy-MM-dd");
-                      const isOccupied = siteReservations.some(res =>
-                        dayStr >= res.check_in && dayStr < res.check_out // standard occupation logic
-                      );
-
-                      // Check if this cell is in the creation selection range
-                      const isInSelection = isCreating && selection?.campsiteId === campsite.id && dayStr >= selection.start && dayStr <= selection.end;
-
-                      const isDragHovered = isDragging && dragPreview?.campsiteId === campsite.id && dragPreview?.startDate === dayStr;
-
-                      return (
-                        <CalendarCell
-                          key={day.toString()}
-                          date={day}
-                          resourceId={campsite.id}
-                          isWeekend={isWeekend(day)}
-                          isToday={isToday(day)}
-                          isOccupied={isOccupied}
-                          isInSelection={isInSelection}
-                          isDragHovered={isDragHovered}
-                          showAvailability={showAvailability}
-                          validationError={validationError}
-                          onDragOver={handleDragOverCell}
-                          onDrop={handleDrop}
-                          onPointerDown={handleCellPointerDown}
-                          onPointerEnter={handleCellPointerEnter}
-                        />
-                      );
-                    })}
-
-                    {/* Render Reservations as Overlays */}
-                    {siteReservations.map((res) => (
-                      <ReservationBlock
-                        key={res.id}
-                        reservation={res}
-                        monthStart={monthStart}
-                        monthEnd={monthEnd}
-                        onSelect={handleReservationClick}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                        onResizeStart={handleResizeStart}
-                        isDragging={draggedItem?.id === res.id}
-                        isResizing={resizeState?.item.id === res.id}
-                        isGlobalDragging={isDragging}
-                      />
-                    ))}
-
-                    {/* Blackout Dates as Interactive Blocks */}
-                    {siteBlackouts.map((blackout) => (
-                      <BlackoutBlock
-                        key={blackout.id}
-                        blackout={blackout}
-                        monthStart={monthStart}
-                        monthEnd={monthEnd}
-                        onSelect={handleBlackoutClick}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
-                        onResizeStart={handleResizeStart}
-                        isDragging={draggedItem?.id === blackout.id}
-                        isResizing={resizeState?.item.id === blackout.id}
-                        isGlobalDragging={isDragging}
-                      />
-                    ))}
-
-                    {/* Unified Ghost Preview */}
-                    <GhostPreview
-                      ghost={getGhost(campsite.id)}
-                      monthStart={monthStart}
-                      monthEnd={monthEnd}
-                      totalDays={totalDays}
-                      label={campsite.code}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
+          return (
+            <CalendarRow
+              key={campsite.id}
+              rowType="campsite"
+              campsite={campsite}
+              reservations={campsiteReservations}
+              blackoutDates={campsiteBlackouts}
+              days={days}
+              monthStart={monthStart}
+              monthEnd={monthEnd}
+              totalDays={totalDays}
+              isCreating={isCreating}
+              selectionCampsiteId={selection?.campsiteId}
+              selectionStart={selection?.start}
+              selectionEnd={selection?.end}
+              isDragging={isDragging}
+              dragPreview={dragPreview}
+              draggedItemId={draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null}
+              resizeStateItemId={resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null}
+              showAvailability={showAvailability}
+              validationError={validationError}
+              onCellPointerDown={handleCellPointerDown}
+              onCellPointerEnter={handleCellPointerEnter}
+              onReservationClick={handleReservationClick}
+              onBlackoutClick={handleBlackoutClick}
+              onDragStart={handleDragPointerDown}
+              onResizeStart={handleResizeStart}
+              getGhost={getGhost}
+            />
+          );
+        })}
+      </div>
         </div>
       </div>
     </div>
@@ -961,8 +703,6 @@ export default function CalendarGrid({
           <ChevronRight size={18} />
         </button>
       </div>
-
-      <CalendarLegend />
     </div>
   );
 }

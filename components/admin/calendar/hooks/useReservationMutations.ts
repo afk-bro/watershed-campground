@@ -5,10 +5,11 @@
  * Handles reschedule operations with proper error handling and rollback.
  */
 
-import { useCallback } from 'react';
+import { useCallback, useRef, useEffect } from 'react';
 import type { Reservation } from '@/lib/supabase';
 import type { CalendarData } from '@/lib/calendar/calendar-types';
 import { useToast } from '@/components/ui/Toast';
+import { calendarService } from '@/lib/calendar/calendar-service';
 
 interface UseReservationMutationsProps {
   onDataMutate?: (
@@ -26,6 +27,14 @@ export interface RescheduleParams {
 
 export function useReservationMutations({ onDataMutate }: UseReservationMutationsProps) {
   const { showToast } = useToast();
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+    };
+  }, []);
 
   /**
    * Reschedule a reservation (move to new campsite and/or dates)
@@ -38,22 +47,19 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
       try {
         const campsiteId = params.newCampsiteId === 'UNASSIGNED' ? null : params.newCampsiteId;
 
-        const response = await fetch(`/api/admin/reservations/${params.reservation.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
+        // Cancel previous request
+        abortControllerRef.current?.abort();
+        abortControllerRef.current = new AbortController();
+
+        const data = await calendarService.updateReservation(
+          params.reservation.id!,
+          {
             campsite_id: campsiteId,
             check_in: params.newStartDate,
             check_out: params.newEndDate,
-          }),
-        });
-
-        if (!response.ok) {
-          const error = await response.json();
-          throw new Error(error.error || 'Failed to reschedule');
-        }
-
-        const data = await response.json();
+          },
+          abortControllerRef.current.signal
+        );
 
         if (data.emailSent) {
           showToast('Reservation rescheduled successfully. Guest has been notified.', 'success');
@@ -114,27 +120,25 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
         async (current) => {
           if (!current) throw new Error('No current data');
 
-          // Make API call
-          const response = await fetch(`/api/admin/reservations/${params.reservation.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
+          // Cancel previous request
+          abortControllerRef.current?.abort();
+          abortControllerRef.current = new AbortController();
+
+          // Make API call using calendarService
+          const { reservation: updatedReservation, emailSent } = await calendarService.updateReservation(
+            params.reservation.id!,
+            {
               campsite_id: campsiteId,
               check_in: params.newStartDate,
               check_out: params.newEndDate,
-            }),
-          });
+            },
+            abortControllerRef.current.signal
+          );
 
-          if (!response.ok) {
-            const error = await response.json();
-            throw new Error(error.error || 'Failed to reschedule');
-          }
-
-          const updatedReservation = await response.json();
           console.log('[RESCHEDULE] Server confirmed:', updatedReservation);
 
           // Show success notification
-          if (updatedReservation.emailSent) {
+          if (emailSent) {
             showToast('Reservation rescheduled successfully. Guest has been notified.', 'success');
           } else {
             showToast('Reservation rescheduled. Warning: Email notification failed.', 'warning');

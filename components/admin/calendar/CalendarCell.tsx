@@ -6,7 +6,7 @@
  */
 
 import { format } from "date-fns";
-import { memo } from "react";
+import { useState, useMemo, useCallback, useEffect, useRef, memo } from "react";
 
 interface CalendarCellProps {
   /** The date this cell represents */
@@ -39,12 +39,6 @@ interface CalendarCellProps {
   /** Base background class (e.g., for unassigned row) */
   baseBackgroundClass?: string;
 
-  /** Drag over handler */
-  onDragOver: (resourceId: string, dateStr: string) => void;
-
-  /** Drop handler */
-  onDrop: (e: React.DragEvent, resourceId: string, dateStr: string) => void;
-
   /** Pointer down handler (start selection) */
   onPointerDown: (e: React.PointerEvent, resourceId: string, dateStr: string) => void;
 
@@ -63,12 +57,10 @@ function CalendarCell({
   showAvailability,
   validationError,
   baseBackgroundClass = "",
-  onDragOver,
-  onDrop,
   onPointerDown,
   onPointerEnter,
 }: CalendarCellProps) {
-  const dateStr = format(date, "yyyy-MM-dd");
+  const dateStr = useMemo(() => format(date, "yyyy-MM-dd"), [date]);
 
   // Determine background styling based on state
   let bgClass = baseBackgroundClass;
@@ -104,19 +96,9 @@ function CalendarCell({
     <div
       data-date={dateStr}
       className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface select-none ${bgClass} ${dragHoverClass} ${selectionClass}`}
-      style={{ touchAction: 'none' }}
-      onDragOver={(e) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-        onDragOver(resourceId, dateStr);
-      }}
-      onDrop={(e) => {
-        console.log('[CELL DROP]', { dateStr, resourceId });
-        onDrop(e, resourceId, dateStr);
-      }}
       onPointerDown={(e) => onPointerDown(e, resourceId, dateStr)}
       onPointerEnter={() => onPointerEnter(resourceId, dateStr)}
-      title={`${format(date, 'EEEE, MMM d, yyyy')}`}
+      title={dateStr}
     />
   );
 }
