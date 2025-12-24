@@ -80,7 +80,7 @@ export default function GhostPreview({
 
   return (
     <div
-      className={`absolute top-1 bottom-1 rounded-md px-2 py-1 border-2 border-dashed ${bgColor} ${borderColor} opacity-50 z-50 pointer-events-none`}
+      className={`absolute top-0 bottom-0 rounded-sm px-2 py-1 border-2 border-dashed ${bgColor} ${borderColor} opacity-60 z-50 pointer-events-none shadow-sm`}
       style={{
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,
