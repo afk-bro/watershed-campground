@@ -162,6 +162,77 @@ export default function ReservationDrawer({
               </div>
             </div>
 
+            {/* Audit / Overrides */}
+            {(() => {
+                const meta = reservation.metadata as any;
+                const overrides = meta?.admin_overrides || meta; // Fallback to flat if needed
+                const hasOverrides = overrides?.force_conflict || overrides?.override_blackout || overrides?.is_offline || overrides?.override_reason;
+                const source = overrides?.entry_source || meta?.source || 'web';
+                
+                // Show if it's an admin booking or has overrides
+                if (!hasOverrides && source !== 'admin_manual') return null;
+
+                return (
+                    <div>
+                        <h3 className="text-sm font-semibold text-[var(--color-text-primary)] uppercase tracking-wider mb-4 border-b pb-2 flex items-center justify-between">
+                            <span>Audit & Override Log</span>
+                            {meta?.audit_version && <span className="text-[10px] bg-gray-100 text-gray-500 px-2 py-0.5 rounded">v{meta.audit_version}</span>}
+                        </h3>
+                        <div className="bg-gray-50 rounded-lg p-3 text-sm space-y-2 border border-gray-100">
+                             <div className="flex justify-between items-center">
+                                <span className="text-gray-500 text-xs uppercase">Entry Source</span>
+                                <span className="font-mono text-xs font-medium text-gray-700 bg-white px-1.5 py-0.5 rounded border border-gray-200">
+                                    {source}
+                                </span>
+                             </div>
+                             
+                             {overrides?.is_offline && (
+                                <div className="flex justify-between items-center">
+                                    <span className="text-gray-500 text-xs uppercase">Payment</span>
+                                    <span className="text-amber-700 bg-amber-50 px-1.5 py-0.5 rounded text-xs font-medium border border-amber-100">Offline / Admin</span>
+                                </div>
+                             )}
+
+                             {(overrides?.force_conflict || overrides?.override_blackout) && (
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                    <div className="text-[10px] font-bold text-gray-400 uppercase mb-1.5">Override Flags</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {overrides.force_conflict && (
+                                            <span className="flex items-center gap-1 px-2 py-1 bg-red-50 text-red-700 text-xs rounded border border-red-100">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-red-500"></span>
+                                                Force Conflict
+                                            </span>
+                                        )}
+                                        {overrides.override_blackout && (
+                                            <span className="flex items-center gap-1 px-2 py-1 bg-orange-50 text-orange-700 text-xs rounded border border-orange-100">
+                                                <span className="w-1.5 h-1.5 rounded-full bg-orange-500"></span>
+                                                Ignore Blackout
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
+                             )}
+
+                             {overrides?.override_reason && (
+                                <div className="mt-2 pt-2 border-t border-gray-200">
+                                    <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Override Reason</span>
+                                    <p className="text-gray-700 bg-white p-2 rounded border border-gray-200 text-xs italic">
+                                        "{overrides.override_reason}"
+                                    </p>
+                                </div>
+                             )}
+
+                             {meta?.created_by && (
+                                 <div className="flex justify-between pt-2 border-t border-gray-200 mt-2 text-xs">
+                                    <span className="text-gray-500">Created By</span>
+                                    <span className="text-gray-700 font-mono">{meta.created_by.slice(0, 8)}...</span>
+                                 </div>
+                             )}
+                        </div>
+                    </div>
+                );
+            })()}
+
             {/* Actions */}
             <div className="pt-6 border-t mt-auto">
               <Link

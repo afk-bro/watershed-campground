@@ -4,6 +4,7 @@ import Stripe from "stripe";
 import { checkAvailability } from "@/lib/availability";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { createClient } from "@/lib/supabase/server";
 import { reservationFormSchema } from "@/lib/reservation/validation";
 import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
@@ -48,6 +49,19 @@ export async function POST(request: Request) {
         }
         const formData = result.data;
 
+        // Security: Guard against unauthorized overrides
+        const hasAdminOverrides = formData.forceConflict || formData.overrideBlackout || formData.isOffline || formData.overrideReason;
+        if (hasAdminOverrides) {
+            const supabase = await createClient();
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                return NextResponse.json(
+                    { error: "Unauthorized: Admin privileges required for overrides." },
+                    { status: 401 }
+                );
+            }
+        }
+
         // 2. Retrieve Payment Intent & Campsite
         let paymentIntent: Stripe.PaymentIntent | null = null;
         let recommendedSiteId: string;
@@ -68,11 +82,17 @@ export async function POST(request: Request) {
                 checkIn: formData.checkIn,
                 checkOut: formData.checkOut,
                 guestCount: formData.adults + formData.children,
-                campsiteId: formData.campsiteId
+                campsiteId: formData.campsiteId,
+                ignorePastCheck: formData.isOffline,
+                forceConflict: formData.forceConflict,
+                overrideBlackout: formData.overrideBlackout
             });
 
             if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
-                return NextResponse.json({ error: "Dates no longer available." }, { status: 400 });
+                return NextResponse.json(
+                    { error: availabilityResult.message || "Dates no longer available." },
+                    { status: 400 }
+                );
             }
             recommendedSiteId = availabilityResult.recommendedSiteId;
         }
@@ -154,10 +174,15 @@ export async function POST(request: Request) {
             } else {
                 paymentContext.balanceDue = Math.max(0, totalAmount - paymentContext.amountPaid);
             }
-        } else if (paymentMethod === 'in-person') {
-            paymentContext.paymentStatus = 'pay_on_arrival';
-            paymentContext.paymentType = 'cash';
-            paymentContext.balanceDue = totalAmount;
+        } else if (paymentMethod === 'in-person' || formData.isOffline) {
+            paymentContext.paymentStatus = formData.isOffline ? 'paid' : 'pay_on_arrival';
+            paymentContext.paymentType = 'cash'; // Defaulting to cash/external for manual bookings
+            if (formData.isOffline) {
+                paymentContext.amountPaid = totalAmount;
+                paymentContext.balanceDue = 0;
+            } else {
+                paymentContext.balanceDue = totalAmount;
+            }
         } else {
             return NextResponse.json({ error: "Payment method required" }, { status: 400 });
         }
@@ -182,8 +207,10 @@ export async function POST(request: Request) {
         const magicLinkUrl = `${manageUrl}?rid=${encodeURIComponent(reservation.id)}&t=${encodeURIComponent(rawToken)}`;
 
         // 6. Send Emails (Async, don't block response)
-        // Only sending critical emails here. Stripe webhooks handle the rest usually, but keeping pay-in-person logic.
-        if (paymentMethod === 'in-person') {
+        // Only sending critical emails here. Stripe webhooks handle the rest usually, but keeping pay-in-person/offline logic.
+        const shouldSendEmail = (paymentMethod === 'in-person') || (formData.isOffline && formData.sendGuestEmail);
+
+        if (shouldSendEmail) {
             const resend = new Resend(process.env.RESEND_API_KEY);
             const name = `${formData.firstName} ${formData.lastName}`;
 
