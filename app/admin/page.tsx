@@ -16,6 +16,7 @@ import ReservationRow from "@/components/admin/reservations/ReservationRow";
 import MaintenanceRow from "@/components/admin/reservations/MaintenanceRow";
 import DashboardStats from "@/components/admin/reservations/DashboardStats";
 import DashboardSearch from "@/components/admin/reservations/DashboardSearch";
+import { DemoDataBanner } from "@/components/admin/DemoDataBanner";
 
 export default function AdminPage() {
     const { showToast } = useToast();
@@ -273,6 +274,11 @@ export default function AdminPage() {
                     <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">Reservations</h1>
                     <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Manage bookings and blocks</p>
                 </div>
+
+                <DemoDataBanner 
+                    hasReservations={items.length > 0}
+                    onSeedComplete={() => fetchReservations()}
+                />
 
                 <OnboardingChecklist />
 
