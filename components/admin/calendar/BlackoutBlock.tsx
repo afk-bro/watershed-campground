@@ -80,11 +80,15 @@ function BlackoutBlock({
 
   return (
     <div
-      className={`absolute top-1 bottom-1 rounded-md text-xs font-medium px-2 py-1 flex items-center gap-1.5 shadow-sm border-2 truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${colorClass} ${
+      className={`absolute top-1 bottom-1 text-xs font-medium px-2 py-1 flex items-center gap-1.5 shadow-sm border-2 truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${colorClass} ${
         isDragging ? 'opacity-40' : ''
       } ${isResizing ? 'opacity-60' : ''} ${
         isGlobalDragging && !isDragging ? 'pointer-events-none' : ''
-      } [.is-panning_&]:pointer-events-none`}
+      } [.is-panning_&]:pointer-events-none ${
+        startDateObj < monthStart ? 'rounded-l-none border-l-0' : 'rounded-l-lg'
+      } ${
+        endDateObj > monthEnd ? 'rounded-r-none border-r-0' : 'rounded-r-lg'
+      }`}
       style={{
         left: `${leftPercent}%`,
         width: `${widthPercent}%`,

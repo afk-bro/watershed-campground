@@ -32,7 +32,7 @@ export default function CalendarControls({
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
           placeholder="Search guest or reservation..."
-          className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] text-sm focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:outline-none transition-all placeholder-[var(--color-text-muted)]"
+          className="w-full pl-10 pr-4 py-2 rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-elevated)] text-sm focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:border-[var(--color-accent-gold)] focus:outline-none transition-all placeholder-[var(--color-text-muted)] hover:border-[var(--color-border-strong)]"
         />
       </div>
 

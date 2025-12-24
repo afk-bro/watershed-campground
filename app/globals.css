@@ -840,3 +840,22 @@ input[type="checkbox"]:disabled {
 .scrollbar-hide::-webkit-scrollbar {
   display: none;
 }
+
+/* Subtle persistent scrollbar for affordance */
+.scrollbar-soft {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(200, 167, 90, 0.2) transparent;
+}
+.scrollbar-soft::-webkit-scrollbar {
+  height: 6px;
+}
+.scrollbar-soft::-webkit-scrollbar-track {
+  background: transparent;
+}
+.scrollbar-soft::-webkit-scrollbar-thumb {
+  background-color: rgba(200, 167, 90, 0.15);
+  border-radius: 999px;
+}
+.scrollbar-soft::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(200, 167, 90, 0.3);
+}
