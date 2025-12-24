@@ -8,11 +8,11 @@ import { clearDemoData } from '@/lib/seed/demo-seed';
 export async function DELETE(request: Request) {
     try {
         // Authorization
-        const { authorized, response: authResponse } = await requireAdmin();
+        const { authorized, user, response: authResponse } = await requireAdmin();
         if (!authorized) return authResponse!;
 
-        // Clear demo data
-        const result = await clearDemoData();
+        // Clear demo data with audit logging
+        const result = await clearDemoData(user!.id);
 
         return NextResponse.json({
             success: true,
