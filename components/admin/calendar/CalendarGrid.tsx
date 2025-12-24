@@ -9,7 +9,7 @@ import ReservationDrawer from "./ReservationDrawer";
 import RescheduleConfirmDialog from "./RescheduleConfirmDialog";
 import GhostPreview from "./GhostPreview";
 import CalendarCell from "./CalendarCell";
-import { ChevronLeft, ChevronRight, Ban, Hand, ArrowLeftToLine, Calendar as CalendarIcon } from "lucide-react";
+import { ChevronLeft, ChevronRight, Ban, Hand, ArrowLeftToLine, Calendar as CalendarIcon, Info } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
 import InstructionalOverlay from "./InstructionalOverlay";
 import EmptyStateHelper from "./EmptyStateHelper";
@@ -509,10 +509,15 @@ export default function CalendarGrid({
           <div className="flex items-center gap-2">
             <span className="w-2.5 h-2.5 rounded-full bg-[var(--color-status-pending)]"></span> Pending
           </div>
-          <div className="hidden xl:block text-[var(--color-text-muted)] italic">
-            Tip: Drag to create a reservation or blackout
-            <a href="/admin/help?article=add-blackout-dates" target="_blank" className="ml-2 text-brand-forest hover:underline not-italic font-medium text-xs">
-                 Need help?
+          <div className="hidden xl:flex items-center gap-1.5 text-[var(--color-text-muted)] text-xs">
+            <Info size={14} className="text-[var(--color-accent-gold)] opacity-80" />
+            <span>Drag to create reservation or blackout</span>
+            <a 
+              href="/admin/help?article=add-blackout-dates" 
+              target="_blank" 
+              className="ml-1 text-[var(--color-accent-gold)] hover:text-[var(--color-accent-gold)]/80 hover:underline font-medium transition-colors"
+            >
+              Need help?
             </a>
           </div>
           <label className="flex items-center gap-2 cursor-pointer select-none opacity-100">
@@ -531,18 +536,22 @@ export default function CalendarGrid({
       <SyncedScrollbar ref={slaveRef} contentWidth={contentWidth} className="z-[60] bg-transparent border-none -mb-3 relative scrollbar-hide" />
 
       {/* Grid Container - Horizontal Scroll Only */}
-      <div
-        ref={scrollContainerRef}
-        {...containerProps}
-        className="calendar-hscroll overflow-x-auto overflow-y-visible relative select-none"
-        onMouseUp={handleCellMouseUp}
-        onMouseLeave={() => {
-           if (isCreating) {
-             clearSelection();
-             stopAutoScroll(); // Stop scrolling when mouse leaves
-           }
-        }}
-      >
+      <div className="relative overflow-hidden group/calendar">
+        <div
+          ref={scrollContainerRef}
+          {...containerProps}
+          className="calendar-hscroll overflow-x-auto overflow-y-visible relative select-none scrollbar-soft"
+          onMouseUp={handleCellMouseUp}
+          onMouseLeave={() => {
+            if (isCreating) {
+              clearSelection();
+              stopAutoScroll(); // Stop scrolling when mouse leaves
+            }
+          }}
+        >
+          {/* Scroll Affordance Gradient */}
+          <div className="absolute top-0 right-0 bottom-0 w-12 bg-gradient-to-l from-[var(--color-surface-card)] to-transparent pointer-events-none z-50 opacity-60 group-hover/calendar:opacity-20 transition-opacity" />
+          
         <div ref={contentRef} className="inline-block min-w-full">
           {/* Header Row (Dates) */}
           <div 
@@ -769,6 +778,7 @@ export default function CalendarGrid({
           </div>
         </div>
       </div>
+    </div>
 
       <ReservationDrawer
         reservation={selectedReservation}
