@@ -13,7 +13,7 @@ import { useState, memo } from "react";
 type ResizeSide = "left" | "right";
 
 interface BlackoutBlockProps {
-  blackout: BlackoutDate;
+  blackout: BlackoutDate & { _saving?: boolean };
   monthStart: Date;
   monthEnd: Date;
   onSelect: (blackout: BlackoutDate) => void;
@@ -78,11 +78,16 @@ function BlackoutBlock({
     }
   };
 
+  // Check if this blackout is being saved (optimistic update)
+  const isSaving = blackout._saving;
+
   return (
     <div
       className={`absolute top-1 bottom-1 text-xs font-medium px-2 py-1 flex items-center gap-1.5 shadow-sm border-2 truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${colorClass} ${
         isDragging ? 'opacity-40' : ''
       } ${isResizing ? 'opacity-60' : ''} ${
+        isSaving ? 'opacity-70' : ''
+      } ${
         isGlobalDragging && !isDragging ? 'pointer-events-none' : ''
       } [.is-panning_&]:pointer-events-none ${
         startDateObj < monthStart ? 'rounded-l-none border-l-0' : 'rounded-l-lg'
@@ -95,6 +100,11 @@ function BlackoutBlock({
         cursor: isInteractive && !isResizing ? 'grab' : 'pointer',
       }}
       draggable={isInteractive && !isResizing}
+      data-blackout-id={blackout.id}
+      data-testid="blackout-block"
+      data-start={blackout.start_date}
+      data-end={blackout.end_date}
+      data-campsite-id={blackout.campsite_id || 'ALL'}
       onDragStart={(e) => {
         if (isResizing || !isInteractive) {
           e.preventDefault();
@@ -127,6 +137,13 @@ Type: BLACKOUT`}
         </span>
       </div>
 
+      {/* Saving indicator */}
+      {isSaving && (
+        <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 bg-[var(--color-surface-elevated)] border border-[var(--color-border-default)] rounded text-[10px] text-[var(--color-text-secondary)] whitespace-nowrap shadow-md z-30 pointer-events-none">
+          Saving...
+        </span>
+      )}
+
       {/* Right Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
         <div
@@ -148,6 +165,7 @@ export default memo(BlackoutBlock, (prevProps, nextProps) => {
     prevProps.blackout.end_date === nextProps.blackout.end_date &&
     prevProps.blackout.reason === nextProps.blackout.reason &&
     prevProps.blackout.campsite_id === nextProps.blackout.campsite_id &&
+    prevProps.blackout._saving === nextProps.blackout._saving &&
     prevProps.isDragging === nextProps.isDragging &&
     prevProps.isResizing === nextProps.isResizing &&
     prevProps.isGlobalDragging === nextProps.isGlobalDragging &&
