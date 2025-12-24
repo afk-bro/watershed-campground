@@ -114,7 +114,7 @@ export default function EditCampsitePage() {
         code: campsite.code,
         type: campsite.type,
         maxGuests: campsite.max_guests,
-        baseRate: parseFloat(campsite.base_rate),
+        baseRate: campsite.base_rate,
         isActive: campsite.is_active,
         notes: campsite.notes || "",
         sortOrder: campsite.sort_order,
