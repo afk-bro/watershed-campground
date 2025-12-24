@@ -20,8 +20,7 @@ export async function GET(request: Request) {
             .from('reservations')
             .select('*, campsites(id, name, code, type)')
             .lte('check_in', endDate)
-            .gte('check_out', startDate)
-            .neq('status', 'cancelled');
+            .gte('check_out', startDate);
 
         if (resError) {
             throw resError;
@@ -31,7 +30,6 @@ export async function GET(request: Request) {
         const { data: campsites, error: campError } = await supabaseAdmin
             .from('campsites')
             .select('*')
-            .eq('is_active', true)
             .order('sort_order', { ascending: true });
 
         if (campError) {

@@ -1,8 +1,4 @@
-/**
- * Pure validation functions for calendar conflict detection.
- * All functions are pure (no side effects, no async) and unit-testable.
- */
-
+import { format, parseISO, subDays, addDays } from 'date-fns';
 import type { CalendarBlock } from './calendar-types';
 import type { Reservation, Campsite, BlackoutDate } from '@/lib/supabase';
 
@@ -118,8 +114,12 @@ export function getBlackoutConflicts(
     // Only check blackouts on the same campsite (null means all sites)
     if (b.campsite_id !== targetCampsiteId && b.campsite_id !== null) return false;
 
+    // Treat b.end_date as inclusive (last day of block)
+    // Overlap requires exclusive end date for comparison
+    const blackoutEndExclusive = format(addDays(parseISO(b.end_date), 1), 'yyyy-MM-dd');
+
     // Check overlap
-    return datesOverlap(targetStartDate, targetEndDate, b.start_date, b.end_date);
+    return datesOverlap(targetStartDate, targetEndDate, b.start_date, blackoutEndExclusive);
   });
 }
 

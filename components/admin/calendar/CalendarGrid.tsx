@@ -58,6 +58,17 @@ export default function CalendarGrid({
   const [showAvailability, setShowAvailability] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [showCreationDialog, setShowCreationDialog] = useState(false);
+  const [todayX, setTodayX] = useState<number | null>(null);
+  const headerTodayRef = useRef<HTMLDivElement>(null);
+
+  // Sync today position
+  useEffect(() => {
+    if (headerTodayRef.current) {
+      setTodayX(headerTodayRef.current.offsetLeft);
+    } else {
+      setTodayX(null);
+    }
+  }, [date, campsites.length]); // Re-calc when month or campsite list changes
   const [pendingMove, setPendingMove] = useState<{
     reservation: Reservation;
     newCampsiteId: string;
@@ -298,6 +309,19 @@ export default function CalendarGrid({
     stopAutoScroll,
   });
 
+  // Validation for cell selection during creation
+  const isValidSelectionCell = useCallback((campsiteId: string, dateStr: string) => {
+    // Check if cell is occupied by reservation
+    const isOccupiedByReservation = reservations.some(res =>
+      res.campsite_id === campsiteId && dateStr >= res.check_in && dateStr < res.check_out && res.status !== 'cancelled'
+    );
+    // Check if cell is occupied by blackout
+    const isOccupiedByBlackout = blackoutDates.some(b =>
+      (b.campsite_id === campsiteId || b.campsite_id === null) && dateStr >= b.start_date && dateStr <= b.end_date
+    );
+    return !isOccupiedByReservation && !isOccupiedByBlackout;
+  }, [reservations, blackoutDates]);
+
   // Calendar selection hook (after drag/resize so we can check their state)
   const {
     isCreating,
@@ -308,7 +332,7 @@ export default function CalendarGrid({
     handleCellMouseEnter,
     handleCellMouseUp: handleCellMouseUpBase,
     clearSelection,
-  } = useCalendarSelection(!isDragging && !resizeState);
+  } = useCalendarSelection(!isDragging && !resizeState, isValidSelectionCell);
 
   // Wrap handleCellMouseUp to also show dialog
   const handleCellMouseUp = useCallback(() => {
@@ -338,6 +362,10 @@ export default function CalendarGrid({
 
   const handleNextMonth = () => {
     onDateChange(new Date(date.getFullYear(), date.getMonth() + 1, 1));
+  };
+
+  const handleGoToToday = () => {
+    onDateChange(new Date());
   };
 
   const handleConfirmReschedule = async () => {
@@ -488,18 +516,24 @@ export default function CalendarGrid({
           <h2 className="text-2xl font-heading font-bold text-[var(--color-text-primary)] tracking-tight">
             {format(date, "MMMM yyyy")}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 bg-[var(--color-surface-elevated)] p-1 rounded-lg border border-[var(--color-border-subtle)] shadow-sm">
             <button
               onClick={handlePrevMonth}
               aria-label="Previous Month"
-              className="p-2 rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] shadow-sm hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)] transition-all active:scale-95"
+              className="p-1.5 hover:bg-[var(--color-surface-card)] rounded-md transition-surface text-[var(--color-text-primary)] hover:text-[var(--color-accent-gold)]"
             >
               <ChevronLeft size={20} />
             </button>
             <button
+              onClick={handleGoToToday}
+              className="px-3 py-1 text-xs font-semibold hover:bg-[var(--color-surface-card)] hover:text-[var(--color-accent-gold)] rounded-md transition-surface text-[var(--color-text-primary)] border-x border-[var(--color-border-subtle)]"
+            >
+              Today
+            </button>
+            <button
               onClick={handleNextMonth}
               aria-label="Next Month"
-              className="p-2 rounded-lg bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] text-[var(--color-text-primary)] shadow-sm hover:bg-[var(--color-surface-hover)] hover:border-[var(--color-border-strong)] transition-all active:scale-95"
+              className="p-1.5 hover:bg-[var(--color-surface-card)] rounded-md transition-surface text-[var(--color-text-primary)] hover:text-[var(--color-accent-gold)]"
             >
               <ChevronRight size={20} />
             </button>
@@ -577,6 +611,7 @@ export default function CalendarGrid({
               {days.map((day) => (
                 <div
                   key={day.toString()}
+                  ref={isToday(day) ? headerTodayRef : null}
                   className={`w-8 lg:w-10 xl:w-12 flex-shrink-0 text-center border-r border-[var(--color-border-default)] pt-5 pb-2 px-1 lg:px-2 text-xs
                     ${isWeekend(day) ? "bg-[var(--color-surface-elevated)]/50" : ""}
                     ${isToday(day) ? "bg-[var(--color-status-active)]/15 border-t-2 border-t-[var(--color-status-active)]" : ""}`}
@@ -587,6 +622,14 @@ export default function CalendarGrid({
               ))}
             </div>
           </div>
+          
+          {/* Today Indicator Line */}
+          {todayX !== null && (
+            <div 
+              className="absolute top-0 bottom-0 w-0.5 bg-[var(--color-status-active)]/30 pointer-events-none z-10"
+              style={{ left: `${todayX}px` }}
+            />
+          )}
 
           {/* Body Rows */}
           <div className="">

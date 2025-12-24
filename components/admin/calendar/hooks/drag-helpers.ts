@@ -131,8 +131,8 @@ export function validateCandidate(
         startDate,
         endDate,
         campsites,
-        isReservation(item) ? reservations : [],
-        isBlackout(item) ? blackoutDates : []
+        reservations,
+        blackoutDates
     );
 }
 

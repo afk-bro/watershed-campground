@@ -61,7 +61,7 @@ function ReservationBlock({
   const colorClass = statusColors[reservation.status] || "bg-gray-400 text-white";
 
   // Non-draggable/resizable statuses
-  const isInteractive = reservation.status !== 'cancelled' && reservation.status !== 'no_show';
+  const isInteractive = reservation.status !== 'cancelled' && reservation.status !== 'no_show' && reservation.status !== 'checked_out';
 
   // Get equipment icon based on camping unit
   const getEquipmentIcon = () => {
@@ -125,10 +125,11 @@ function ReservationBlock({
       onClick={() => onSelect(reservation)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      title={`${reservation.last_name}, ${reservation.first_name}
-${format(checkIn, 'MMM d')} - ${format(checkOut, 'MMM d')}
-${reservation.status}
-${reservation.camping_unit || 'No equipment'}`}
+      title={`${reservation.last_name}, ${reservation.first_name} [${reservation.id?.substring(0, 8) || 'No Ref'}]
+Site: ${reservation.campsites?.name || 'Unassigned'}
+Dates: ${format(checkIn, 'MMM d')} - ${format(checkOut, 'MMM d')} (${differenceInDays(checkOut, checkIn)} nights)
+Status: ${reservation.status.toUpperCase()}
+Unit: ${reservation.camping_unit || 'No equipment'}`}
     >
       {/* Left Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (

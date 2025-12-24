@@ -1,13 +1,45 @@
 
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useSearchParams, useRouter, usePathname } from "next/navigation";
+import { format, parse } from "date-fns";
 import Container from "@/components/Container";
 import CalendarGrid from "@/components/admin/calendar/CalendarGrid";
 import { useCalendarData } from "@/hooks/useCalendarData";
 
 export default function CalendarPage() {
-  const [currentDate, setCurrentDate] = useState(new Date());
+  const searchParams = useSearchParams();
+  const router = useRouter();
+  const pathname = usePathname();
+
+  // Initialize from URL or today
+  const [currentDate, setCurrentDate] = useState(() => {
+    const month = searchParams.get('month');
+    const year = searchParams.get('year');
+    if (month && year) {
+        try {
+            return parse(`${year}-${month}`, 'yyyy-MM', new Date());
+        } catch {
+            return new Date();
+        }
+    }
+    return new Date();
+  });
+
+  // Keep URL in sync
+  useEffect(() => {
+     const params = new URLSearchParams(searchParams.toString());
+     const m = format(currentDate, 'MM');
+     const y = format(currentDate, 'yyyy');
+     
+     if (params.get('month') !== m || params.get('year') !== y) {
+       params.set('month', m);
+       params.set('year', y);
+       router.replace(`${pathname}?${params.toString()}`, { scroll: false });
+     }
+  }, [currentDate, pathname, router, searchParams]);
+
   const { data, isLoading, error, mutate } = useCalendarData(currentDate);
 
   if (isLoading && !data) {
