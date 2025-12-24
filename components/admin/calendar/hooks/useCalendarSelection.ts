@@ -208,6 +208,16 @@ export function useCalendarSelection(
     return () => window.removeEventListener('keydown', handleEsc);
   }, [isCreating, clearSelection]);
 
+  // Handle window blur to cancel selection (user switches tabs/apps)
+  useEffect(() => {
+    if (!isCreating) return;
+    const handleBlur = () => {
+      clearSelection();
+    };
+    window.addEventListener('blur', handleBlur);
+    return () => window.removeEventListener('blur', handleBlur);
+  }, [isCreating, clearSelection]);
+
   return {
     isCreating,
     creationStart,
