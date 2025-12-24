@@ -45,11 +45,11 @@ interface CalendarCellProps {
   /** Drop handler */
   onDrop: (e: React.DragEvent, resourceId: string, dateStr: string) => void;
 
-  /** Mouse down handler (start selection) */
-  onMouseDown: (resourceId: string, dateStr: string) => void;
+  /** Pointer down handler (start selection) */
+  onPointerDown: (e: React.PointerEvent, resourceId: string, dateStr: string) => void;
 
-  /** Mouse enter handler (extend selection) */
-  onMouseEnter: (resourceId: string, dateStr: string) => void;
+  /** Pointer enter handler (extend selection) */
+  onPointerEnter: (resourceId: string, dateStr: string) => void;
 }
 
 function CalendarCell({
@@ -65,8 +65,8 @@ function CalendarCell({
   baseBackgroundClass = "",
   onDragOver,
   onDrop,
-  onMouseDown,
-  onMouseEnter,
+  onPointerDown,
+  onPointerEnter,
 }: CalendarCellProps) {
   const dateStr = format(date, "yyyy-MM-dd");
 
@@ -103,18 +103,19 @@ function CalendarCell({
   return (
     <div
       data-date={dateStr}
-      className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface ${bgClass} ${dragHoverClass} ${selectionClass}`}
+      className={`w-8 lg:w-10 xl:w-12 h-10 lg:h-12 xl:h-14 flex-shrink-0 border-r border-[var(--color-border-subtle)] transition-surface select-none ${bgClass} ${dragHoverClass} ${selectionClass}`}
+      style={{ touchAction: 'none' }}
       onDragOver={(e) => {
         e.preventDefault();
         e.dataTransfer.dropEffect = 'move';
         onDragOver(resourceId, dateStr);
       }}
       onDrop={(e) => {
-        console.log('[CELL DROP]', { dateStr, resourceId }); 
+        console.log('[CELL DROP]', { dateStr, resourceId });
         onDrop(e, resourceId, dateStr);
       }}
-      onMouseDown={() => onMouseDown(resourceId, dateStr)}
-      onMouseEnter={() => onMouseEnter(resourceId, dateStr)}
+      onPointerDown={(e) => onPointerDown(e, resourceId, dateStr)}
+      onPointerEnter={() => onPointerEnter(resourceId, dateStr)}
       title={`${format(date, 'EEEE, MMM d, yyyy')}`}
     />
   );
@@ -133,6 +134,8 @@ export default memo(CalendarCell, (prevProps, nextProps) => {
     prevProps.isDragHovered === nextProps.isDragHovered &&
     prevProps.showAvailability === nextProps.showAvailability &&
     prevProps.validationError === nextProps.validationError &&
-    prevProps.baseBackgroundClass === nextProps.baseBackgroundClass
+    prevProps.baseBackgroundClass === nextProps.baseBackgroundClass &&
+    prevProps.onPointerDown === nextProps.onPointerDown &&
+    prevProps.onPointerEnter === nextProps.onPointerEnter
   );
 });
