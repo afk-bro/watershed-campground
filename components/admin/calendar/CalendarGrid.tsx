@@ -313,10 +313,14 @@ export default function CalendarGrid({
   // Wrap handleCellMouseUp to also show dialog
   const handleCellMouseUp = useCallback(() => {
     handleCellMouseUpBase();
-    if (isCreating && creationStart && creationEnd) {
+  }, [handleCellMouseUpBase]);
+
+  // Show creation dialog when selection is non-null and creation has ended
+  useEffect(() => {
+    if (!isCreating && selection && creationStart && creationEnd) {
       setShowCreationDialog(true);
     }
-  }, [handleCellMouseUpBase, isCreating, creationStart, creationEnd]);
+  }, [isCreating, selection, creationStart, creationEnd]);
   
   const handleReservationClick = (res: Reservation) => {
     setSelectedReservation(res);
@@ -460,20 +464,19 @@ export default function CalendarGrid({
           {visibleBlackoutDates.length === 0 && filteredReservations.length === 0 && <EmptyStateHelper />}
           
           {selection && showCreationDialog && (
-
-        <CreationDialog
-          isOpen={showCreationDialog}
-          onClose={() => {
-            setShowCreationDialog(false);
-            clearSelection();
-          }}
-          startDate={selection.start}
-          endDate={selection.end}
-          campsiteId={selection.campsiteId}
-          campsiteCode={campsites.find(c => c.id === selection.campsiteId)?.code}
-          onCreateBlackout={handleCreateBlackout}
-          onCreateReservation={() => router.push(`/admin/reservations/new?start=${selection.start}&end=${selection.end}&campsite=${selection.campsiteId}`)}
-        />
+            <CreationDialog
+              isOpen={showCreationDialog}
+              onClose={() => {
+                setShowCreationDialog(false);
+                clearSelection();
+              }}
+              startDate={selection.start}
+              endDate={selection.end}
+              campsiteId={selection.campsiteId}
+              campsiteCode={campsites.find(c => c.id === selection.campsiteId)?.code}
+              onCreateBlackout={handleCreateBlackout}
+              onCreateReservation={() => router.push(`/admin/reservations/new?start=${selection.start}&end=${selection.end}&campsite=${selection.campsiteId}`)}
+            />
           )}
         </>
       )}
