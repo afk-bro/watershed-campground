@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import Container from "@/components/Container";
 import Link from "next/link";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
+import { toLocalMidnight, getLocalToday } from "@/lib/date";
 
 type Addon = {
     id: string;
@@ -21,6 +22,54 @@ type Campsite = {
     max_guests: number;
 };
 
+type ReservationFormData = {
+    firstName: string;
+    lastName: string;
+    address1: string;
+    city: string;
+    postalCode: string;
+    email: string;
+    phone: string;
+    checkIn: string;
+    checkOut: string;
+    rvLength: string;
+    adults: number;
+    children: number;
+    campingUnit: string;
+    contactMethod: string;
+    campsiteId: string;
+    comments: string;
+    isOffline: boolean;
+    forceConflict: boolean;
+    overrideBlackout: boolean;
+    sendGuestEmail: boolean;
+    overrideReason: string;
+};
+
+const initialFormData: ReservationFormData = {
+    firstName: "",
+    lastName: "",
+    address1: "",
+    city: "",
+    postalCode: "",
+    email: "",
+    phone: "",
+    checkIn: "",
+    checkOut: "",
+    rvLength: "0",
+    adults: 1,
+    children: 0,
+    campingUnit: "RV",
+    contactMethod: "Email",
+    campsiteId: "",
+    comments: "Manual Booking",
+    isOffline: true,
+    forceConflict: false,
+    overrideBlackout: false,
+    sendGuestEmail: false,
+    overrideReason: ""
+};
+
 function ReservationForm() {
     const router = useRouter();
     const searchParams = useSearchParams();
@@ -33,27 +82,46 @@ function ReservationForm() {
     const [addons, setAddons] = useState<Addon[]>([]);
     const [loading, setLoading] = useState(false);
     
-    const [formData, setFormData] = useState({
-        checkIn: "",
-        checkOut: "",
-        adults: 1,
-        children: 0,
-        campsiteId: "",
-        firstName: "",
-        lastName: "",
-        email: "",
-        phone: "",
-        address1: "",
-        city: "",
-        postalCode: "",
-        contactMethod: "Email",
-        campingUnit: "Other",
-        rvLength: "0",
-        comments: "Manual Booking",
-        isOffline: true
-    });
+    const [formData, setFormData] = useState<ReservationFormData>(initialFormData);
+    const [validationResult, setValidationResult] = useState<{
+        available: boolean;
+        message?: string;
+        conflicts?: Array<{ id: string; type: 'reservation' | 'blackout'; details?: string }>;
+    } | null>(null);
 
     const [selectedAddons, setSelectedAddons] = useState<Record<string, number>>({});
+
+    useEffect(() => {
+        const checkAvailability = async () => {
+            if (!formData.checkIn || !formData.checkOut || !formData.campsiteId || !formData.adults) {
+                setValidationResult(null);
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/availability/check', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        checkIn: formData.checkIn,
+                        checkOut: formData.checkOut,
+                        campsiteId: formData.campsiteId,
+                        guestCount: formData.adults + formData.children,
+                        ignorePastCheck: true // Admin can backdate, so we check purely for conflicts
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setValidationResult(data);
+                }
+            } catch (error) {
+                console.error("Availability check failed", error);
+            }
+        };
+
+        const timer = setTimeout(checkAvailability, 500);
+        return () => clearTimeout(timer);
+    }, [formData.checkIn, formData.checkOut, formData.campsiteId, formData.adults, formData.children]);
 
     useEffect(() => {
         // Auto-populate from URL
@@ -88,6 +156,26 @@ function ReservationForm() {
         setLoading(true);
 
         try {
+            // Client-side validation for dates
+            const checkInDate = toLocalMidnight(formData.checkIn);
+            const today = getLocalToday();
+            
+            // Allow 1 day tolerance (same as server)
+            const yesterday = new Date(today);
+            yesterday.setDate(yesterday.getDate() - 1);
+
+            console.log('[DEBUG] Date Validation:', {
+                checkInStr: formData.checkIn,
+                checkInDate: checkInDate.toString(),
+                today: today.toString(),
+                yesterday: yesterday.toString(),
+                isPast: checkInDate < yesterday
+            });
+
+            if (checkInDate < yesterday && !formData.isOffline) {
+                throw new Error("Check-in date cannot be in the past");
+            }
+
             // Get Session Token
             const { data: { session } } = await supabase.auth.getSession();
             if (!session) throw new Error("Not authenticated");
@@ -189,10 +277,94 @@ function ReservationForm() {
 
                      {/* Payment Override */}
                      <div className="bg-[var(--color-warning)]/10 p-4 rounded border border-[var(--color-warning)]/30">
-                         <label className="flex items-center gap-2">
-                             <input type="checkbox" checked={formData.isOffline} onChange={e => setFormData({...formData, isOffline: e.target.checked})} />
-                             <span className="font-bold text-[var(--color-text-primary)]">Mark as Paid (Offline / Cash / E-Transfer)</span>
-                         </label>
+                            <div className="flex items-center space-x-2">
+                                <input 
+                                    type="checkbox"
+                                    id="isOffline" 
+                                    checked={formData.isOffline}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, isOffline: e.target.checked }))}
+                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                />
+                                <label htmlFor="isOffline" className="text-sm font-medium text-gray-700">Mark as Paid (Offline / Admin Booking)</label>
+                            </div>
+
+                            {/* Admin Overrides Section */}
+                            {formData.isOffline && (
+                                <div className="ml-6 mt-2 p-3 bg-gray-50 border rounded-md space-y-3">
+                                    <h4 className="text-sm font-semibold text-gray-700">Admin Overrides</h4>
+
+                                    {/* Warning Summary */}
+                                    {validationResult && !validationResult.available && (
+                                        <div className="bg-amber-50 border-l-4 border-amber-500 p-4">
+                                            <div className="flex">
+                                                <div className="ml-3">
+                                                    <p className="text-sm text-amber-700 font-bold">
+                                                        ⚠️ Conflict Detected
+                                                    </p>
+                                                    <p className="text-sm text-amber-700">
+                                                        {validationResult.message}
+                                                    </p>
+                                                    {validationResult.conflicts && validationResult.conflicts.length > 0 && (
+                                                        <ul className="mt-1 text-xs text-amber-800 list-disc list-inside">
+                                                            {validationResult.conflicts.map((c, i) => (
+                                                                <li key={i}>{c.details}</li>
+                                                            ))}
+                                                        </ul>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
+                                    <div className="flex items-center space-x-2">
+                                        <input 
+                                            type="checkbox"
+                                            id="forceConflict" 
+                                            checked={formData.forceConflict}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, forceConflict: e.target.checked }))}
+                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                        />
+                                        <label htmlFor="forceConflict" className="text-sm text-gray-700">Force Overlap (Ignore Conflicts)</label>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <input 
+                                            type="checkbox"
+                                            id="overrideBlackout" 
+                                            checked={formData.overrideBlackout}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, overrideBlackout: e.target.checked }))}
+                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                        />
+                                        <label htmlFor="overrideBlackout" className="text-sm text-gray-700">Ignore Blackout Dates</label>
+                                    </div>
+
+                                    <div className="flex items-center space-x-2">
+                                        <input 
+                                            type="checkbox"
+                                            id="sendGuestEmail" 
+                                            checked={formData.sendGuestEmail}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, sendGuestEmail: e.target.checked }))}
+                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                        />
+                                        <label htmlFor="sendGuestEmail" className="text-sm text-gray-700">Send Confirmation Email</label>
+                                    </div>
+
+                                    {(formData.forceConflict || formData.overrideBlackout) && (
+                                        <div>
+                                            <label htmlFor="overrideReason" className="text-xs font-medium text-gray-700 block mb-1">Override Reason (Required)</label>
+                                            <input 
+                                                type="text"
+                                                id="overrideReason"
+                                                className="w-full h-8 px-2 text-sm border border-[var(--color-border-default)] bg-[var(--color-surface-card)] rounded"
+                                                placeholder="e.g. Authorized by Manager"
+                                                value={formData.overrideReason}
+                                                onChange={(e) => setFormData(prev => ({ ...prev, overrideReason: e.target.value }))}
+                                                required
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                          <p className="text-sm text-[var(--color-text-muted)] ml-6">By checking this, you bypass Stripe payment. The reservation will be confirmed immediately.</p>
                      </div>
 

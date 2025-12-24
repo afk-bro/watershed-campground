@@ -127,6 +127,15 @@ function toReservationInsert(
             ip_hash: audit?.ipHash,
             created_by: audit?.createdBy,
             created_at_iso: new Date().toISOString(),
+            // Namespace admin overrides for clarity and future-proofing
+            admin_overrides: {
+                override_reason: formData.overrideReason || null,
+                force_conflict: formData.forceConflict || false,
+                override_blackout: formData.overrideBlackout || false,
+                is_offline: formData.isOffline || false,
+                entry_source: formData.isOffline ? 'admin_manual' : 'web_public',
+            },
+            audit_version: 1,
         },
     };
 }
