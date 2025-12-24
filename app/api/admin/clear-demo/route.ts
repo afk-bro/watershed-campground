@@ -1,18 +1,18 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-auth';
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { clearDemoData } from '@/lib/seed/demo-seed';
 
 /**
- * Clears all demo data from the campground.
+ * DELETE /api/admin/clear-demo
+ * Clears all demo data for the organization
  */
 export async function DELETE(request: Request) {
     try {
-        // Authorization
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
-        // Clear demo data with audit logging
-        const result = await clearDemoData(user!.id);
+        // Clear demo data for this organization
+        const result = await clearDemoData(organizationId!, user!.id);
 
         return NextResponse.json({
             success: true,

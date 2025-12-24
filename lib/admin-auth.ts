@@ -1,68 +1,99 @@
-import 'server-only';
-import { createClient } from '@/lib/supabase/server'; // Server Component Client
 import { NextResponse } from 'next/server';
+import { createClient } from '@/lib/supabase/server';
+import { getUserOrganization } from '@/lib/organization';
 
 /**
- * Validates that the current request is from an authenticated admin.
- * For V1, this means checking they have a valid Supabase Session
- * AND their email is in the ADMIN_EMAILS allowlist.
+ * Checks if the current user is an admin based on ADMIN_EMAILS environment variable.
+ * 
+ * @returns Object with authorization status, user, and response
  */
 export async function requireAdmin() {
     const supabase = await createClient();
     const { data: { user }, error } = await supabase.auth.getUser();
 
     if (error || !user) {
-        return { authorized: false, response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 }) };
+        return {
+            authorized: false,
+            user: null,
+            response: NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+        };
     }
 
-    // Email Allowlist Check
-    const adminEmailsRaw = process.env.ADMIN_EMAILS || '';
+    const adminEmails = process.env.ADMIN_EMAILS?.split(',').map(e => e.trim().toLowerCase()) || [];
 
-    // Robust parsing: split by comma, trim, lowercase, remove empty
-    const adminEmails = adminEmailsRaw
-        .split(',')
-        .map(e => e.trim().toLowerCase())
-        .filter(Boolean);
+    // In preview environments, allow any authenticated user for testing
+    const isPreview = process.env.VERCEL_ENV === 'preview';
+    const isAdmin = isPreview || adminEmails.includes(user.email?.toLowerCase() || '');
 
-    const isProduction = process.env.NODE_ENV === 'production';
-    const isVercelPreview = process.env.VERCEL_ENV === 'preview';
+    if (!isAdmin) {
+        return {
+            authorized: false,
+            user,
+            response: NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+        };
+    }
 
-    if (adminEmails.length > 0 && user.email) {
-        if (!adminEmails.includes(user.email.toLowerCase())) {
-            console.warn(`[AUTH] Unauthorized admin access attempt: ${user.email}`);
+    return {
+        authorized: true,
+        user,
+        response: null
+    };
+}
+
+/**
+ * Combined helper for admin routes that need organization context.
+ * 
+ * This is the STANDARD helper for all /api/admin/* routes.
+ * It ensures:
+ * - User is authenticated
+ * - User is an admin
+ * - User has an organization
+ * 
+ * @returns Object with authorization status, user, organizationId, and response
+ */
+export async function requireAdminWithOrg() {
+    const { authorized, user, response } = await requireAdmin();
+
+    if (!authorized) {
+        return {
+            authorized: false,
+            user: null,
+            organizationId: null,
+            response
+        };
+    }
+
+    try {
+        const organizationId = await getUserOrganization(user!.id);
+
+        if (!organizationId) {
             return {
                 authorized: false,
+                user,
+                organizationId: null,
                 response: NextResponse.json(
-                    { error: 'Forbidden: You are not authorized to access this area.' },
+                    { error: 'User has no organization' },
                     { status: 403 }
                 )
             };
         }
-    } else if (isProduction) {
-        // In production, we REQUIRE an allowlist to be safe.
-        // If it's missing, fail closed.
-        console.error('❌ CRITICAL: ADMIN_EMAILS is not configured in production!');
+
+        return {
+            authorized: true,
+            user,
+            organizationId,
+            response: null
+        };
+    } catch (error) {
+        console.error('[requireAdminWithOrg] Error getting organization:', error);
         return {
             authorized: false,
+            user,
+            organizationId: null,
             response: NextResponse.json(
-                { error: 'Server configuration error' },
+                { error: 'Failed to get organization' },
                 { status: 500 }
             )
         };
-    } else if (isVercelPreview) {
-        // In preview environments, if ADMIN_EMAILS is missing, we might want to warn
-        // but perhaps still allow access if they are authenticated? 
-        // Safer to keep it strict or allow a specific preview list.
-        // For now, let's keep it strict but log more info.
-        console.warn('[AUTH] ADMIN_EMAILS missing in Preview environment. Policy: Fail-Closed.');
-        return {
-            authorized: false,
-            response: NextResponse.json(
-                { error: 'Admin access not configured for this environment.' },
-                { status: 403 }
-            )
-        };
     }
-
-    return { authorized: true, user };
 }
