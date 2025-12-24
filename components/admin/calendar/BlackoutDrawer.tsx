@@ -33,6 +33,16 @@ export default function BlackoutDrawer({
     }
   }, [blackout]);
 
+  // Handle escape to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
   if (!blackout) return null;
 
   const handleUpdate = async () => {

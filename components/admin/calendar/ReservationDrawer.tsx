@@ -1,5 +1,6 @@
 
 import { Reservation } from "@/lib/supabase";
+import { useState, useEffect } from "react";
 import { format, parseISO } from "date-fns";
 import { X, Calendar, User, Mail, Phone, MapPin, Tent, CreditCard } from "lucide-react";
 import Link from "next/link";
@@ -15,6 +16,16 @@ export default function ReservationDrawer({
   isOpen,
   onClose,
 }: ReservationDrawerProps) {
+  // Handle escape to close
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isOpen, onClose]);
+
   if (!reservation) return null;
 
   return (

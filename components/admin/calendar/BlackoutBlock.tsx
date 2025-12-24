@@ -106,8 +106,9 @@ function BlackoutBlock({
       onClick={() => onSelect(blackout)}
       onMouseEnter={() => setIsHovered(true)}
       onMouseLeave={() => setIsHovered(false)}
-      title={`${blackout.reason || "Unavailable"}
-${format(startDateObj, 'MMM d')} - ${format(endDateObj, 'MMM d')}`}
+      title={`${blackout.reason || "Maintenance / Block"}
+Dates: ${format(startDateObj, 'MMM d')} - ${format(endDateObj, 'MMM d')} (${differenceInDays(endDateObj, startDateObj) + 1} days)
+Type: BLACKOUT`}
     >
       {/* Left Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (

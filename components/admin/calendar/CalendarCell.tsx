@@ -115,6 +115,7 @@ function CalendarCell({
       }}
       onMouseDown={() => onMouseDown(resourceId, dateStr)}
       onMouseEnter={() => onMouseEnter(resourceId, dateStr)}
+      title={`${format(date, 'EEEE, MMM d, yyyy')}`}
     />
   );
 }

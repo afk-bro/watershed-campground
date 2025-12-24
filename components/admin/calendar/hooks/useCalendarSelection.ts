@@ -62,7 +62,10 @@ export interface UseCalendarSelectionReturn {
  *
  * <div onMouseUp={handleCellMouseUp}>...</div>
  */
-export function useCalendarSelection(enabled: boolean): UseCalendarSelectionReturn {
+export function useCalendarSelection(
+  enabled: boolean,
+  isValidSelection?: (campsiteId: string, dateStr: string) => boolean
+): UseCalendarSelectionReturn {
   const [isCreating, setIsCreating] = useState(false);
   const [creationStart, setCreationStart] = useState<{ campsiteId: string; date: string } | null>(null);
   const [creationEnd, setCreationEnd] = useState<{ campsiteId: string; date: string } | null>(null);
@@ -75,6 +78,11 @@ export function useCalendarSelection(enabled: boolean): UseCalendarSelectionRetu
 
   const handleCellMouseDown = useCallback((campsiteId: string, dateStr: string) => {
     if (!enabledRef.current) return;
+
+    // Check if cell is occupied immediately on click
+    if (isValidSelection && !isValidSelection(campsiteId, dateStr)) {
+      return;
+    }
 
     // If already creating, this click is the "End" click
     if (isCreating && creationStart && campsiteId === creationStart.campsiteId) {
@@ -92,8 +100,10 @@ export function useCalendarSelection(enabled: boolean): UseCalendarSelectionRetu
   const handleCellMouseEnter = useCallback((campsiteId: string, dateStr: string) => {
     if (!isCreating || !creationStart) return;
 
-    // Only allow selection within the same campsite
-    if (campsiteId !== creationStart.campsiteId) return;
+    // Prevent dragging over occupied cells
+    if (isValidSelection && !isValidSelection(campsiteId, dateStr)) {
+      return;
+    }
 
     setCreationEnd({ campsiteId, date: dateStr });
   }, [isCreating, creationStart]);
