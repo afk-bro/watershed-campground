@@ -1,22 +1,27 @@
-
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { ReservationStatus } from "@/lib/supabase";
+import { requireAdmin } from "@/lib/admin-auth";
+import { logAudit } from "@/lib/audit/audit-service";
+import { z } from "zod";
+
+const bulkStatusSchema = z.object({
+    reservationIds: z.array(z.string()).min(1),
+    status: z.enum(['pending', 'confirmed', 'cancelled', 'checked_in', 'checked_out', 'no_show'])
+});
 
 export async function POST(request: Request) {
     try {
-        const { reservationIds, status } = await request.json();
+        // 1. Authorization
+        const { authorized, user, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
 
-        if (!reservationIds || !Array.isArray(reservationIds) || reservationIds.length === 0) {
-            return NextResponse.json({ error: "reservationIds array is required" }, { status: 400 });
+        const body = await request.json();
+        const validation = bulkStatusSchema.safeParse(body);
+        if (!validation.success) {
+            return NextResponse.json({ error: "Invalid request payload" }, { status: 400 });
         }
-        if (!status) {
-            return NextResponse.json({ error: "status is required" }, { status: 400 });
-        }
-
-        // Validate Status Transition (Basic)
-        // We could be stricter here, e.g. preventing 'check_in' if status is 'cancelled'
-        // For MVP, we'll allow admin override power but could filter valid IDs if needed.
+        const { reservationIds, status } = validation.data;
 
         const { data, error } = await supabaseAdmin
             .from('reservations')
@@ -24,11 +29,15 @@ export async function POST(request: Request) {
             .in('id', reservationIds)
             .select('id, status');
 
-        if (error) {
-            throw error;
-        }
+        if (error) throw error;
 
-        // Return the updated records so UI can reconcile
+        // 2. Audit Logging
+        await logAudit({
+            action: 'RESERVATION_UPDATE',
+            newData: { reservationIds, status },
+            changedBy: user!.id
+        });
+
         return NextResponse.json({ updated: data });
 
     } catch (error) {

@@ -1,14 +1,19 @@
-
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { requireAdmin } from "@/lib/admin-auth";
+import { logAudit } from "@/lib/audit/audit-service";
 
 export async function POST(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const { authorized, user, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
+
         const { id } = await params;
-        const { campsiteId } = await request.json();
+        const body = await request.json();
+        const { campsiteId } = body;
 
         if (!campsiteId) {
             return NextResponse.json({ error: "campsiteId is required" }, { status: 400 });
@@ -74,6 +79,15 @@ export async function POST(
         if (updateError) {
             throw updateError;
         }
+
+        // 6. Audit Logging
+        await logAudit({
+            action: 'RESERVATION_UPDATE',
+            reservationId: id,
+            oldData: { campsite_id: reservation.campsite_id },
+            newData: { campsite_id: campsiteId },
+            changedBy: user!.id
+        });
 
         return NextResponse.json({ success: true, campsiteId });
 
