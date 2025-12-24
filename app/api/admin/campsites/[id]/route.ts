@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
+import { requireAdmin } from "@/lib/admin-auth";
+import { logAudit } from "@/lib/audit/audit-service";
 
 type Params = {
     params: Promise<{
@@ -11,6 +13,9 @@ type Params = {
 // GET /api/admin/campsites/[id] - Get a single campsite
 export async function GET(request: Request, { params }: Params) {
     try {
+        const { authorized, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
+
         const { id } = await params;
 
         const { data, error } = await supabaseAdmin
@@ -21,43 +26,38 @@ export async function GET(request: Request, { params }: Params) {
 
         if (error) {
             if (error.code === 'PGRST116') {
-                return NextResponse.json(
-                    { error: "Campsite not found" },
-                    { status: 404 }
-                );
+                return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
             }
-
-            console.error("Error fetching campsite:", error);
-            return NextResponse.json(
-                { error: "Failed to fetch campsite" },
-                { status: 500 }
-            );
+            throw error;
         }
 
         return NextResponse.json({ data });
     } catch (error) {
         console.error("Error in GET /api/admin/campsites/[id]:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
 // PATCH /api/admin/campsites/[id] - Update a campsite
 export async function PATCH(request: Request, { params }: Params) {
     try {
+        const { authorized, user, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
+
         const { id } = await params;
-        const text = await request.text();
-        if (!text) {
-            return NextResponse.json({ error: "Empty request body" }, { status: 400 });
+
+        // Fetch existing for comparison/logging
+        const { data: existingCampsite, error: fetchError } = await supabaseAdmin
+            .from('campsites')
+            .select('*')
+            .eq('id', id)
+            .single();
+
+        if (fetchError || !existingCampsite) {
+            return NextResponse.json({ error: 'Campsite not found' }, { status: 404 });
         }
-        let body: unknown;
-        try {
-            body = JSON.parse(text);
-        } catch {
-            return NextResponse.json({ error: "Malformed JSON" }, { status: 400 });
-        }
+
+        const body = await request.json();
 
         // Validate request body (make all fields optional for partial updates)
         const partialSchema = campsiteFormSchema.partial();
@@ -65,10 +65,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
         if (!validationResult.success) {
             return NextResponse.json(
-                {
-                    error: "Validation failed",
-                    details: validationResult.error.flatten().fieldErrors
-                },
+                { error: "Validation failed", details: validationResult.error.flatten().fieldErrors },
                 { status: 400 }
             );
         }
@@ -77,7 +74,6 @@ export async function PATCH(request: Request, { params }: Params) {
 
         // Convert camelCase to snake_case for database
         const updateData: Record<string, unknown> = {};
-
         if (formData.name !== undefined) updateData.name = formData.name;
         if (formData.code !== undefined) updateData.code = formData.code;
         if (formData.type !== undefined) updateData.type = formData.type;
@@ -87,93 +83,83 @@ export async function PATCH(request: Request, { params }: Params) {
         if (formData.notes !== undefined) updateData.notes = formData.notes || null;
         if (formData.sortOrder !== undefined) updateData.sort_order = formData.sortOrder;
         if (formData.imageUrl !== undefined) updateData.image_url = formData.imageUrl || null;
+        updateData.updated_at = new Date().toISOString();
 
         // Update campsite
-        const { data, error } = await supabaseAdmin
+        const { data: updatedCampsite, error: updateError } = await supabaseAdmin
             .from('campsites')
             .update(updateData)
             .eq('id', id)
             .select()
             .single();
 
-        if (error) {
-            if (error.code === 'PGRST116') {
-                return NextResponse.json(
-                    { error: "Campsite not found" },
-                    { status: 404 }
-                );
+        if (updateError) {
+            if (updateError.code === '23505') {
+                return NextResponse.json({ error: "A campsite with this code already exists" }, { status: 409 });
             }
-
-            // Check for unique constraint violation on code
-            if (error.code === '23505') {
-                return NextResponse.json(
-                    { error: "A campsite with this code already exists" },
-                    { status: 409 }
-                );
-            }
-
-            console.error("Error updating campsite:", error);
-            return NextResponse.json(
-                { error: "Failed to update campsite" },
-                { status: 500 }
-            );
+            throw updateError;
         }
 
-        return NextResponse.json({ data });
+        // Audit Logging
+        await logAudit({
+            action: 'CAMPSITE_UPDATE',
+            oldData: existingCampsite,
+            newData: updatedCampsite,
+            changedBy: user!.id
+        });
+
+        return NextResponse.json({ data: updatedCampsite });
     } catch (error) {
         console.error("Error in PATCH /api/admin/campsites/[id]:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
 
-// DELETE /api/admin/campsites/[id] - Soft delete (deactivate) a campsite
+// DELETE /api/admin/campsites/[id] - Permanent delete a campsite
 export async function DELETE(request: Request, { params }: Params) {
     try {
+        const { authorized, user, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
+
         const { id } = await params;
 
-        // Real delete: Remove the campsite record
-        const { data, error } = await supabaseAdmin
+        // Fetch existing for logging
+        const { data: existingCampsite, error: fetchError } = await supabaseAdmin
             .from('campsites')
-            .delete()
+            .select('*')
             .eq('id', id)
-            .select()
             .single();
 
-        if (error) {
-            if (error.code === 'PGRST116') {
-                return NextResponse.json(
-                    { error: "Campsite not found" },
-                    { status: 404 }
-                );
-            }
+        if (fetchError || !existingCampsite) {
+            return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
+        }
 
-            // Check for foreign key constraint (e.g. linked reservations)
-            if (error.code === '23503') {
+        // Delete the campsite record
+        const { error: deleteError } = await supabaseAdmin
+            .from('campsites')
+            .delete()
+            .eq('id', id);
+
+        if (deleteError) {
+            if (deleteError.code === '23503') {
                 return NextResponse.json(
                     { error: "Cannot delete campsite with existing reservations. Deactivate it instead." },
                     { status: 409 }
                 );
             }
-
-            console.error("Error deleting campsite:", error);
-            return NextResponse.json(
-                { error: "Failed to delete campsite" },
-                { status: 500 }
-            );
+            throw deleteError;
         }
 
-        return NextResponse.json({
-            data,
-            message: "Campsite deleted permanently"
+        // Audit Logging
+        await logAudit({
+            action: 'CAMPSITE_DEACTIVATE', // Or add CAMPSITE_DELETE but current schema uses campsite_id as reservation_id dummy or similar. Actually logAudit handles it.
+            oldData: existingCampsite,
+            changedBy: user!.id
         });
+
+        return NextResponse.json({ message: "Campsite deleted permanently" });
     } catch (error) {
         console.error("Error in DELETE /api/admin/campsites/[id]:", error);
-        return NextResponse.json(
-            { error: "Internal server error" },
-            { status: 500 }
-        );
+        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

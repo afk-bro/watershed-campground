@@ -1,18 +1,29 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { requireAdmin } from '@/lib/admin-auth';
+import { blackoutFormSchema } from '@/lib/schemas';
+import { logAudit } from '@/lib/audit/audit-service';
 
 export async function POST(request: Request) {
     try {
-        const body = await request.json();
-        const { start_date, end_date, campsite_id, reason } = body;
+        // 1. Authorization
+        const { authorized, user, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
 
-        if (!start_date || !end_date) {
+        // 2. Validation
+        const body = await request.json();
+        const validation = blackoutFormSchema.safeParse(body);
+
+        if (!validation.success) {
             return NextResponse.json(
-                { error: 'Start date and end date are required' },
+                { error: 'Validation failed', details: validation.error.flatten().fieldErrors },
                 { status: 400 }
             );
         }
 
+        const { start_date, end_date, campsite_id, reason } = validation.data;
+
+        // 3. Database Operation
         const { data, error } = await supabaseAdmin
             .from('blackout_dates')
             .insert({
@@ -25,6 +36,13 @@ export async function POST(request: Request) {
             .single();
 
         if (error) throw error;
+
+        // 4. Audit Logging
+        await logAudit({
+            action: 'BLACKOUT_CREATE',
+            newData: data,
+            changedBy: user!.id
+        });
 
         return NextResponse.json(data);
     } catch (error) {
