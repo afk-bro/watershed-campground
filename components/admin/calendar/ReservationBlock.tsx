@@ -7,7 +7,7 @@ import { useState, memo } from "react";
 type ResizeSide = "left" | "right";
 
 interface ReservationBlockProps {
-  reservation: Reservation;
+  reservation: Reservation & { _saving?: boolean };
   monthStart: Date;
   monthEnd: Date;
   onSelect: (reservation: Reservation) => void;
@@ -94,11 +94,16 @@ function ReservationBlock({
     }
   };
 
+  // Check if this reservation is being saved (optimistic update)
+  const isSaving = reservation._saving;
+
   return (
     <div
       className={`absolute top-1 bottom-1 text-xs font-medium px-2 py-1 flex items-center gap-1 shadow-sm border truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${colorClass} ${
         isDragging ? 'opacity-40' : ''
       } ${isResizing ? 'opacity-60' : ''} ${
+        isSaving ? 'opacity-70' : ''
+      } ${
         isGlobalDragging && !isDragging ? 'pointer-events-none' : ''
       } [.is-panning_&]:pointer-events-none ${
         checkIn < monthStart ? 'rounded-l-none border-l-0' : 'rounded-l-lg'
@@ -112,7 +117,10 @@ function ReservationBlock({
       }}
       draggable={isInteractive && !isResizing}
       data-reservation-id={reservation.id}
-      data-testid={`reservation-block-${reservation.id}`}
+      data-testid="reservation-block"
+      data-start={reservation.check_in}
+      data-end={reservation.check_out}
+      data-campsite-id={reservation.campsite_id || 'UNASSIGNED'}
       onDragStart={(e) => {
         // Don't allow drag to start if we're resizing or hovering over handles
         if (isResizing || !isInteractive) {
@@ -150,6 +158,13 @@ Unit: ${reservation.camping_unit || 'No equipment'}`}
       </div>
       {reservation.status === 'pending' && <AlertCircle size={12} className="pointer-events-none flex-shrink-0" />}
 
+      {/* Saving indicator */}
+      {isSaving && (
+        <span className="absolute top-full left-1/2 -translate-x-1/2 mt-1 px-2 py-0.5 bg-[var(--color-surface-elevated)] border border-[var(--color-border-default)] rounded text-[10px] text-[var(--color-text-secondary)] whitespace-nowrap shadow-md z-30 pointer-events-none">
+          Saving...
+        </span>
+      )}
+
       {/* Right Resize Handle */}
       {isInteractive && (isHovered || isResizing) && (
         <div
@@ -172,6 +187,7 @@ export default memo(ReservationBlock, (prevProps, nextProps) => {
     prevProps.reservation.check_out === nextProps.reservation.check_out &&
     prevProps.reservation.status === nextProps.reservation.status &&
     prevProps.reservation.campsite_id === nextProps.reservation.campsite_id &&
+    prevProps.reservation._saving === nextProps.reservation._saving &&
     prevProps.isDragging === nextProps.isDragging &&
     prevProps.isResizing === nextProps.isResizing &&
     prevProps.isGlobalDragging === nextProps.isGlobalDragging &&
