@@ -22,6 +22,8 @@ import { useDragResize } from "./hooks/useDragResize";
 import { useBlackoutManager } from "./hooks/useBlackoutManager";
 import { useCalendarPanning } from "./hooks/useCalendarPanning";
 import { useSyncedScroll } from "./hooks/useSyncedScroll";
+import { useStuckSavingFailsafe } from "./hooks/useStuckSavingFailsafe";
+import { useReservationMutations } from "./hooks/useReservationMutations";
 import SyncedScrollbar from "./SyncedScrollbar";
 import CalendarControls from "./CalendarControls";
 import BlackoutDrawer from "./BlackoutDrawer";
@@ -69,6 +71,51 @@ export default function CalendarGrid({
       setTodayX(null);
     }
   }, [date, campsites.length]); // Re-calc when month or campsite list changes
+
+  // Dev-only invariant checks (catches cache reconciliation bugs)
+  useEffect(() => {
+    if (process.env.NODE_ENV !== 'development') return;
+
+    // Check for duplicate reservation IDs
+    const reservationIds = reservations.map(r => r.id);
+    const uniqueReservationIds = new Set(reservationIds);
+    if (reservationIds.length !== uniqueReservationIds.size) {
+      console.error('❌ INVARIANT VIOLATION: Duplicate reservation IDs detected!', {
+        total: reservationIds.length,
+        unique: uniqueReservationIds.size,
+        duplicates: reservationIds.filter((id, index) => reservationIds.indexOf(id) !== index)
+      });
+    }
+
+    // Check for duplicate blackout IDs
+    const blackoutIds = blackoutDates.map(b => b.id);
+    const uniqueBlackoutIds = new Set(blackoutIds);
+    if (blackoutIds.length !== uniqueBlackoutIds.size) {
+      console.error('❌ INVARIANT VIOLATION: Duplicate blackout IDs detected!', {
+        total: blackoutIds.length,
+        unique: uniqueBlackoutIds.size,
+        duplicates: blackoutIds.filter((id, index) => blackoutIds.indexOf(id) !== index)
+      });
+    }
+
+    // Check for temp IDs that aren't currently saving
+    const tempReservations = reservations.filter(r => r.id?.startsWith('temp_') && !(r as any)._saving);
+    if (tempReservations.length > 0) {
+      console.error('❌ INVARIANT VIOLATION: Temp reservation IDs found that are not saving!', {
+        count: tempReservations.length,
+        ids: tempReservations.map(r => r.id)
+      });
+    }
+
+    const tempBlackouts = blackoutDates.filter(b => b.id?.startsWith('temp_') && !(b as any)._saving);
+    if (tempBlackouts.length > 0) {
+      console.error('❌ INVARIANT VIOLATION: Temp blackout IDs found that are not saving!', {
+        count: tempBlackouts.length,
+        ids: tempBlackouts.map(b => b.id)
+      });
+    }
+  }, [reservations, blackoutDates]);
+
   const [pendingMove, setPendingMove] = useState<{
     reservation: Reservation;
     newCampsiteId: string;
@@ -83,15 +130,42 @@ export default function CalendarGrid({
   const [typeFilter, setTypeFilter] = useState<string | 'ALL'>("ALL");
   const [hideBlackouts, setHideBlackouts] = useState(false);
 
-  // Blackout Manager Hook
+  // Mutation Hooks
   const {
       selectedBlackout,
       isBlackoutDrawerOpen,
       openDrawer: openBlackoutDrawer,
       closeDrawer: closeBlackoutDrawer,
+      createBlackout,
       updateBlackout,
       deleteBlackout
   } = useBlackoutManager({ onDataMutate });
+
+  const { rescheduleReservation } = useReservationMutations({ onDataMutate });
+
+  // Stuck Saving Failsafe - auto-revalidate if items stuck saving for >10s
+  const lastRevalidateRef = useRef(0);
+  const handleRevalidate = useCallback(() => {
+    if (!onDataMutate) return;
+
+    // Throttle: only allow one revalidate per 3 seconds
+    // Prevents spamming server if multiple items get stuck simultaneously
+    const now = Date.now();
+    if (now - lastRevalidateRef.current < 3000) {
+      console.log('[STUCK SAVING FAILSAFE] Skipping revalidate (throttled - multiple items stuck)');
+      return;
+    }
+
+    lastRevalidateRef.current = now;
+    console.log('[STUCK SAVING FAILSAFE] Auto-revalidating calendar data');
+    onDataMutate(undefined, { revalidate: true });
+  }, [onDataMutate]);
+
+  useStuckSavingFailsafe({
+    reservations,
+    blackoutDates,
+    onRevalidate: handleRevalidate,
+  });
 
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
@@ -372,42 +446,21 @@ export default function CalendarGrid({
     if (!pendingMove) return;
 
     setIsSubmitting(true);
+    setConfirmDialogError(null);
 
     try {
-      // Convert 'UNASSIGNED' to null for API
-      const campsiteId = pendingMove.newCampsiteId === 'UNASSIGNED' ? null : pendingMove.newCampsiteId;
-
-      const response = await fetch(`/api/admin/reservations/${pendingMove.reservation.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          campsite_id: campsiteId,
-          check_in: pendingMove.newStartDate,
-          check_out: pendingMove.newEndDate,
-        }),
+      await rescheduleReservation({
+        reservation: pendingMove.reservation,
+        newCampsiteId: pendingMove.newCampsiteId,
+        newStartDate: pendingMove.newStartDate,
+        newEndDate: pendingMove.newEndDate,
       });
 
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.error || 'Failed to reschedule');
-      }
-
-      const data = await response.json();
-
-      // Show success notification (use toast instead of alert)
-      if (data.emailSent) {
-        showToast('Reservation rescheduled successfully. Guest has been notified.', 'success');
-      } else {
-        showToast('Reservation rescheduled. Warning: Email notification failed.', 'warning');
-      }
-
-      // Refresh the page to get updated data (with slight delay to show toast)
-      setTimeout(() => {
-        window.location.reload();
-      }, 1500);
-
+      // Close dialog on success
+      setShowConfirmDialog(false);
+      setPendingMove(null);
+      setConfirmDialogError(null);
     } catch (error: unknown) {
-      console.error('Reschedule error:', error);
       // Show error in dialog, keep it open for retry
       setConfirmDialogError(error instanceof Error ? error.message : 'Unknown error');
     } finally {
@@ -437,13 +490,6 @@ export default function CalendarGrid({
   const handleCreateBlackout = async (reason: string) => {
     if (!creationStart || !creationEnd) return;
 
-    // Ensure start is before end
-    let start = creationStart.date;
-    let end = creationEnd.date;
-    if (start > end) {
-      [start, end] = [end, start];
-    }
-    
     // Check if we have a valid campsite ID
     if (!creationStart.campsiteId || creationStart.campsiteId === 'UNASSIGNED') {
         showToast('Cannot create blackout on Unassigned row', 'error');
@@ -451,25 +497,10 @@ export default function CalendarGrid({
     }
 
     try {
-      const response = await fetch('/api/admin/blackout-dates', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          start_date: start,
-          end_date: end,
-          campsite_id: creationStart.campsiteId,
-          reason
-        }),
-      });
-
-      if (!response.ok) throw new Error('Failed to create blackout');
-
-      showToast('Blackout dates added', 'success');
-      // Refresh
-      setTimeout(() => window.location.reload(), 500);
-    } catch (error) {
-      console.error(error);
-      showToast('Failed to create blackout', 'error');
+      await createBlackout(creationStart.date, creationEnd.date, creationStart.campsiteId, reason);
+    } catch (error: unknown) {
+      // Error already logged and toasted by the hook
+      console.error('[CREATE BLACKOUT] Failed:', error);
     }
   };
 
