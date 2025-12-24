@@ -3,8 +3,12 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startOfMonth, endOfMonth, parseISO, format } from 'date-fns';
 
+import { requireAdmin } from '@/lib/admin-auth';
+
 export async function GET(request: Request) {
     try {
+        const { authorized, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
         const { searchParams } = new URL(request.url);
         const dateParam = searchParams.get('month'); // YYYY-MM
 

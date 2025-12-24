@@ -4,6 +4,7 @@ export interface UpdateReservationParams {
   campsite_id: string | null;
   check_in: string;
   check_out: string;
+  status?: string; // Align with API supporting status updates
 }
 
 export interface UpdateBlackoutParams {
@@ -14,7 +15,7 @@ export interface UpdateBlackoutParams {
 }
 
 export interface CreateBlackoutParams {
-  campsite_id: string;
+  campsite_id: string | null; // Support global blackouts (null)
   start_date: string;
   end_date: string;
   reason: string;
