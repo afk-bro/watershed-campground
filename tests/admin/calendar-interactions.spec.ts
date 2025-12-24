@@ -11,43 +11,17 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
     let testReservationId: string;
     let testCampsiteId: string;
     let alternateCampsiteId: string;
-    let reservationDate: Date;
 
-    // Helper to navigate to the reservation date
-    const navigateToReservationDate = async (page: Page, targetDate: Date) => {
-        const currentDate = new Date(); // Calendar starts at today
-        const monthsDiff = differenceInMonths(startOfMonth(targetDate), startOfMonth(currentDate));
-
-        if (monthsDiff > 0) {
-            console.log(`Navigating ${monthsDiff} months forward to find reservation...`);
-
-            // Close any open modals first
-            const closeButtons = page.locator('button[aria-label="Close"]');
-            const closeCount = await closeButtons.count();
-            if (closeCount > 0) {
-                await closeButtons.first().click();
-                await page.waitForTimeout(500);
-            }
-
-            const nextButton = page.getByRole('button', { name: /next month/i });
-
-            // Click next month button multiple times with retries
-            for (let i = 0; i < monthsDiff; i++) {
-                // Wait for the button to be clickable
-                await nextButton.waitFor({ state: 'visible' });
-                await page.waitForTimeout(200);
-
-                try {
-                    await nextButton.click({ force: true });
-                    await page.waitForTimeout(500); // Wait for animation/render
-                } catch (error) {
-                    console.warn(`Failed to click next month button on iteration ${i}:`, error);
-                }
-            }
-
-            // Just wait a bit to ensure the month has updated
-            await page.waitForTimeout(1000);
-        }
+    // Direct navigation helper (avoids fragile month clicking)
+    const navigateToCalendar = async (page: Page, month: number, year: number) => {
+        await page.goto(`/admin/calendar?month=${month.toString().padStart(2, '0')}&year=${year}`);
+        // Wait for API response
+        await page.waitForResponse(
+            response => response.url().includes('/api/admin/') && response.status() === 200,
+            { timeout: 10000 }
+        );
+        // Wait for calendar to render
+        await page.waitForSelector('[class*="calendar"]', { timeout: 5000 });
     };
 
     // Setup: Create test data
@@ -66,18 +40,11 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
         testCampsiteId = campsites[0].id;
         alternateCampsiteId = campsites[1].id;
 
-        // Create test reservation with dates that are visible in calendar
-        // Use a wide date range with timestamp-based offset to avoid conflicts
-        const uniqueKey = Date.now(); // Unique timestamp for each test run
-
-        // Use dates spread across many months: 30-300 days out (ensures no overlap between test runs)
-        const daysFromNow = 30 + ((uniqueKey % 270)); // Results in 30-299 days
-        const checkIn = addDays(new Date(), daysFromNow);
+        // Use fixed dates in August 2025 for stable testing
+        const checkIn = new Date('2025-08-10');
         const checkOut = addDays(checkIn, 3);
 
-        reservationDate = checkIn; // Store for navigation
-
-        const email = `calendar.test.${uniqueKey}@example.com`;
+        const email = `calendar.test.${Date.now()}@example.com`;
 
         // Check if reservation already exists (multiple browser workers may try to create)
         const { data: existing } = await supabaseAdmin
@@ -137,17 +104,21 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
     });
 
     test('should drag reservation to different campsite', async ({ page }) => {
-        // ==========================================
-        // STEP 1: Navigate to Calendar
-        // ==========================================
-        await page.goto('/admin/calendar');
-        await expect(page.getByRole('link', { name: 'Calendar' })).toBeVisible();
+        // Reset to specific dates for this test (Aug 5-8)
+        const checkIn = new Date('2025-08-05');
+        const checkOut = addDays(checkIn, 3);
 
-        // Wait for calendar to load
-        await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
+        await supabaseAdmin
+            .from('reservations')
+            .update({
+                check_in: format(checkIn, 'yyyy-MM-dd'),
+                check_out: format(checkOut, 'yyyy-MM-dd'),
+                campsite_id: testCampsiteId
+            })
+            .eq('id', testReservationId);
 
-        // Navigate to correct month
-        await navigateToReservationDate(page, reservationDate);
+        // Navigate directly to August 2025
+        await navigateToCalendar(page, 8, 2025);
 
         // ==========================================
         // STEP 2: Find Test Reservation Block
@@ -195,12 +166,9 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
     });
 
     test('should extend reservation by dragging right edge', async ({ page }) => {
-        // Reset reservation dates
-        const checkIn = addDays(new Date(), 5); // 5 days from today might be in current month, or next
+        // Reset to known dates in August 2025 (Aug 12-15, avoids overlap with previous test)
+        const checkIn = new Date('2025-08-12');
         const checkOut = addDays(checkIn, 3); // 3 nights initially
-
-        // Update reservationDate to match new checkIn
-        reservationDate = checkIn;
 
         await supabaseAdmin
             .from('reservations')
@@ -210,11 +178,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
             })
             .eq('id', testReservationId);
 
-        await page.goto('/admin/calendar');
-        await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
-
-        // Navigate to correct month
-        await navigateToReservationDate(page, reservationDate);
+        await navigateToCalendar(page, 8, 2025);
 
         // ==========================================
         // STEP 1: Find Reservation Block (Using robust ID)
@@ -268,11 +232,9 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
     });
 
     test('should shorten reservation by dragging left edge forward', async ({ page }) => {
-        // Reset reservation to longer stay
-        const checkIn = addDays(new Date(), 5);
+        // Reset reservation to longer stay in August 2025 (Aug 18-23, avoids overlap)
+        const checkIn = new Date('2025-08-18');
         const checkOut = addDays(checkIn, 5); // 5 nights initially
-
-        reservationDate = checkIn;
 
         await supabaseAdmin
             .from('reservations')
@@ -282,11 +244,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
             })
             .eq('id', testReservationId);
 
-        await page.goto('/admin/calendar');
-        await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
-
-        // Navigate
-        await navigateToReservationDate(page, reservationDate);
+        await navigateToCalendar(page, 8, 2025);
 
         const reservationBlock = page.locator(`[data-reservation-id="${testReservationId}"]`).first();
 
@@ -330,12 +288,22 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
     });
 
     test('should prevent conflicting reservation and snap back', async ({ page }) => {
-        // Create a second reservation that would conflict
-        const conflictCheckIn = addDays(new Date(), 8);
-        const conflictCheckOut = addDays(conflictCheckIn, 2);
+        // First, reset main reservation to Aug 24-27
+        const mainCheckIn = new Date('2025-08-24');
+        const mainCheckOut = addDays(mainCheckIn, 3);
 
-        // This relies on conflict date being close to reservationDate. 
-        // 5 days vs 8 days -> likely same month.
+        await supabaseAdmin
+            .from('reservations')
+            .update({
+                check_in: format(mainCheckIn, 'yyyy-MM-dd'),
+                check_out: format(mainCheckOut, 'yyyy-MM-dd'),
+                campsite_id: testCampsiteId
+            })
+            .eq('id', testReservationId);
+
+        // Create a second reservation that would conflict (Aug 25-27, overlaps with main)
+        const conflictCheckIn = new Date('2025-08-25');
+        const conflictCheckOut = addDays(conflictCheckIn, 2);
 
         const { data: conflictReservation } = await supabaseAdmin
             .from('reservations')
@@ -363,12 +331,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
         const conflictId = conflictReservation?.id;
 
         try {
-            await page.goto('/admin/calendar');
-            await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
-
-            // Navigate (using reservationDate which was set in previous test, likely 5 days out)
-            // Or assume conflictCheckIn is the target?
-            await navigateToReservationDate(page, conflictCheckIn);
+            await navigateToCalendar(page, 8, 2025);
 
             // Find our original test reservation
             const originalBlock = page.locator('[draggable="true"]', {
@@ -433,11 +396,9 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
     });
 
     test('should move reservation to different dates on same campsite', async ({ page }) => {
-        // Reset to known state
-        const checkIn = addDays(new Date(), 5);
+        // Reset to known state in August 2025 (Aug 28-31, last test avoids all overlaps)
+        const checkIn = new Date('2025-08-28');
         const checkOut = addDays(checkIn, 3);
-
-        reservationDate = checkIn;
 
         await supabaseAdmin
             .from('reservations')
@@ -448,10 +409,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
             })
             .eq('id', testReservationId);
 
-        await page.goto('/admin/calendar');
-        await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
-
-        await navigateToReservationDate(page, reservationDate);
+        await navigateToCalendar(page, 8, 2025);
 
         const reservationBlock = page.locator('[draggable="true"]', {
             has: page.locator('text=/Calendar.*Test/i')
