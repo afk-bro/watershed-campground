@@ -1,10 +1,15 @@
-
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { searchCampsites } from "@/lib/availability/engine";
+import { requireAdmin } from "@/lib/admin-auth";
+import { logAudit } from "@/lib/audit/audit-service";
 
 export async function POST(request: Request) {
     try {
+        // 1. Authorization
+        const { authorized, user, response: authResponse } = await requireAdmin();
+        if (!authorized) return authResponse!;
+
         const { reservationIds } = await request.json();
 
         if (!reservationIds || !Array.isArray(reservationIds)) {
@@ -13,10 +18,8 @@ export async function POST(request: Request) {
 
         const results: { id: string; success: boolean; campsiteId?: string; reason?: string }[] = [];
 
-        // Process sequentially to safely handle race conditions between items in the same batch
-        // (If we process in parallel, two items could claim the same spot)
+        // Process sequentially to safely handle race conditions
         for (const id of reservationIds) {
-            // 1. Fetch Reservation
             const { data: reservation } = await supabaseAdmin
                 .from('reservations')
                 .select('*')
@@ -33,16 +36,11 @@ export async function POST(request: Request) {
                 continue;
             }
 
-            // 2. Find Available Sites
-            // Note: searchCampsites internally checks db availability. 
-            // Since we are iterating, subsequent calls will see the previous assignments 
-            // IF we were confirming them instantly. But searchCampsites reads from DB. 
-            // We must write to DB immediately for the next iteration to 'see' the conflict.
             const availableSites = await searchCampsites({
                 checkIn: reservation.check_in,
                 checkOut: reservation.check_out,
                 guestCount: (reservation.adults || 0) + (reservation.children || 0),
-                rvLength: reservation.rv_length ? parseInt(reservation.rv_length) : undefined, // parsing assumed safe or 0
+                rvLength: reservation.rv_length ? parseInt(reservation.rv_length) : undefined,
                 unitType: reservation.camping_unit
             });
 
@@ -51,10 +49,8 @@ export async function POST(request: Request) {
                 continue;
             }
 
-            // 3. Pick First Match
             const targetSite = availableSites[0];
 
-            // 4. Assign
             const { error: assignError } = await supabaseAdmin
                 .from('reservations')
                 .update({ campsite_id: targetSite.id })
@@ -66,6 +62,13 @@ export async function POST(request: Request) {
                 results.push({ id, success: true, campsiteId: targetSite.id });
             }
         }
+
+        // 2. Audit Logging
+        await logAudit({
+            action: 'RESERVATION_UPDATE', // Batch assign is effectively multiple updates
+            newData: { reservationIds, results },
+            changedBy: user!.id
+        });
 
         return NextResponse.json({ results });
 

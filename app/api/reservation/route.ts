@@ -8,6 +8,9 @@ import { createClient } from "@/lib/supabase/server";
 import { reservationFormSchema } from "@/lib/reservation/validation";
 import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
+import { requireAdmin } from "@/lib/admin-auth";
+import { getBaseUrl } from "@/lib/url-utils";
+import { checkRateLimit, rateLimiters, getClientIp, createIpIdentifier, getRateLimitHeaders } from "@/lib/rate-limit-upstash";
 
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
@@ -22,18 +25,25 @@ function getStripeClient() {
 
 export async function POST(request: Request) {
     try {
-        // Validate NEXT_PUBLIC_BASE_URL in production
-        let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!baseUrl) {
-            if (process.env.NODE_ENV === 'production') {
-                console.error("ERROR: NEXT_PUBLIC_BASE_URL environment variable must be set in production.");
-                return NextResponse.json(
-                    { error: "Server misconfiguration: NEXT_PUBLIC_BASE_URL is required in production." },
-                    { status: 500 }
-                );
-            }
-            baseUrl = 'http://localhost:3000';
+        // 0. Rate Limiting
+        const ip = getClientIp(request);
+        const rlResult = await checkRateLimit(
+            createIpIdentifier(ip, 'reservation_create'),
+            rateLimiters.reservationCreate
+        );
+
+        if (!rlResult.success) {
+            console.warn(`[RateLimit] Blocked reservation attempt from ${ip}`);
+            return NextResponse.json(
+                { error: "Too many reservation attempts. Please try again later." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rlResult)
+                }
+            );
         }
+
+        const baseUrl = getBaseUrl();
         const manageUrl = `${baseUrl}/manage-reservation`;
 
         const body = await request.json();
@@ -52,14 +62,8 @@ export async function POST(request: Request) {
         // Security: Guard against unauthorized overrides
         const hasAdminOverrides = formData.forceConflict || formData.overrideBlackout || formData.isOffline || formData.overrideReason;
         if (hasAdminOverrides) {
-            const supabase = await createClient();
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                return NextResponse.json(
-                    { error: "Unauthorized: Admin privileges required for overrides." },
-                    { status: 401 }
-                );
-            }
+            const { authorized, response: authResponse } = await requireAdmin();
+            if (!authorized) return authResponse!;
         }
 
         // 2. Retrieve Payment Intent & Campsite
