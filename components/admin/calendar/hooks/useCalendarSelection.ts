@@ -95,7 +95,7 @@ export function useCalendarSelection(
     setIsCreating(true);
     setCreationStart({ campsiteId, date: dateStr });
     setCreationEnd({ campsiteId, date: dateStr });
-  }, [isCreating, creationStart]);
+  }, [isCreating, creationStart, isValidSelection]);
 
   const handleCellMouseEnter = useCallback((campsiteId: string, dateStr: string) => {
     if (!isCreating || !creationStart) return;
@@ -106,7 +106,7 @@ export function useCalendarSelection(
     }
 
     setCreationEnd({ campsiteId, date: dateStr });
-  }, [isCreating, creationStart]);
+  }, [isCreating, creationStart, isValidSelection]);
 
   const handleCellMouseUp = useCallback(() => {
     // We don't finish on MouseUp anymore in the Two-Click model
