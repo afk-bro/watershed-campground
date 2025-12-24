@@ -1,30 +1,21 @@
 "use client";
 
 import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import Link from "next/link";
-import { AlertTriangle, X, Wrench, Search, Trash2 } from "lucide-react";
 import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
-import StatusPill from "@/components/admin/StatusPill";
-import PaymentBadge from "@/components/admin/PaymentBadge";
-import RowActions from "@/components/admin/RowActions";
 import ReservationDrawer from "@/components/admin/calendar/ReservationDrawer";
 import AssignmentDialog from "@/components/admin/AssignmentDialog";
 import Container from "@/components/Container";
 import OnboardingChecklist from "@/components/admin/dashboard/OnboardingChecklist";
 import BulkBar from "@/components/admin/reservations/BulkBar";
-import { computeCounts, getNights, sortItems, type SortMode } from "@/lib/admin/reservations/listing";
+import { computeCounts, sortItems, type SortMode, type FilterType } from "@/lib/admin/reservations/listing";
 import { useToast } from "@/components/ui/Toast";
+import type { ReservationOverviewItem, BlockingEventOverviewItem } from "@/lib/supabase";
 
-type PaymentStatus = 'paid' | 'deposit_paid' | 'payment_due' | 'overdue' | 'failed' | 'refunded' | null;
-
-interface PaymentTransaction {
-    amount: number;
-    status: string;
-    type: string;
-    created_at: string;
-}
-
-type FilterType = ReservationStatus | 'all' | 'maintenance';
+// New modular components
+import ReservationRow from "@/components/admin/reservations/ReservationRow";
+import MaintenanceRow from "@/components/admin/reservations/MaintenanceRow";
+import DashboardStats from "@/components/admin/reservations/DashboardStats";
+import DashboardSearch from "@/components/admin/reservations/DashboardSearch";
 
 export default function AdminPage() {
     const { showToast } = useToast();
@@ -45,22 +36,13 @@ export default function AdminPage() {
         setLoading(true);
         try {
             const response = await fetch('/api/admin/reservations');
-            if (!response.ok) {
-                throw new Error('Failed to fetch reservations');
-            }
+            if (!response.ok) throw new Error('Failed to fetch reservations');
 
             const { data } = await response.json();
 
-            // Note: Blocking events (maintenance) don't have archived_at, so we'll show them when showArchived is false
-                        const filtered = showArchived
-                                ? (data || []).filter((item: unknown): item is OverviewItem => {
-                                        if (!item || typeof item !== 'object') return false;
-                                        const anyItem = item as Record<string, unknown>;
-                                        const type = anyItem.type;
-                                        const archived = (anyItem as Record<string, unknown>).archived_at;
-                                        return type === 'reservation' && archived != null;
-                                    })
-                                : (Array.isArray(data) ? data : []);
+            const filtered = showArchived
+                ? (data || []).filter((item: any) => item.type === 'reservation' && item.archived_at != null)
+                : (Array.isArray(data) ? data : []);
 
             setItems(filtered);
         } catch (err) {
@@ -71,7 +53,6 @@ export default function AdminPage() {
         }
     }, [showArchived]);
 
-    // Clear selection when filter changes to avoid confusion
     useEffect(() => {
         setSelectedIds(new Set());
     }, [filter, showArchived]);
@@ -88,20 +69,13 @@ export default function AdminPage() {
                 searchInputRef.current?.blur();
             }
         };
-
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
     }, [searchQuery]);
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
         if (isSubmitting) return;
-
-        // Add confirmation for cancel action
-        if (status === 'cancelled') {
-            if (!confirm('Are you sure you want to cancel this reservation?')) {
-                return;
-            }
-        }
+        if (status === 'cancelled' && !confirm('Are you sure?')) return;
 
         setIsSubmitting(true);
         try {
@@ -111,9 +85,7 @@ export default function AdminPage() {
                 body: JSON.stringify({ status })
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to update status');
-            }
+            if (!response.ok) throw new Error('Failed to update status');
 
             await fetchReservations();
             showToast(`Reservation ${status.replace('_', ' ')}`, 'success');
@@ -127,7 +99,6 @@ export default function AdminPage() {
 
     const handleAssignCampsite = async (reservationId: string, campsiteId: string) => {
         if (isSubmitting) return;
-
         setIsSubmitting(true);
         try {
             const res = await fetch(`/api/admin/reservations/${reservationId}/assign`, {
@@ -136,116 +107,32 @@ export default function AdminPage() {
                 body: JSON.stringify({ campsiteId }),
             });
 
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Failed to assign campsite');
-            }
+            if (!res.ok) throw new Error('Failed to assign campsite');
 
             await fetchReservations();
             showToast('Campsite assigned successfully', 'success');
         } catch (error) {
-            showToast(error instanceof Error ? error.message : 'Failed to assign campsite', 'error');
+            showToast('Failed to assign campsite', 'error');
             throw error;
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    // Filter by status
-    const statusFilteredItems = (() => {
-        if (filter === 'all') return items;
-        if (filter === 'maintenance') return items.filter(item => item.type === 'maintenance' || item.type === 'blackout');
-        // Filter by reservation status
-        return items.filter(item => item.type === 'reservation' && item.status === filter);
-    })();
-
-    // Apply search filter
-    const filteredItems = useMemo(() => {
-        if (!searchQuery.trim()) return statusFilteredItems;
-
-        const query = searchQuery.toLowerCase();
-        return statusFilteredItems.filter(item => {
-            if (item.type !== 'reservation') return false;
-
-            // Type guard: we know it's a reservation now
-            const reservation = item as Extract<OverviewItem, { type: 'reservation' }>;
-
-            // Search across name, email, phone, ID, and campsite code
-            const searchableText = [
-                reservation.guest_name,
-                reservation.guest_email,
-                reservation.guest_phone,
-                reservation.id,
-                reservation.campsite_code,
-            ].filter(Boolean).join(' ').toLowerCase();
-
-            return searchableText.includes(query);
-        });
-    }, [statusFilteredItems, searchQuery]);
-
-    const sortedItems = [...filteredItems].sort((a, b) => {
-        const getDateValue = (item: OverviewItem) => {
-            if (sortMode === 'created_at') {
-                if (item.type === 'reservation' && item.created_at) return item.created_at;
-                // Maintenance/blackout items may not have created_at; fall back to their start date
-            }
-            return item.type === 'reservation' ? item.check_in : item.start_date;
-        };
-
-        const aDate = new Date(getDateValue(a) ?? 0).getTime();
-        const bDate = new Date(getDateValue(b) ?? 0).getTime();
-
-        // Descending (most recent first)
-        if (bDate !== aDate) return bDate - aDate;
-
-        // Stable tie-breaker to keep reservations ahead of maintenance when dates match
-        if (a.type !== b.type) return a.type === 'reservation' ? -1 : 1;
-        return 0;
-    });
-
-    // Only reservations can be selected for bulk operations
-    const selectableReservations = sortedItems.filter(item => item.type === 'reservation');
-
-    const toggleSelection = (id: string, itemType: 'reservation' | 'maintenance' | 'blackout') => {
-        const newSet = new Set(selectedIds);
-        if (newSet.has(id)) {
-            newSet.delete(id);
-        } else {
-            newSet.add(id);
-        }
-        setSelectedIds(newSet);
-    };
-
-    const toggleAll = () => {
-        if (selectedIds.size === selectableReservations.length) {
-            setSelectedIds(new Set());
-        } else {
-            setSelectedIds(new Set(selectableReservations.map(item => item.id)));
-        }
-    };
-
     const handleBulkAction = async (action: 'check_in' | 'check_out' | 'cancel') => {
-        if (isSubmitting) return;
-        if (!confirm(`Are you sure you want to ${action.replace('_', ' ')} ${selectedIds.size} reservations?`)) return;
-
+        if (isSubmitting || !confirm(`Process ${selectedIds.size} reservations?`)) return;
         setIsSubmitting(true);
         try {
             const res = await fetch('/api/admin/reservations/bulk-status', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    reservationIds: Array.from(selectedIds),
-                    status: action
-                }),
+                body: JSON.stringify({ reservationIds: Array.from(selectedIds), status: action }),
             });
-
             if (!res.ok) throw new Error('Bulk update failed');
-
             await fetchReservations();
             setSelectedIds(new Set());
-            showToast(`${selectedIds.size} reservations ${action.replace('_', ' ')}`, 'success');
+            showToast(`${selectedIds.size} reservations updated`, 'success');
         } catch (error) {
-            console.error(error);
             showToast("Failed to perform bulk action", 'error');
         } finally {
             setIsSubmitting(false);
@@ -253,9 +140,7 @@ export default function AdminPage() {
     };
 
     const handleBulkAssignRandom = async () => {
-        if (isSubmitting) return;
-        if (!confirm(`Auto-assign campsites for ${selectedIds.size} reservations?`)) return;
-
+        if (isSubmitting || !confirm(`Auto-assign ${selectedIds.size} reservations?`)) return;
         setIsSubmitting(true);
         try {
             const res = await fetch('/api/admin/reservations/bulk-assign-random', {
@@ -263,32 +148,12 @@ export default function AdminPage() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ reservationIds: Array.from(selectedIds) }),
             });
-
             const data = await res.json();
-
-            // Report results
-            const successCount = (data.results || []).filter((r: unknown) => {
-                return r && typeof r === 'object' && (r as Record<string, unknown>).success;
-            }).length;
-            const failCount = (data.results || []).length - successCount;
-
-            showToast(`Assigned ${successCount} reservations. ${failCount} failed.`, successCount > 0 ? 'success' : 'warning');
-
+            const successCount = (data.results || []).filter((r: any) => r.success).length;
+            showToast(`Assigned ${successCount} reservations.`, 'success');
             await fetchReservations();
-
-            if (failCount === 0) {
-                setSelectedIds(new Set());
-            } else {
-                const failedIds = new Set<string>(
-                    (data.results || []).filter((r: unknown) => {
-                        return r && typeof r === 'object' && !(r as Record<string, unknown>).success;
-                    }).map((r: unknown) => (r as Record<string, unknown>).id as string)
-                );
-                setSelectedIds(failedIds);
-            }
-
+            setSelectedIds(new Set());
         } catch (error) {
-            console.error("Bulk Assign Error:", error);
             showToast("Failed to run bulk assignment", 'error');
         } finally {
             setIsSubmitting(false);
@@ -296,27 +161,18 @@ export default function AdminPage() {
     };
 
     const handleBulkArchive = async (action: 'archive' | 'restore') => {
-        if (isSubmitting) return;
-        if (!confirm(`Are you sure you want to ${action} ${selectedIds.size} reservations?`)) return;
-
+        if (isSubmitting || !confirm(`${action} ${selectedIds.size} items?`)) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch('/api/admin/reservations/bulk-archive', {
+            await fetch('/api/admin/reservations/bulk-archive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    reservationIds: Array.from(selectedIds),
-                    action
-                }),
+                body: JSON.stringify({ reservationIds: Array.from(selectedIds), action }),
             });
-
-            if (!res.ok) throw new Error(`${action} failed`);
-
             await fetchReservations();
             setSelectedIds(new Set());
-            showToast(`${selectedIds.size} reservations ${action}d`, 'success');
+            showToast(`Items ${action}d`, 'success');
         } catch (error) {
-            console.error(error);
             showToast(`Failed to ${action} items`, 'error');
         } finally {
             setIsSubmitting(false);
@@ -324,26 +180,17 @@ export default function AdminPage() {
     };
 
     const handleArchive = async (reservationId: string) => {
-        if (isSubmitting) return;
-        if (!confirm('Archive this reservation?')) return;
-
+        if (isSubmitting || !confirm('Archive this reservation?')) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch('/api/admin/reservations/bulk-archive', {
+            await fetch('/api/admin/reservations/bulk-archive', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    reservationIds: [reservationId],
-                    action: 'archive'
-                }),
+                body: JSON.stringify({ reservationIds: [reservationId], action: 'archive' }),
             });
-
-            if (!res.ok) throw new Error('Archive failed');
-
             await fetchReservations();
             showToast('Reservation archived', 'success');
         } catch (error) {
-            console.error(error);
             showToast('Failed to archive reservation', 'error');
         } finally {
             setIsSubmitting(false);
@@ -351,38 +198,58 @@ export default function AdminPage() {
     };
 
     const handleDeleteMaintenance = async (maintenanceId: string) => {
-        if (isSubmitting) return;
-        if (!confirm('Delete this maintenance block? This action cannot be undone.')) return;
-
+        if (isSubmitting || !confirm('Delete maintenance block?')) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch(`/api/admin/blackout-dates/${maintenanceId}`, {
-                method: 'DELETE',
-            });
-
-            if (!res.ok) {
-                const data = await res.json();
-                throw new Error(data.error || 'Delete failed');
-            }
-
+            await fetch(`/api/admin/blackout-dates/${maintenanceId}`, { method: 'DELETE' });
             await fetchReservations();
             showToast('Maintenance block deleted', 'success');
         } catch (error) {
-            console.error(error);
-            showToast(error instanceof Error ? error.message : 'Failed to delete maintenance block', 'error');
+            showToast('Failed to delete', 'error');
         } finally {
             setIsSubmitting(false);
         }
     };
 
-    const { statusCounts, maintenanceCount } = computeCounts(items);
+    // Filter and Sort Logic
+    const statusFilteredItems = useMemo(() => {
+        if (filter === 'all') return items;
+        if (filter === 'maintenance') return items.filter(item => item.type === 'maintenance' || item.type === 'blackout');
+        return items.filter(item => item.type === 'reservation' && item.status === filter);
+    }, [items, filter]);
 
-    const getNights = (start: string, end: string) => {
-        const diff = new Date(end).getTime() - new Date(start).getTime();
-        return Math.ceil(diff / (1000 * 3600 * 24));
-    };
+    const filteredItems = useMemo(() => {
+        if (!searchQuery.trim()) return statusFilteredItems;
+        const q = searchQuery.toLowerCase();
+        
+        return statusFilteredItems.filter(item => {
+            if (item.type === 'reservation') {
+                const res = item as any;
+                const fullName = `${res.first_name || ''} ${res.last_name || ''}`.toLowerCase();
+                const email = (res.email || '').toLowerCase();
+                const phone = (res.phone || '').toLowerCase();
+                const id = (res.id || '').toLowerCase();
+                const campsiteCode = (res.campsites?.code || '').toLowerCase();
+                
+                return fullName.includes(q) || 
+                       email.includes(q) || 
+                       phone.includes(q) || 
+                       id.includes(q) || 
+                       campsiteCode.includes(q);
+            } else {
+                // Maintenance / Blackout items
+                const mt = item as any;
+                const reason = (mt.reason || '').toLowerCase();
+                const campsiteCode = (mt.campsite_code || '').toLowerCase();
+                return reason.includes(q) || campsiteCode.includes(q);
+            }
+        });
+    }, [statusFilteredItems, searchQuery]);
 
-    // Get current filter label for "Showing:" text
+    const sortedItems = useMemo(() => sortItems(filteredItems, sortMode), [filteredItems, sortMode]);
+    const selectableReservations = useMemo(() => sortedItems.filter(item => item.type === 'reservation'), [sortedItems]);
+    const { statusCounts, maintenanceCount } = useMemo(() => computeCounts(items), [items]);
+
     const getFilterLabel = () => {
         if (showArchived) return 'Archived';
         if (filter === 'all') return 'All';
@@ -390,576 +257,97 @@ export default function AdminPage() {
         return filter.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase());
     };
 
-    // Determine payment status based on transactions and reservation data
-    const getPaymentStatus = (item: unknown): PaymentStatus => {
-        const reservation = item as {
-            payment_transactions?: PaymentTransaction[],
-            metadata?: { total_amount?: number },
-            check_in?: string,
-            status?: string
-        };
-
-        const transactions = reservation.payment_transactions || [];
-        const totalAmount = reservation.metadata?.total_amount || 0;
-
-        // No transactions yet
-        if (transactions.length === 0) {
-            // Check if overdue (past check-in and not cancelled)
-            if (reservation.check_in && reservation.status !== 'cancelled') {
-                const checkInDate = new Date(reservation.check_in);
-                const now = new Date();
-                if (now > checkInDate) {
-                    return 'overdue';
-                }
-            }
-            return 'payment_due';
-        }
-
-        // Find succeeded transactions
-        const succeededTransactions = transactions.filter(t => t.status === 'succeeded');
-        const totalPaid = succeededTransactions.reduce((sum, t) => sum + t.amount, 0);
-
-        // Check for refunded
-        const hasRefund = transactions.some(t => t.type === 'refund');
-        if (hasRefund) {
-            return 'refunded';
-        }
-
-        // Check for failed (most recent transaction)
-        const sortedTransactions = [...transactions].sort((a, b) =>
-            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-        );
-        if (sortedTransactions[0]?.status === 'failed') {
-            return 'failed';
-        }
-
-        // Determine if paid in full or deposit
-        if (totalPaid > 0 && totalAmount > 0) {
-            // Allow 1 cent tolerance for rounding
-            if (Math.abs(totalPaid - totalAmount) < 0.02) {
-                return 'paid';
-            } else if (totalPaid < totalAmount) {
-                return 'deposit_paid';
-            }
-            return 'paid'; // Overpaid or exact
-        }
-
-        // Has payments but can't determine status
-        if (totalPaid > 0) {
-            return 'deposit_paid';
-        }
-
-        return 'payment_due';
+    const toggleSelection = (id: string) => {
+        const next = new Set(selectedIds);
+        if (next.has(id)) next.delete(id); else next.add(id);
+        setSelectedIds(next);
     };
 
-    if (loading) {
-        return (
-            <div className="py-12">
-                <Container>
-                    <div className="animate-fade-in space-y-4">
-                        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />
-                        <div className="flex gap-2 mb-8">
-                             {[1,2,3,4].map(i => <div key={i} className="h-8 w-24 bg-gray-200 dark:bg-gray-800 rounded animate-pulse" />)}
-                        </div>
-                        <div className="h-96 w-full bg-gray-100 dark:bg-gray-900 rounded-lg animate-pulse" />
-                    </div>
-                </Container>
-            </div>
-        );
-    }
-
-    if (error) {
-        return (
-            <div className="py-12">
-                <Container>
-                    <div className="p-4 bg-red-50 text-red-600 border border-red-200 rounded-lg">
-                        <strong>Error:</strong> {error}
-                    </div>
-                    <button
-                        onClick={() => fetchReservations()}
-                        className="mt-4 px-4 py-2 bg-[var(--color-accent-gold)] text-[var(--color-text-inverse)] rounded-lg hover:opacity-90 transition-opacity"
-                    >
-                        Retry
-                    </button>
-                </Container>
-            </div>
-        );
-    }
+    if (loading) return <div className="py-12"><Container><div className="animate-pulse h-96 bg-gray-100 dark:bg-gray-900 rounded-lg" /></Container></div>;
+    if (error) return <div className="py-12"><Container><div className="p-4 bg-red-50 text-red-600 rounded-lg">{error}</div></Container></div>;
 
     return (
         <div className="py-8 min-h-screen bg-[var(--color-background)]">
             <Container>
-                {/* Row 1: Title Only */}
                 <div className="mb-6">
-                    <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">
-                        Reservations
-                    </h1>
-                    <p className="text-sm text-[var(--color-text-muted)] mt-0.5">
-                        Manage bookings and blocks
-                    </p>
+                    <h1 className="text-2xl font-semibold text-[var(--color-text-primary)]">Reservations</h1>
+                    <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Manage bookings and blocks</p>
                 </div>
 
                 <OnboardingChecklist />
 
-                {/* Row 2: Full-width Status Tabs */}
-                <div className="w-full border-b border-[var(--color-border-default)]/10 mb-6">
-                    <div className="flex w-full items-center justify-between gap-4">
-                        {/* Left: Tabs */}
-                        <div className="flex min-w-0 flex-1 gap-6 overflow-x-auto scrollbar-hide pb-2">
-                            <button
-                                onClick={() => setFilter('all')}
-                                className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                                    filter === 'all'
-                                        ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
-                                        : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-                                }`}
-                            >
-                                {showArchived ? 'Archived' : 'All'}
-                                <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${
-                                    filter === 'all'
-                                        ? 'bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]'
-                                        : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                                }`}>
-                                    {items.length}
-                                </span>
-                            </button>
-                            {!showArchived && (
-                                <>
-                                    {(['pending', 'confirmed', 'checked_in', 'checked_out', 'cancelled'] as ReservationStatus[]).map(status => (
-                                        <button
-                                            key={status}
-                                            onClick={() => setFilter(status)}
-                                            className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap capitalize ${
-                                                filter === status
-                                                    ? 'border-[var(--color-accent-gold)] text-[var(--color-accent-gold)]'
-                                                    : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-                                            }`}
-                                        >
-                                            {status.replace('_', ' ')}
-                                            <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${
-                                                filter === status
-                                                    ? 'bg-[var(--color-accent-gold)]/10 text-[var(--color-accent-gold)]'
-                                                    : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                                            }`}>
-                                                {statusCounts[status] || 0}
-                                            </span>
-                                        </button>
-                                    ))}
-                                    <button
-                                        onClick={() => setFilter('maintenance')}
-                                        className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
-                                            filter === 'maintenance'
-                                                ? 'border-amber-500 text-amber-600 dark:text-amber-500'
-                                                : 'border-transparent text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)]'
-                                        }`}
-                                    >
-                                        🛠️ Maintenance
-                                        <span className={`ml-2 text-xs py-0.5 px-1.5 rounded-full ${
-                                            filter === 'maintenance'
-                                                ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
-                                                : 'bg-gray-100 dark:bg-gray-800 text-gray-500'
-                                        }`}>
-                                            {maintenanceCount}
-                                        </span>
-                                    </button>
-                                </>
-                            )}
-                        </div>
+                <DashboardStats
+                    filter={filter}
+                    setFilter={setFilter}
+                    showArchived={showArchived}
+                    totalCount={items.length}
+                    statusCounts={statusCounts}
+                    maintenanceCount={maintenanceCount}
+                    sortedItemsCount={sortedItems.length}
+                    searchQuery={searchQuery}
+                    onClearSearch={() => setSearchQuery('')}
+                    getFilterLabel={getFilterLabel}
+                />
 
-                        {/* Right: Meta info */}
-                        <div className="shrink-0 text-xs text-[var(--color-text-muted)]/50 whitespace-nowrap pb-2">
-                            Showing: <span className="font-semibold text-[var(--color-text-primary)]">{getFilterLabel()}</span>
-                            {searchQuery ? (
-                                <>
-                                    {' · '}
-                                    <span className="font-semibold text-[var(--color-text-primary)]">{sortedItems.length}</span>
-                                    {' '}{sortedItems.length === 1 ? 'result' : 'results'}
-                                </>
-                            ) : (
-                                <>
-                                    {' · '}
-                                    <span className="font-semibold text-[var(--color-text-primary)]">{sortedItems.length}</span>
-                                    {' total'}
-                                </>
-                            )}
-                            {searchQuery && (
-                                <>
-                                    {' · '}
-                                    <button
-                                        onClick={() => setSearchQuery('')}
-                                        className="text-[var(--color-text-muted)]/50 hover:text-[var(--color-text-primary)] transition-colors underline"
-                                    >
-                                        clear
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    </div>
-                </div>
+                <DashboardSearch
+                    searchQuery={searchQuery}
+                    setSearchQuery={setSearchQuery}
+                    sortMode={sortMode}
+                    setSortMode={setSortMode}
+                    showArchived={showArchived}
+                    setShowArchived={setShowArchived}
+                    searchInputRef={searchInputRef}
+                />
 
-                {/* Row 3: Search + Controls */}
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-                    <div className="min-w-[260px] flex-1 max-w-[520px]">
-                        <div className="relative group">
-                            <Search
-                                className="absolute left-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] group-focus-within:text-[var(--color-accent-gold)] transition-colors"
-                                size={16}
-                            />
-                            <input
-                                ref={searchInputRef}
-                                type="text"
-                                placeholder="Search name, email, phone, ref..."
-                                value={searchQuery}
-                                onChange={(e) => setSearchQuery(e.target.value)}
-                                className="w-full pl-10 pr-10 py-2 rounded-lg border border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] text-sm text-[var(--color-text-primary)] placeholder:text-[var(--color-text-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-gold)] transition-all"
-                            />
-                            {searchQuery && (
-                                <button
-                                    onClick={() => setSearchQuery('')}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
-                                    aria-label="Clear search"
-                                >
-                                    <X size={16} />
-                                </button>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center gap-2 text-sm text-[var(--color-text-muted)]">
-                            <span>Sort</span>
-                            <select
-                                value={sortMode}
-                                onChange={(e) => setSortMode(e.target.value as SortMode)}
-                                className="rounded-md border border-[var(--color-border-subtle)] bg-[var(--color-surface-card)] px-3 py-1.5 text-sm text-[var(--color-text-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-accent-gold)]"
-                            >
-                                <option value="start_date">Start date</option>
-                                <option value="created_at">Created date</option>
-                            </select>
-                        </div>
-
-                        <label className="flex items-center gap-2 text-xs text-[var(--color-text-muted)] cursor-pointer hover:text-[var(--color-text-primary)] transition-colors">
-                            <input
-                                type="checkbox"
-                                checked={showArchived}
-                                onChange={(e) => setShowArchived(e.target.checked)}
-                                className="rounded border-gray-300 text-[var(--color-accent-gold)] focus:ring-[var(--color-accent-gold)]"
-                            />
-                            Show archived
-                        </label>
-
-                        <Link
-                            href="/admin/calendar"
-                            className="flex items-center gap-2 px-4 py-1.5 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-elevated)] hover:bg-[var(--color-surface-elevated)]/80 border border-[var(--color-border-subtle)] rounded-lg transition-all"
-                        >
-                            <span>📅</span>
-                            <span>Calendar</span>
-                        </Link>
-                    </div>
-                </div>
-
-                {/* Reservations Table */}
                 <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm overflow-hidden">
                     <div className="overflow-x-auto">
                         <table className="w-full table-fixed border-collapse">
                             <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
                                 <tr>
-                                    <th className="px-3 pl-4 py-3 w-10 text-left font-medium text-gray-500 shrink-0">
+                                    <th className="px-3 pl-4 py-3 w-10 text-left">
                                         <input
                                             type="checkbox"
-                                            disabled={isSubmitting}
-                                            className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
-                                                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                            }`}
+                                            className="rounded-md w-5 h-5 cursor-pointer"
                                             checked={selectedIds.size > 0 && selectedIds.size === selectableReservations.length}
-                                            ref={input => { if (input) input.indeterminate = selectedIds.size > 0 && selectedIds.size < selectableReservations.length; }}
-                                            onChange={toggleAll}
+                                            onChange={() => setSelectedIds(selectedIds.size === selectableReservations.length ? new Set() : new Set(selectableReservations.map(i => i.id)))}
                                         />
                                     </th>
-                            <th className="px-5 py-3 w-[260px] border-l border-[var(--color-border-default)]/30">Guest</th>
-                                    <th className="px-5 py-3 w-[180px] whitespace-nowrap border-l border-[var(--color-border-default)]/30">Dates</th>
-                                    <th className="px-5 py-3 min-w-0 border-l border-[var(--color-border-default)]/30">Details</th>
-                                    <th className="px-5 py-3 w-[110px] text-center border-l border-[var(--color-border-default)]/30">Campsite</th>
-                                    <th className="px-5 py-3 w-[180px] text-center border-l border-[var(--color-border-default)]/30">Status</th>
-                                    <th className="px-5 py-3 w-[90px] text-center border-l border-[var(--color-border-default)]/30">Actions</th>
+                                    <th className="px-5 py-3 w-[260px] border-l border-[var(--color-border-default)]/20">Guest</th>
+                                    <th className="px-5 py-3 w-[180px] border-l border-[var(--color-border-default)]/20">Dates</th>
+                                    <th className="px-5 py-3 min-w-0 border-l border-[var(--color-border-default)]/20">Details</th>
+                                    <th className="px-5 py-3 w-[110px] text-center border-l border-[var(--color-border-default)]/20">Campsite</th>
+                                    <th className="px-5 py-3 w-[180px] text-center border-l border-[var(--color-border-default)]/20">Status</th>
+                                    <th className="px-5 py-3 w-[90px] text-center border-l border-[var(--color-border-default)]/20">Actions</th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-[var(--color-border-subtle)] text-sm">
                                 {sortedItems.length === 0 ? (
-                                    <tr>
-                                        <td colSpan={7} className="px-5 py-12 text-center text-[var(--color-text-muted)]">
-                                            No items found matching this filter.
-                                        </td>
-                                    </tr>
+                                    <tr><td colSpan={7} className="px-5 py-12 text-center text-[var(--color-text-muted)]">No items found.</td></tr>
                                 ) : (
-                                    sortedItems.map((item) => {
-                                        // Handle blocking events (maintenance/blackout)
-                                        if (item.type === 'maintenance' || item.type === 'blackout') {
-                                            const isSelected = selectedIds.has(item.id);
-                                            const rowClass = `group transition-colors cursor-pointer border-l-2 opacity-70 ${
-                                                isSelected
-                                                    ? 'border-l-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/5'
-                                                    : 'border-l-transparent hover:bg-[var(--color-surface-elevated)]'
-                                            }`;
-
-                                            return (
-                                                <tr
-                                                    key={item.id}
-                                                    className={rowClass}
-                                                >
-                                                    {/* Checkbox - Enabled for maintenance */}
-                                                    <td className="px-3 pl-4 py-4 w-10 align-middle" onClick={(e) => e.stopPropagation()}>
-                                                        <div className="flex items-center min-h-[28px]">
-                                                            <input
-                                                                type="checkbox"
-                                                                disabled={isSubmitting}
-                                                                className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
-                                                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                                                }`}
-                                                                checked={selectedIds.has(item.id)}
-                                                                onChange={() => toggleSelection(item.id, item.type)}
-                                                            />
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Guest Column - Show "—" for maintenance */}
-                                                    <td className="px-5 py-4 align-top border-l border-[var(--color-border-default)]/30">
-                                                        <div className="flex items-center gap-2">
-                                                            <Wrench size={16} className="text-[var(--color-text-muted)]" />
-                                                            <span className="text-[var(--color-text-muted)] italic">Maintenance Block</span>
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Dates Column */}
-                                                    <td className="px-5 py-4 align-top whitespace-nowrap border-l border-[var(--color-border-default)]/30">
-                                                        <div className="text-[var(--color-text-primary)]">
-                                                            {new Date(item.start_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
-                                                            <span className="text-[var(--color-text-muted)] mx-2">→</span>
-                                                            {new Date(item.end_date).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
-                                                        </div>
-                                                        <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                                                            {getNights(item.start_date, item.end_date)} days
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Details Column - Show reason */}
-                                                    <td className="px-5 py-4 align-top min-w-0 border-l border-[var(--color-border-default)]/30">
-                                                        <div
-                                                            className="text-[var(--color-text-muted)] text-sm truncate max-w-[260px]"
-                                                            title={item.reason || 'No reason specified'}
-                                                        >
-                                                            {item.reason || 'No reason specified'}
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Campsite Column */}
-                                                    <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
-                                                        <div className="inline-flex justify-center items-center min-h-[28px]">
-                                                            {item.campsite_code ? (
-                                                                <span className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-muted)] text-xs h-7">
-                                                                    {item.campsite_code}
-                                                                </span>
-                                                            ) : (
-                                                                <span className="text-[var(--color-text-muted)] text-xs italic">All sites</span>
-                                                            )}
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Status Column - Show maintenance pill */}
-                                                    <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
-                                                        <div className="inline-flex justify-center items-center min-h-[28px]">
-                                                            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 border border-gray-200 dark:border-gray-700">
-                                                                🛠️ Blocked
-                                                            </span>
-                                                        </div>
-                                                    </td>
-
-                                                    {/* Actions Column */}
-                                                    <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
-                                                        <div className="inline-flex items-center justify-center gap-2 min-h-[28px]">
-                                                            <button
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    handleDeleteMaintenance(item.id);
-                                                                }}
-                                                                disabled={isSubmitting}
-                                                                className={`p-2 rounded-full text-red-600 hover:bg-red-100 dark:text-red-400 dark:hover:bg-red-900/30 transition-colors ${
-                                                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                                                }`}
-                                                                title="Delete Maintenance Block"
-                                                            >
-                                                                <Trash2 size={16} />
-                                                            </button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                            );
-                                        }
-
-                                        // Handle regular reservations (guard against non-reservation items)
-                                        if (item.type !== 'reservation') {
-                                            return null;
-                                        }
-                                        const reservation = item as unknown as Reservation;
-                                        // Row-level styling based on status
-                                        const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
-                                        const isCheckedIn = reservation.status === 'checked_in';
-                                        const isSelected = selectedIds.has(reservation.id!);
-                                        const isArchived = !!(reservation as unknown as { archived_at?: string }).archived_at;
-
-                                        const rowClass = `group transition-colors cursor-pointer border-l-2 ${
-                                            isSelected
-                                                ? 'border-l-[var(--color-accent-gold)] bg-[var(--color-accent-gold)]/5'
-                                                : 'border-l-transparent'
-                                        } ${
-                                            isArchived
-                                                ? 'opacity-50 bg-gray-50/30 dark:bg-gray-900/10'
-                                                : isCancelled
-                                                    ? 'opacity-60 grayscale bg-gray-50/50 dark:bg-gray-900/20'
-                                                    : isCheckedIn
-                                                        ? 'bg-green-50/30 hover:bg-green-50/60 dark:bg-green-900/10 dark:hover:bg-green-900/20'
-                                                        : 'hover:bg-[var(--color-surface-elevated)]'
-                                        }`;
-
-                                        return (
-                                            <tr
-                                                key={reservation.id}
-                                                className={rowClass}
-                                                onClick={() => setSelectedReservation(reservation)}
-                                            >
-                                                {/* Checkbox Column */}
-                                                <td className="px-3 pl-4 py-4 w-10 align-middle" onClick={(e) => e.stopPropagation()}>
-                                                    <div className="flex items-center min-h-[28px]">
-                                                        <input
-                                                            type="checkbox"
-                                                            disabled={isSubmitting}
-                                                            className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
-                                                                isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                                            }`}
-                                                            checked={selectedIds.has(reservation.id!)}
-                                                            onChange={() => toggleSelection(reservation.id!, 'reservation')}
-                                                        />
-                                                    </div>
-                                                </td>
-
-                                                {/* Guest Column */}
-                                                <td className="px-5 py-4 align-top border-l border-[var(--color-border-default)]/30">
-                                                    <div className="font-semibold text-[var(--color-text-primary)] text-base">
-                                                        {reservation.first_name} {reservation.last_name}
-                                                    </div>
-                                                    <div className="text-[var(--color-text-muted)] text-xs mt-0.5 flex flex-col gap-0.5">
-                                                        {reservation.email && <div>{reservation.email}</div>}
-                                                        {reservation.phone && <div>{reservation.phone}</div>}
-                                                    </div>
-                                                </td>
-
-                                                {/* Dates Column */}
-                                                <td className="px-5 py-4 align-top whitespace-nowrap border-l border-[var(--color-border-default)]/30">
-                                                    <div className="text-[var(--color-text-primary)]">
-                                                        {new Date(reservation.check_in).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
-                                                        <span className="text-[var(--color-text-muted)] mx-2">→</span>
-                                                        {new Date(reservation.check_out).toLocaleDateString(undefined, { month: 'short', day: 'numeric'})}
-                                                    </div>
-                                                    <div className="text-xs text-[var(--color-text-muted)] mt-0.5">
-                                                        {getNights(reservation.check_in, reservation.check_out)} nights
-                                                    </div>
-                                                </td>
-
-                                                {/* Details Column */}
-                                                <td className="px-5 py-4 align-top min-w-0 border-l border-[var(--color-border-default)]/30">
-                                                    <div className="flex flex-col gap-1 max-w-[260px]">
-                                                         <div className="flex items-center gap-1.5 text-[var(--color-text-primary)]">
-                                                            <span className="text-base text-[var(--color-text-muted)]">
-                                                                 {reservation.camping_unit?.includes('Tent') ? '⛺' : '🚐'}
-                                                            </span>
-                                                            <span>{reservation.camping_unit}</span>
-                                                        </div>
-                                                        <div className="text-xs text-[var(--color-text-muted)] flex gap-2">
-                                                            <span>👥 {reservation.adults} Adults, {reservation.children} Kids</span>
-                                                        </div>
-                                                        {(() => {
-                                                            const paymentStatus = getPaymentStatus(reservation);
-                                                            if (!paymentStatus) return null;
-
-                                                            const paymentConfig = {
-                                                                paid: { icon: '✓', label: 'Paid in full', color: 'text-green-600/60 dark:text-green-400/60' },
-                                                                deposit_paid: { icon: '💳', label: 'Deposit paid', color: 'text-blue-600/60 dark:text-blue-400/60' },
-                                                                payment_due: { icon: '⏳', label: 'Payment due', color: 'text-amber-600/80 dark:text-amber-400/80' },
-                                                                overdue: { icon: '⚠️', label: 'Payment overdue', color: 'text-red-600/80 dark:text-red-400/80' },
-                                                                failed: { icon: '✕', label: 'Payment failed', color: 'text-red-600/80 dark:text-red-400/80' },
-                                                                refunded: { icon: '↩', label: 'Refunded', color: 'text-gray-600/60 dark:text-gray-400/60' }
-                                                            };
-
-                                                            const config = paymentConfig[paymentStatus];
-
-                                                            return (
-                                                                <div className={`mt-0.5 flex items-center gap-1 text-xs ${config.color}`}>
-                                                                    <span className="opacity-70">{config.icon}</span>
-                                                                    <span>{config.label}</span>
-                                                                </div>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                </td>
-
-                                                {/* Campsite Column */}
-                                                <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
-                                                    <div className="inline-flex justify-center items-center min-h-[28px]">
-                                                        {reservation.campsites ? (
-                                                            <span className="inline-flex items-center px-2.5 py-1 rounded bg-[var(--color-surface-elevated)] border border-[var(--color-border-subtle)] font-mono font-medium text-[var(--color-text-primary)] text-xs h-7">
-                                                                {reservation.campsites.code}
-                                                            </span>
-                                                        ) : (
-                                                            <button
-                                                                disabled={isSubmitting}
-                                                                className={`flex items-center gap-1.5 text-amber-700 bg-amber-50 hover:bg-amber-100 dark:bg-amber-900/20 dark:hover:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded font-medium text-xs transition-colors group/unassigned border border-amber-200/50 dark:border-amber-800/50 h-7 ${
-                                                                    isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
-                                                                }`}
-                                                                onClick={(e) => {
-                                                                    e.stopPropagation();
-                                                                    setAssigningReservation(reservation);
-                                                                }}
-                                                            >
-                                                                <AlertTriangle size={14} className="stroke-[2.5]" />
-                                                                <span className="font-bold text-xs uppercase tracking-wide translate-y-[0.5px]">Assign</span>
-                                                            </button>
-                                                        )}
-                                                    </div>
-                                                </td>
-
-                                                {/* Status Column */}
-                                                <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
-                                                    <div className="inline-flex justify-center items-center gap-2">
-                                                        <StatusPill status={reservation.status} />
-                                                        {(() => {
-                                                            const paymentStatus = getPaymentStatus(reservation);
-                                                            const needsAttention = paymentStatus === 'overdue' || paymentStatus === 'failed' || paymentStatus === 'payment_due';
-
-                                                            if (!needsAttention) return null;
-
-                                                            return (
-                                                                <span className="flex items-center justify-center w-4 h-4 rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400" title="Payment needs attention">
-                                                                    <span className="text-xs font-bold">!</span>
-                                                                </span>
-                                                            );
-                                                        })()}
-                                                    </div>
-                                                </td>
-
-                                                {/* Actions Column */}
-                                                <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/30">
-                                                    <div className="inline-flex items-center justify-center gap-2 min-h-[28px]">
-                                                        <RowActions
-                                                            reservation={reservation}
-                                                            updateStatus={updateStatus}
-                                                            onArchive={handleArchive}
-                                                            isSubmitting={isSubmitting}
-                                                        />
-                                                    </div>
-                                                </td>
-                                            </tr>
-                                        );
-                                    })
+                                    sortedItems.map(item => (
+                                        item.type === 'reservation' ? (
+                                            <ReservationRow
+                                                key={item.id}
+                                                reservation={item as any}
+                                                isSelected={selectedIds.has(item.id)}
+                                                isSubmitting={isSubmitting}
+                                                onToggle={() => toggleSelection(item.id)}
+                                                onClick={setSelectedReservation}
+                                                updateStatus={updateStatus}
+                                                handleArchive={handleArchive}
+                                                setAssigningReservation={setAssigningReservation}
+                                            />
+                                        ) : (
+                                            <MaintenanceRow
+                                                key={item.id}
+                                                item={item as BlockingEventOverviewItem}
+                                                isSelected={selectedIds.has(item.id)}
+                                                isSubmitting={isSubmitting}
+                                                onToggle={() => toggleSelection(item.id)}
+                                                onDelete={handleDeleteMaintenance}
+                                            />
+                                        )
+                                    ))
                                 )}
                             </tbody>
                         </table>
@@ -967,19 +355,8 @@ export default function AdminPage() {
                 </div>
             </Container>
 
-            <ReservationDrawer
-                reservation={selectedReservation}
-                isOpen={!!selectedReservation}
-                onClose={() => setSelectedReservation(null)}
-            />
-
-            <AssignmentDialog
-                reservation={assigningReservation}
-                isOpen={!!assigningReservation}
-                onClose={() => setAssigningReservation(null)}
-                onAssign={handleAssignCampsite}
-            />
-
+            <ReservationDrawer reservation={selectedReservation} isOpen={!!selectedReservation} onClose={() => setSelectedReservation(null)} />
+            <AssignmentDialog reservation={assigningReservation} isOpen={!!assigningReservation} onClose={() => setAssigningReservation(null)} onAssign={handleAssignCampsite} />
             <BulkBar
                 selectedCount={selectedIds.size}
                 showArchived={showArchived}
