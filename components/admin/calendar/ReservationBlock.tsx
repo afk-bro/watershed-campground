@@ -127,6 +127,12 @@ function ReservationBlock({
           e.preventDefault();
           return;
         }
+        
+        // Hide the default browser drag image so we only see the customized GhostPreview
+        const emptyImg = new Image();
+        emptyImg.src = 'data:image/gif;base64,R0lGODlhAQABAIAAAAUEBAAAACwAAAAAAQABAAACAkQBADs=';
+        e.dataTransfer.setDragImage(emptyImg, 0, 0);
+
         onDragStart(e, reservation);
       }}
       onDragEnd={onDragEnd}
