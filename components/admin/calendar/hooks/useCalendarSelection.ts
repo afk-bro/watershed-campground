@@ -74,13 +74,20 @@ export function useCalendarSelection(enabled: boolean): UseCalendarSelectionRetu
   }, [enabled]);
 
   const handleCellMouseDown = useCallback((campsiteId: string, dateStr: string) => {
-    // Only start if selection is enabled
     if (!enabledRef.current) return;
 
+    // If already creating, this click is the "End" click
+    if (isCreating && creationStart && campsiteId === creationStart.campsiteId) {
+      setIsCreating(false);
+      setCreationEnd({ campsiteId, date: dateStr });
+      return;
+    }
+
+    // Otherwise, this is the "Start" click
     setIsCreating(true);
     setCreationStart({ campsiteId, date: dateStr });
     setCreationEnd({ campsiteId, date: dateStr });
-  }, []); // Stable handler
+  }, [isCreating, creationStart]);
 
   const handleCellMouseEnter = useCallback((campsiteId: string, dateStr: string) => {
     if (!isCreating || !creationStart) return;
@@ -92,10 +99,16 @@ export function useCalendarSelection(enabled: boolean): UseCalendarSelectionRetu
   }, [isCreating, creationStart]);
 
   const handleCellMouseUp = useCallback(() => {
-    if (!isCreating) return;
-    setIsCreating(false);
-    // Don't clear creationStart/creationEnd here - parent needs them for dialog
-  }, [isCreating]);
+    // We don't finish on MouseUp anymore in the Two-Click model
+    // unless we want to support both. Let's make it smarter:
+    // If the mouse up is on a different day than mouse down, we finish.
+    // If it's the same day, we stay in "Creating" mode for the second click.
+    if (!isCreating || !creationStart || !creationEnd) return;
+
+    if (creationStart.date !== creationEnd.date) {
+      setIsCreating(false);
+    }
+  }, [isCreating, creationStart, creationEnd]);
 
   const clearSelection = useCallback(() => {
     setIsCreating(false);
@@ -113,6 +126,18 @@ export function useCalendarSelection(enabled: boolean): UseCalendarSelectionRetu
   }, [creationStart, creationEnd]);
 
   const selection = getSelectionRange();
+
+  // Handle escape to clear
+  useEffect(() => {
+    if (!isCreating) return;
+    const handleEsc = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        clearSelection();
+      }
+    };
+    window.addEventListener('keydown', handleEsc);
+    return () => window.removeEventListener('keydown', handleEsc);
+  }, [isCreating, clearSelection]);
 
   return {
     isCreating,
