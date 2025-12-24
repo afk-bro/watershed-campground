@@ -402,16 +402,17 @@ export default function CalendarGrid({
     creationStart,
     creationEnd,
     selection,
-    handleCellMouseDown,
-    handleCellMouseEnter,
-    handleCellMouseUp: handleCellMouseUpBase,
+    handleCellPointerDown,
+    handleCellPointerEnter,
+    handleCellPointerUp: handleCellPointerUpBase,
+    handleCellPointerCancel,
     clearSelection,
   } = useCalendarSelection(!isDragging && !resizeState, isValidSelectionCell);
 
-  // Wrap handleCellMouseUp to also show dialog
-  const handleCellMouseUp = useCallback(() => {
-    handleCellMouseUpBase();
-  }, [handleCellMouseUpBase]);
+  // Wrap handleCellPointerUp to also show dialog
+  const handleCellPointerUp = useCallback(() => {
+    handleCellPointerUpBase();
+  }, [handleCellPointerUpBase]);
 
   // Show creation dialog when selection is non-null and creation has ended
   useEffect(() => {
@@ -468,24 +469,33 @@ export default function CalendarGrid({
     }
   };
 
-  // Auto-scroll during creation drag
-  const handleCreationMouseMove = useCallback((e: MouseEvent) => {
-    if (!isCreating) return;
-    updateScrollDirection(e.clientX, e.clientY);
-  }, [isCreating, updateScrollDirection]);
+  // Ref to track if we're currently creating (prevents stale closures)
+  const isCreatingRef = useRef(isCreating);
+  useEffect(() => {
+    isCreatingRef.current = isCreating;
+  }, [isCreating]);
 
-  // Add/remove window mouse listeners for creation drag
+  // Auto-scroll during creation drag - stabilized handler using refs
+  // This function is created once and never recreates, preventing listener thrash
+  const handleCreationPointerMove = useCallback((e: PointerEvent) => {
+    // Read current state from ref to avoid stale closures
+    if (!isCreatingRef.current) return;
+    updateScrollDirection(e.clientX, e.clientY);
+  }, [updateScrollDirection]); // Only depends on updateScrollDirection, not isCreating
+
+  // Add/remove window pointer listeners for creation drag
+  // Attaches ONCE when isCreating becomes true, removes when it becomes false
   useEffect(() => {
     if (isCreating) {
-      console.log('[CREATION] Setting up mousemove listener for auto-scroll');
-      window.addEventListener('mousemove', handleCreationMouseMove);
+      console.log('[CREATION] Setting up pointermove listener for auto-scroll');
+      window.addEventListener('pointermove', handleCreationPointerMove);
       return () => {
-        console.log('[CREATION] Removing mousemove listener');
-        window.removeEventListener('mousemove', handleCreationMouseMove);
+        console.log('[CREATION] Removing pointermove listener');
+        window.removeEventListener('pointermove', handleCreationPointerMove);
         stopAutoScroll(); // Stop any active scrolling
       };
     }
-  }, [isCreating, handleCreationMouseMove, stopAutoScroll]);
+  }, [isCreating, handleCreationPointerMove, stopAutoScroll]);
 
   const handleCreateBlackout = async (reason: string) => {
     if (!creationStart || !creationEnd) return;
@@ -609,11 +619,13 @@ export default function CalendarGrid({
           ref={scrollContainerRef}
           {...containerProps}
           className="calendar-hscroll overflow-x-auto overflow-y-visible relative select-none scrollbar-soft"
-          onMouseUp={handleCellMouseUp}
-          onMouseLeave={() => {
+          style={{ touchAction: 'none' }}
+          onPointerUp={handleCellPointerUp}
+          onPointerCancel={handleCellPointerCancel}
+          onPointerLeave={() => {
             if (isCreating) {
               clearSelection();
-              stopAutoScroll(); // Stop scrolling when mouse leaves
+              stopAutoScroll(); // Stop scrolling when pointer leaves
             }
           }}
         >
@@ -707,8 +719,8 @@ export default function CalendarGrid({
                           baseBackgroundClass="bg-[var(--color-status-pending-bg)]/50"
                           onDragOver={handleDragOverCell}
                           onDrop={handleDrop}
-                          onMouseDown={handleCellMouseDown}
-                          onMouseEnter={handleCellMouseEnter}
+                          onPointerDown={handleCellPointerDown}
+                          onPointerEnter={handleCellPointerEnter}
                         />
                       );
                     })}
@@ -800,8 +812,8 @@ export default function CalendarGrid({
                           validationError={validationError}
                           onDragOver={handleDragOverCell}
                           onDrop={handleDrop}
-                          onMouseDown={handleCellMouseDown}
-                          onMouseEnter={handleCellMouseEnter}
+                          onPointerDown={handleCellPointerDown}
+                          onPointerEnter={handleCellPointerEnter}
                         />
                       );
                     })}

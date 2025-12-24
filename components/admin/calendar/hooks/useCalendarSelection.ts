@@ -27,13 +27,16 @@ export interface UseCalendarSelectionReturn {
   selection: SelectionRange | null;
 
   /** Start selection on a cell */
-  handleCellMouseDown: (campsiteId: string, dateStr: string) => void;
+  handleCellPointerDown: (e: React.PointerEvent, campsiteId: string, dateStr: string) => void;
 
   /** Extend selection to a cell */
-  handleCellMouseEnter: (campsiteId: string, dateStr: string) => void;
+  handleCellPointerEnter: (campsiteId: string, dateStr: string) => void;
 
   /** Finish selection */
-  handleCellMouseUp: () => void;
+  handleCellPointerUp: () => void;
+
+  /** Cancel selection (for pointercancel events) */
+  handleCellPointerCancel: () => void;
 
   /** Cancel/clear selection */
   clearSelection: () => void;
@@ -49,18 +52,19 @@ export interface UseCalendarSelectionReturn {
  * const {
  *   isCreating,
  *   selection,
- *   handleCellMouseDown,
- *   handleCellMouseEnter,
- *   handleCellMouseUp,
+ *   handleCellPointerDown,
+ *   handleCellPointerEnter,
+ *   handleCellPointerUp,
+ *   handleCellPointerCancel,
  *   clearSelection
  * } = useCalendarSelection(true);
  *
  * <CalendarCell
- *   onMouseDown={() => handleCellMouseDown(campsiteId, dateStr)}
- *   onMouseEnter={() => handleCellMouseEnter(campsiteId, dateStr)}
+ *   onPointerDown={(e) => handleCellPointerDown(e, campsiteId, dateStr)}
+ *   onPointerEnter={() => handleCellPointerEnter(campsiteId, dateStr)}
  * />
  *
- * <div onMouseUp={handleCellMouseUp}>...</div>
+ * <div onPointerUp={handleCellPointerUp} onPointerCancel={handleCellPointerCancel}>...</div>
  */
 export function useCalendarSelection(
   enabled: boolean,
@@ -70,14 +74,37 @@ export function useCalendarSelection(
   const [creationStart, setCreationStart] = useState<{ campsiteId: string; date: string } | null>(null);
   const [creationEnd, setCreationEnd] = useState<{ campsiteId: string; date: string } | null>(null);
 
-  // Use ref to keep handlers stable when enabled state changes
-  const enabledRef = useRef(enabled);
-  useEffect(() => {
-    enabledRef.current = enabled;
-  }, [enabled]);
+  // Anchor ref - holds the initial cell that started the selection
+  // This should NEVER flip during a selection session
+  const anchorRef = useRef<{ campsiteId: string; date: string } | null>(null);
 
-  const handleCellMouseDown = useCallback((campsiteId: string, dateStr: string) => {
-    if (!enabledRef.current) return;
+  // Active ref - holds the current hover cell
+  const activeRef = useRef<{ campsiteId: string; date: string } | null>(null);
+
+  // Refs to keep handlers stable and avoid stale closures without frequent re-renders
+  const stateRef = useRef({
+    isCreating,
+    creationStart,
+    creationEnd,
+    enabled
+  });
+
+  useEffect(() => {
+    stateRef.current = { isCreating, creationStart, creationEnd, enabled };
+  }, [isCreating, creationStart, creationEnd, enabled]);
+
+  const handleCellPointerDown = useCallback((e: React.PointerEvent, campsiteId: string, dateStr: string) => {
+    const { isCreating, creationStart, enabled } = stateRef.current;
+
+    // Only handle left button (primary pointer button)
+    if (e.button !== 0) return;
+    if (!enabled) return;
+
+    // Prevent text selection and default browser behavior
+    e.preventDefault();
+
+    // Capture pointer to ensure we get all pointer events even if cursor leaves element
+    e.currentTarget.setPointerCapture(e.pointerId);
 
     // Check if cell is occupied immediately on click
     if (isValidSelection && !isValidSelection(campsiteId, dateStr)) {
@@ -88,16 +115,21 @@ export function useCalendarSelection(
     if (isCreating && creationStart && campsiteId === creationStart.campsiteId) {
       setIsCreating(false);
       setCreationEnd({ campsiteId, date: dateStr });
+      activeRef.current = { campsiteId, date: dateStr };
       return;
     }
 
-    // Otherwise, this is the "Start" click
+    // Otherwise, this is the "Start" click - set the anchor
+    anchorRef.current = { campsiteId, date: dateStr };
+    activeRef.current = { campsiteId, date: dateStr };
     setIsCreating(true);
     setCreationStart({ campsiteId, date: dateStr });
     setCreationEnd({ campsiteId, date: dateStr });
-  }, [isCreating, creationStart, isValidSelection]);
+  }, [isValidSelection]); // Dependencies reduced to just the validator
 
-  const handleCellMouseEnter = useCallback((campsiteId: string, dateStr: string) => {
+  const handleCellPointerEnter = useCallback((campsiteId: string, dateStr: string) => {
+    const { isCreating, creationStart } = stateRef.current;
+
     if (!isCreating || !creationStart) return;
 
     // Prevent dragging over occupied cells
@@ -105,26 +137,33 @@ export function useCalendarSelection(
       return;
     }
 
+    // Update active end only
+    activeRef.current = { campsiteId, date: dateStr };
     setCreationEnd({ campsiteId, date: dateStr });
-  }, [isCreating, creationStart, isValidSelection]);
-
-  const handleCellMouseUp = useCallback(() => {
-    // We don't finish on MouseUp anymore in the Two-Click model
-    // unless we want to support both. Let's make it smarter:
-    // If the mouse up is on a different day than mouse down, we finish.
-    // If it's the same day, we stay in "Creating" mode for the second click.
-    if (!isCreating || !creationStart || !creationEnd) return;
-
-    if (creationStart.date !== creationEnd.date) {
-      setIsCreating(false);
-    }
-  }, [isCreating, creationStart, creationEnd]);
+  }, [isValidSelection]);
 
   const clearSelection = useCallback(() => {
     setIsCreating(false);
     setCreationStart(null);
     setCreationEnd(null);
+    anchorRef.current = null;
+    activeRef.current = null;
   }, []);
+
+  const handleCellPointerUp = useCallback(() => {
+    const { isCreating, creationStart, creationEnd } = stateRef.current;
+
+    if (!isCreating || !creationStart || !creationEnd) return;
+
+    if (creationStart.date !== creationEnd.date) {
+      setIsCreating(false);
+    }
+  }, []);
+
+  const handleCellPointerCancel = useCallback(() => {
+    // Handle OS gestures, tab switches, or other interruptions
+    clearSelection();
+  }, [clearSelection]);
 
   // Calculate normalized selection range (start <= end)
   const getSelectionRange = useCallback((): SelectionRange | null => {
@@ -137,8 +176,28 @@ export function useCalendarSelection(
 
   const selection = getSelectionRange();
 
+  // Dev-only invariant check: anchor should never flip
+  useEffect(() => {
+    if (process.env.NODE_ENV !== "production") {
+      if (anchorRef.current && selection?.start) {
+        const anchor = anchorRef.current.date;
+        // Anchor must always be either start or end of selection range
+        const ok = selection.start === anchor || selection.end === anchor;
+        if (!ok) {
+          console.error("[INVARIANT] anchor flipped", {
+            anchor,
+            selection,
+            anchorRef: anchorRef.current,
+            activeRef: activeRef.current,
+          });
+        }
+      }
+    }
+  }, [selection]);
+
   // Handle escape to clear
   useEffect(() => {
+    // We can allow this to be reactive to state since it's just attaching a listener
     if (!isCreating) return;
     const handleEsc = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -154,9 +213,10 @@ export function useCalendarSelection(
     creationStart,
     creationEnd,
     selection,
-    handleCellMouseDown,
-    handleCellMouseEnter,
-    handleCellMouseUp,
+    handleCellPointerDown,
+    handleCellPointerEnter,
+    handleCellPointerUp,
+    handleCellPointerCancel,
     clearSelection,
   };
 }

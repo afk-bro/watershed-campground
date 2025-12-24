@@ -35,8 +35,8 @@ interface CalendarRowProps {
   // Handlers
   onDragOver: (resourceId: string, dateStr: string) => void;
   onDrop: (e: React.DragEvent) => void;
-  onCellMouseDown: (resourceId: string, dateStr: string) => void;
-  onCellMouseEnter: (resourceId: string, dateStr: string) => void;
+  onCellPointerDown: (e: React.PointerEvent, resourceId: string, dateStr: string) => void;
+  onCellPointerEnter: (resourceId: string, dateStr: string) => void;
   onReservationClick: (res: Reservation) => void;
   onBlackoutClick: (blackout: BlackoutDate) => void;
   onDragStart: (e: React.DragEvent, item: DragResizeItem) => void;
@@ -64,8 +64,8 @@ function CalendarRow({
   validationError,
   onDragOver,
   onDrop,
-  onCellMouseDown,
-  onCellMouseEnter,
+  onCellPointerDown,
+  onCellPointerEnter,
   onReservationClick,
   onBlackoutClick,
   onDragStart,
@@ -160,8 +160,8 @@ function CalendarRow({
               baseBackgroundClass={rowType === "unassigned" ? "bg-[var(--color-status-pending-bg)]/50" : ""}
               onDragOver={onDragOver}
               onDrop={onDrop}
-              onMouseDown={onCellMouseDown}
-              onMouseEnter={onCellMouseEnter}
+              onPointerDown={onCellPointerDown}
+              onPointerEnter={onCellPointerEnter}
             />
           );
         })}
