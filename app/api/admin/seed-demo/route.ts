@@ -1,19 +1,18 @@
 import { NextResponse } from 'next/server';
-import { requireAdmin } from '@/lib/admin-auth';
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { seedDemoDataForCampground } from '@/lib/seed/demo-seed';
 
 /**
- * Seeds demo data for the campground.
- * Only works if the campground has no existing reservations.
+ * POST /api/admin/seed-demo
+ * Seeds demo data for the organization
  */
 export async function POST(request: Request) {
     try {
-        // Authorization
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
-        // Seed demo data
-        const result = await seedDemoDataForCampground(user!.id);
+        // Seed demo data for this organization
+        const result = await seedDemoDataForCampground(organizationId!, user!.id);
 
         if (!result.success) {
             return NextResponse.json(
@@ -28,7 +27,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        console.error('[API] Demo seed error:', error);
+        console.error('[API] Seed demo error:', error);
         return NextResponse.json(
             { error: 'Failed to seed demo data' },
             { status: 500 }
