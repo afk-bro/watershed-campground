@@ -79,6 +79,11 @@ INSERT INTO auth.identities (
 )
 ON CONFLICT (id) DO NOTHING;
 
+-- Assign admin user to default organization
+INSERT INTO public.user_organizations (user_id, organization_id, role)
+VALUES ('00000000-0000-0000-0000-000000000001'::uuid, '00000000-0000-0000-0000-000000000001'::uuid, 'owner')
+ON CONFLICT DO NOTHING;
+
 -- ============================================
 -- 2. Seed Campsites
 -- ============================================
