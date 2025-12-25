@@ -39,7 +39,8 @@ export default function AssignmentDialog({ reservation, isOpen, onClose, onAssig
                 // We could pass rvLength if we had it parsed from camping_unit or separate field
             };
 
-            const res = await fetch('/api/availability/search', {
+            const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+            const res = await fetch(`/api/availability/search?org=${orgSlug}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify(body),

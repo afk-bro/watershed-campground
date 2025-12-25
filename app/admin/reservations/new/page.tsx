@@ -99,7 +99,8 @@ function ReservationForm() {
             }
 
             try {
-                const res = await fetch('/api/availability/check', {
+                const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+                const res = await fetch(`/api/availability/check?org=${orgSlug}`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({
