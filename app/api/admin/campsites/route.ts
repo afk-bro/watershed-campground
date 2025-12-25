@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 
 // GET /api/admin/campsites - List all campsites
 export async function GET(request: Request) {
     try {
-        const { authorized, response: authResponse } = await requireAdmin();
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { searchParams } = new URL(request.url);
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
 // POST /api/admin/campsites - Create a new campsite
 export async function POST(request: Request) {
     try {
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const body = await request.json();

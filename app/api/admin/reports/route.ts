@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startOfMonth, endOfMonth, parse, eachDayOfInterval, isWithinInterval } from 'date-fns';
-import { requireAdmin } from '@/lib/admin-auth';
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 
 export async function GET(request: Request) {
     try {
-        const { authorized, response: authResponse } = await requireAdmin();
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { searchParams } = new URL(request.url);

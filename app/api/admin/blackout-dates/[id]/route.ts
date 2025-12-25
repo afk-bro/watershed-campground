@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import { requireAdmin } from '@/lib/admin-auth';
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { blackoutFormSchema } from '@/lib/schemas';
 import { logAudit } from '@/lib/audit/audit-service';
 
@@ -14,7 +14,7 @@ export async function PATCH(
 ) {
     try {
         // 1. Authorization
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { id } = await params;
@@ -152,7 +152,7 @@ export async function DELETE(
 ) {
     try {
         // 1. Authorization
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { id } = await params;
