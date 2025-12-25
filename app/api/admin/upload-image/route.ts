@@ -1,6 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { NextRequest, NextResponse } from 'next/server';
-import { migrationGate } from '@/lib/migration-gate';
+import { migrationGate } from '@/lib/admin-auth';
 
 /**
  * @deprecated SECURITY WARNING: This endpoint does NOT use org-prefixed storage keys.

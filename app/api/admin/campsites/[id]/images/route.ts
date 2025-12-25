@@ -34,6 +34,13 @@ export async function POST(request: NextRequest, { params }: Params) {
         // 2. Verify Campsite Ownership (404 if not found or wrong org)
         const campsite = await verifyOrgResource<{ image_url: string | null }>('campsites', campsiteId, organizationId!);
 
+        if (!campsite) {
+            return NextResponse.json(
+                { error: 'Campsite not found or access denied' },
+                { status: 404 }
+            );
+        }
+
         // 3. Parse Form Data
         const formData = await request.formData();
         const file = formData.get('file') as File;
@@ -163,6 +170,13 @@ export async function DELETE(request: NextRequest, { params }: Params) {
 
         // 2. Verify Campsite Ownership (404 if not found or wrong org)
         const campsite = await verifyOrgResource<{ image_url: string | null }>('campsites', campsiteId, organizationId!);
+
+        if (!campsite) {
+            return NextResponse.json(
+                { error: 'Campsite not found or access denied' },
+                { status: 404 }
+            );
+        }
 
         if (!campsite.image_url) {
             return NextResponse.json(

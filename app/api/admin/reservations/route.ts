@@ -57,11 +57,14 @@ export async function GET() {
         }));
 
         // Add type discriminator to blackout dates
-        const blackoutItems = (blackoutDates || []).map(bd => ({
-            ...bd,
-            type: ('blackout' in bd ? 'blackout' : 'maintenance') as const,
-            campsite_code: bd.campsite?.code,
-        }));
+        const blackoutItems = (blackoutDates || []).map(bd => {
+            const itemType: 'blackout' | 'maintenance' = 'blackout' in bd ? 'blackout' : 'maintenance';
+            return {
+                ...bd,
+                type: itemType,
+                campsite_code: bd.campsite?.code,
+            };
+        });
 
         const allItems: OverviewItem[] = [...reservationItems, ...blackoutItems];
 

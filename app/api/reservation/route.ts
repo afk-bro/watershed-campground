@@ -117,7 +117,7 @@ export async function POST(request: Request) {
 
                 if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
                     return NextResponse.json(
-                        { error: availabilityResult.message || "Dates no longer available." },
+                        { error: "Dates no longer available." },
                         { status: 400 }
                     );
                 }
