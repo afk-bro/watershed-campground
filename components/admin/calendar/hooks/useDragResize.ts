@@ -307,6 +307,7 @@ export function useDragResize({
       window.removeEventListener('pointercancel', onEnd);
       window.removeEventListener('keydown', onKey, { capture: true });
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging, !!resizeState, updateScrollDirection, clearOperationState, onReservationMoveRequested, onBlackoutMoveRequested]);
 
   // Ghost Rendering Utility

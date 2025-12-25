@@ -217,7 +217,7 @@ export default function ReservationDrawer({
                                 <div className="mt-2 pt-2 border-t border-gray-200">
                                     <span className="text-[10px] font-bold text-gray-400 uppercase block mb-1">Override Reason</span>
                                     <p className="text-gray-700 bg-white p-2 rounded border border-gray-200 text-xs italic">
-                                        "{overrides.override_reason}"
+                                        {overrides.override_reason}
                                     </p>
                                 </div>
                              )}
