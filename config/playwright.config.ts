@@ -87,9 +87,13 @@ export default defineConfig({
         timeout: 120000,
         stdout: 'pipe',
         stderr: 'pipe',
-        env: Object.fromEntries(
-            // Pass all loaded env vars from .env.local to the webServer, filtering out undefined
-            Object.entries(process.env).filter(([, v]) => v !== undefined)
-        ) as Record<string, string>,
+        env: {
+            ...Object.fromEntries(
+                // Pass all loaded env vars from .env.local to the webServer, filtering out undefined
+                Object.entries(process.env).filter(([, v]) => v !== undefined)
+            ),
+            // Fast failsafe timeout for tests (500ms instead of 10s in production)
+            NEXT_PUBLIC_STUCK_SAVING_TIMEOUT_MS: '500',
+        } as Record<string, string>,
     },
 });

@@ -23,7 +23,11 @@ interface UseStuckSavingFailsafeProps {
   onRevalidate?: () => void;
 }
 
-const STUCK_TIMEOUT_MS = 10000; // 10 seconds
+// Configurable timeout with safeguards (default 10s, min 100ms to prevent instant triggers)
+const FAILSAFE_TIMEOUT_MS = Number(process.env.NEXT_PUBLIC_STUCK_SAVING_TIMEOUT_MS ?? 10_000);
+const STUCK_TIMEOUT_MS = Number.isFinite(FAILSAFE_TIMEOUT_MS) && FAILSAFE_TIMEOUT_MS >= 100
+  ? FAILSAFE_TIMEOUT_MS
+  : 10_000;
 
 export function useStuckSavingFailsafe({
   reservations,

@@ -480,7 +480,7 @@ export async function clearDemoData(
             return { success: false, message: 'Demo data clearing is disabled' };
         }
 
-        let deletedCounts = {
+        const deletedCounts = {
             reservations: 0,
             blackouts: 0,
             campsites: 0
