@@ -18,7 +18,8 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
         const search = async () => {
              setLoading(true);
              try {
-                 const res = await fetch('/api/availability/search', {
+                 const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+                 const res = await fetch(`/api/availability/search?org=${orgSlug}`, {
                      method: 'POST',
                      headers: { 'Content-Type': 'application/json' },
                          body: JSON.stringify({
