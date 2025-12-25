@@ -147,7 +147,7 @@ export function migrationGate(
         tag: 'DEPRECATED_ENDPOINT_USAGE' // For monitoring/alerting
     });
 
-    const response: Record<string, any> = {
+    const response: Record<string, unknown> = {
         error: 'ENDPOINT_DEPRECATED',
         route,
         message: reason || 'This endpoint is deprecated and blocked in production for security.',

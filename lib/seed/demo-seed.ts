@@ -233,7 +233,7 @@ async function createDemoCampsites(organizationId: string) {
  * Creates 10 demo reservations with varied statuses and dates
  * Includes 2 overlapping reservations marked with has_conflict for demo purposes
  */
-async function createDemoReservations(organizationId: string, campsites: any[]) {
+async function createDemoReservations(organizationId: string, campsites: Array<{ id: string; code: string }>) {
     const today = new Date();
 
     const demoReservations = [
