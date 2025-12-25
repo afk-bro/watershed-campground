@@ -12,21 +12,26 @@ export type SearchParams = {
     guestCount: number;
     rvLength?: number;
     unitType?: 'Tent' | 'RV / Trailer' | 'Camper Van' | 'Cabin' | '';
+    organizationId: string; // REQUIRED - Multi-tenant org scoping
 };
 
 /**
  * Checks availability for every day in a given month.
  * Used to populate the high-level date picker.
+ *
+ * @param month - The month to check
+ * @param organizationId - REQUIRED organization ID for multi-tenancy
  */
-export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> {
+export async function checkDailyAvailability(month: Date, organizationId: string): Promise<DayStatus[]> {
     const start = startOfMonth(month);
     const end = endOfMonth(month);
     const dates = eachDayOfInterval({ start, end });
 
-    // 1. Get all active campsites (to know total capacity)
+    // 1. Get all active campsites (org-scoped)
     const { data: allCampsites } = await supabaseAdmin
         .from('campsites')
         .select('id')
+        .eq('organization_id', organizationId)
         .eq('is_active', true);
 
     if (!allCampsites || allCampsites.length === 0) {
@@ -35,18 +40,20 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
 
     const totalSites = allCampsites.length;
 
-    // 2. Get all reservations in this month
+    // 2. Get all reservations in this month (org-scoped)
     // Overlap: existing.start <= monthEnd AND existing.end >= monthStart
     const { data: reservations } = await supabaseAdmin
         .from('reservations')
         .select('check_in, check_out, campsite_id')
+        .eq('organization_id', organizationId)
         .in('status', ['pending', 'confirmed', 'checked_in'])
         .or(`and(check_in.lte.${format(end, 'yyyy-MM-dd')},check_out.gte.${format(start, 'yyyy-MM-dd')})`);
 
-    // 3. Get all blackout dates in this month
+    // 3. Get all blackout dates in this month (org-scoped)
     const { data: blackouts } = await supabaseAdmin
         .from('blackout_dates')
         .select('start_date, end_date, campsite_id')
+        .eq('organization_id', organizationId)
         .or(`and(start_date.lte.${format(end, 'yyyy-MM-dd')},end_date.gte.${format(start, 'yyyy-MM-dd')})`);
 
     // 4. Calculate status for each day
@@ -109,12 +116,13 @@ export async function checkDailyAvailability(month: Date): Promise<DayStatus[]> 
  * Searches for specific campsites matching criteria.
  */
 export async function searchCampsites(params: SearchParams) {
-    const { checkIn, checkOut, guestCount, rvLength, unitType } = params;
+    const { checkIn, checkOut, guestCount, rvLength, unitType, organizationId } = params;
 
-    // 1. Get all conflicting IDs (same logic as availability.ts)
+    // 1. Get all conflicting IDs (org-scoped, required)
     const { data: conflicting } = await supabaseAdmin
         .from('reservations')
         .select('campsite_id')
+        .eq('organization_id', organizationId)
         .in('status', ['pending', 'confirmed', 'checked_in'])
         .not('campsite_id', 'is', null)
         .or(`and(check_out.gt.${checkIn},check_in.lt.${checkOut})`);
@@ -122,6 +130,7 @@ export async function searchCampsites(params: SearchParams) {
     const { data: blackouts } = await supabaseAdmin
         .from('blackout_dates')
         .select('campsite_id')
+        .eq('organization_id', organizationId)
         .or(`and(end_date.gte.${checkIn},start_date.lte.${checkOut})`);
 
     // Check global blackout
@@ -134,10 +143,11 @@ export async function searchCampsites(params: SearchParams) {
         ...(blackouts?.map(b => b.campsite_id) || [])
     ].filter(id => id !== null) as string[]);
 
-    // 2. Query available sites
+    // 2. Query available sites (org-scoped, required)
     const query = supabaseAdmin
         .from('campsites')
         .select('*')
+        .eq('organization_id', organizationId)
         .eq('is_active', true)
         .gte('max_guests', guestCount)
         .order('sort_order', { ascending: true });
@@ -185,16 +195,18 @@ export async function checkAvailability(params: {
     checkOut: string;
     guestCount: number;
     campsiteId?: string;
+    organizationId: string; // REQUIRED for multi-tenancy
 }): Promise<{ available: boolean; recommendedSiteId: string | null }> {
-    const { checkIn, checkOut, guestCount, campsiteId } = params;
+    const { checkIn, checkOut, guestCount, campsiteId, organizationId } = params;
 
-    // Search for available campsites
+    // Search for available campsites (org-scoped)
     const availableSites = await searchCampsites({
         checkIn,
         checkOut,
         guestCount,
         unitType: '',
-        rvLength: 0
+        rvLength: 0,
+        organizationId
     });
 
     // If no sites available at all

@@ -1,6 +1,7 @@
 
 import { NextResponse } from "next/server";
 import { searchCampsites } from "@/lib/availability/engine";
+import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { z } from "zod";
 
 const searchSchema = z.object({
@@ -13,6 +14,12 @@ const searchSchema = z.object({
 
 export async function POST(request: Request) {
     try {
+        // CRITICAL: Resolve organization BEFORE any queries
+        const organizationId = await resolvePublicOrganizationId(request);
+        if (!organizationId) {
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
         const rawBody = await request.text();
 
         if (!rawBody || !rawBody.trim()) {
@@ -25,11 +32,15 @@ export async function POST(request: Request) {
         } catch {
             return NextResponse.json({ error: "Malformed JSON body" }, { status: 400 });
         }
-        
+
         // Validate and sanitize input
         const validated = searchSchema.parse(body);
-        
-        const results = await searchCampsites(validated);
+
+        // Query with org-scoping (fail-closed)
+        const results = await searchCampsites({
+            ...validated,
+            organizationId
+        });
         return NextResponse.json(results);
     } catch (error) {
         if (error instanceof z.ZodError) {

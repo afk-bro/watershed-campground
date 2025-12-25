@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { blackoutFormSchema } from '@/lib/schemas';
 import { logAudit } from '@/lib/audit/audit-service';
+import { verifyOrgResource } from '@/lib/db-helpers';
 
 /**
  * PATCH /api/admin/blackout-dates/[id]
@@ -19,19 +20,13 @@ export async function PATCH(
 
         const { id } = await params;
 
-        // 2. Fetch existing blackout for comparison/logging
-        const { data: existingBlackout, error: fetchError } = await supabaseAdmin
-            .from('blackout_dates')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (fetchError || !existingBlackout) {
-            return NextResponse.json(
-                { error: 'Blackout date not found' },
-                { status: 404 }
-            );
-        }
+        // 2. Fetch existing blackout for comparison/logging (use verifyOrgResource for 404-before-validation)
+        const existingBlackout = await verifyOrgResource<{
+            start_date: string;
+            end_date: string;
+            campsite_id: string | null;
+            reason: string;
+        }>('blackout_dates', id, organizationId!);
 
         // 3. Validation
         const body = await request.json();
@@ -60,26 +55,20 @@ export async function PATCH(
             );
         }
 
-        // Validate campsite if provided
+        // Validate campsite if provided (verify ownership)
         if (newCampsiteId !== null) {
-            const { data: campsite, error: campsiteError } = await supabaseAdmin
-                .from('campsites')
-                .select('id, name, is_active')
-                .eq('id', newCampsiteId)
-                .single();
-
-            if (campsiteError || !campsite) {
-                return NextResponse.json({ error: 'Campsite not found' }, { status: 404 });
-            }
+            // Use verifyOrgResource to ensure campsite belongs to this org
+            await verifyOrgResource('campsites', newCampsiteId, organizationId!);
         }
 
         // SERVER-SIDE CONFLICT VALIDATION (Omitted for brevity in this snippet but should be preserved or slightly refactored)
         // I will preserve the existing conflict logic here...
 
-        // [CONFLICT LOGIC PRESERVED FROM ORIGINAL FILE]
+        // [CONFLICT LOGIC PRESERVED FROM ORIGINAL FILE - ORG-SCOPED]
         const { data: conflictingReservations } = await supabaseAdmin
             .from('reservations')
             .select('id, first_name, last_name, check_in, check_out, status, campsite_id')
+            .eq('organization_id', organizationId!)
             .or(`campsite_id.eq.${newCampsiteId}${newCampsiteId === null ? ',campsite_id.is.null' : ''}`)
             .not('status', 'in', '(cancelled,no_show)')
             .gte('check_out', newStartDate)
@@ -93,10 +82,11 @@ export async function PATCH(
             return NextResponse.json({ error: 'Conflict with reservation', conflicts: actualReservationConflicts }, { status: 409 });
         }
 
-        // Check for conflicts with other blackout dates
+        // Check for conflicts with other blackout dates (org-scoped)
         const { data: conflictingBlackouts } = await supabaseAdmin
             .from('blackout_dates')
             .select('id, start_date, end_date, reason, campsite_id')
+            .eq('organization_id', organizationId!)
             .neq('id', id)
             .or(`campsite_id.eq.${newCampsiteId}${newCampsiteId === null ? ',campsite_id.is.null' : ''}`)
             .gte('end_date', newStartDate)
@@ -122,6 +112,7 @@ export async function PATCH(
             .from('blackout_dates')
             .update(updates)
             .eq('id', id)
+            .eq('organization_id', organizationId!)
             .select()
             .single();
 
@@ -157,22 +148,15 @@ export async function DELETE(
 
         const { id } = await params;
 
-        // 2. Fetch existing for logging
-        const { data: existingBlackout, error: fetchError } = await supabaseAdmin
-            .from('blackout_dates')
-            .select('*')
-            .eq('id', id)
-            .single();
+        // 2. Fetch existing for logging (use verifyOrgResource for 404-before-deletion)
+        const existingBlackout = await verifyOrgResource('blackout_dates', id, organizationId!);
 
-        if (fetchError || !existingBlackout) {
-            return NextResponse.json({ error: 'Blackout date not found' }, { status: 404 });
-        }
-
-        // 3. Delete
+        // 3. Delete (org-scoped)
         const { error: deleteError } = await supabaseAdmin
             .from('blackout_dates')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('organization_id', organizationId!);
 
         if (deleteError) throw deleteError;
 

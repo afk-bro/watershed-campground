@@ -22,13 +22,13 @@ try {
 
 async function run() {
     // Dynamic import to ensure env is ready
-    const { checkAvailability } = await import('../lib/availability');
+    const { checkAvailability } = await import('../lib/availability/engine');
     const { supabaseAdmin } = await import('../lib/supabase-admin');
 
     console.log('Fetching first active campsite...');
     const { data: campsites, error } = await supabaseAdmin
         .from('campsites')
-        .select('*')
+        .select('id, name, organization_id')
         .eq('is_active', true)
         .limit(1);
 
@@ -44,6 +44,7 @@ async function run() {
 
     const site = campsites[0];
     console.log(`Testing with site: ${site.name} (${site.id})`);
+    console.log(`Organization ID: ${site.organization_id}`);
 
     // Test "Today" to "Tomorrow"
     const today = new Date();
@@ -60,7 +61,8 @@ async function run() {
             checkIn,
             checkOut,
             guestCount: 1,
-            campsiteId: site.id
+            campsiteId: site.id,
+            organizationId: site.organization_id // REQUIRED for new engine
         });
 
         console.log('Result:', result);

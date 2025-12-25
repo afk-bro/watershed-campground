@@ -16,6 +16,7 @@ export async function GET(request: Request) {
         let query = supabaseAdmin
             .from('campsites')
             .select('*')
+            .eq('organization_id', organizationId!)
             .order('sort_order', { ascending: true });
 
         if (!showInactive) {
@@ -63,6 +64,7 @@ export async function POST(request: Request) {
             is_active: formData.isActive,
             notes: formData.notes || null,
             sort_order: formData.sortOrder,
+            organization_id: organizationId!,
         };
 
         // Insert campsite

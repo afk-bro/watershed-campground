@@ -1,18 +1,13 @@
 
 import { NextResponse } from "next/server";
-import { checkAvailability } from "@/lib/availability";
-import { createClient } from "@/lib/supabase/server";
+import { checkAvailability } from "@/lib/availability/engine";
+import { requireAdminWithOrg } from "@/lib/admin-auth";
 
 export async function POST(request: Request) {
     try {
-        const supabase = await createClient();
-
-        // Check Authorization (Admin only for accurate checking including unreleased sites, or just generally Auth'd)
-        // For now, let's ensure an authenticated user at least.
-        const { data: { session } } = await supabase.auth.getSession();
-        if (!session) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-        }
+        // Use admin auth with org scoping
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
+        if (!authorized) return authResponse!;
 
         const body = await request.json();
 
@@ -27,14 +22,37 @@ export async function POST(request: Request) {
             overrideBlackout
         } = body;
 
+        // Admin override logic (route layer)
+        // If admin is forcing availability, skip engine check entirely
+        if (forceConflict || overrideBlackout) {
+            return NextResponse.json({
+                available: true,
+                message: "Admin override: availability check bypassed",
+                recommendedSiteId: campsiteId || null
+            });
+        }
+
+        // Past date validation (route layer for admin control)
+        if (!ignorePastCheck) {
+            const checkInDate = new Date(checkIn);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (checkInDate < today) {
+                return NextResponse.json({
+                    available: false,
+                    message: "Check-in date cannot be in the past"
+                });
+            }
+        }
+
+        // Use new engine with org scoping
         const result = await checkAvailability({
             checkIn,
             checkOut,
             guestCount: Number(guestCount),
             campsiteId,
-            ignorePastCheck,
-            forceConflict,
-            overrideBlackout
+            organizationId: organizationId!
         });
 
         return NextResponse.json(result);

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import Stripe from "stripe";
-import { checkAvailability } from "@/lib/availability";
+import { checkAvailability } from "@/lib/availability/engine";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { createClient } from "@/lib/supabase/server";
@@ -11,6 +11,7 @@ import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/
 import { requireAdmin } from "@/lib/admin-auth";
 import { getBaseUrl } from "@/lib/url-utils";
 import { checkRateLimit, rateLimiters, getClientIp, createIpIdentifier, getRateLimitHeaders } from "@/lib/rate-limit-upstash";
+import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
@@ -43,6 +44,12 @@ export async function POST(request: Request) {
             );
         }
 
+        // 0.5. Org Resolution (CRITICAL - before any queries)
+        const organizationId = await resolvePublicOrganizationId(request);
+        if (!organizationId) {
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
         const baseUrl = getBaseUrl();
         const manageUrl = `${baseUrl}/manage-reservation`;
 
@@ -59,11 +66,17 @@ export async function POST(request: Request) {
         }
         const formData = result.data;
 
-        // Security: Guard against unauthorized overrides
+        // Security: Admin-only override flags - REJECT for non-admins
         const hasAdminOverrides = formData.forceConflict || formData.overrideBlackout || formData.isOffline || formData.overrideReason;
         if (hasAdminOverrides) {
             const { authorized, response: authResponse } = await requireAdmin();
-            if (!authorized) return authResponse!;
+            if (!authorized) {
+                // Explicit rejection: public users cannot use override flags
+                return NextResponse.json(
+                    { error: "Unauthorized: admin-only parameters detected" },
+                    { status: 403 }
+                );
+            }
         }
 
         // 2. Retrieve Payment Intent & Campsite
@@ -82,23 +95,34 @@ export async function POST(request: Request) {
             recommendedSiteId = paymentIntent.metadata.campsiteId;
         } else {
             // Check availability for non-prepaid bookings
-            const availabilityResult = await checkAvailability({
-                checkIn: formData.checkIn,
-                checkOut: formData.checkOut,
-                guestCount: formData.adults + formData.children,
-                campsiteId: formData.campsiteId,
-                ignorePastCheck: formData.isOffline,
-                forceConflict: formData.forceConflict,
-                overrideBlackout: formData.overrideBlackout
-            });
+            // Admin overrides handled at route layer (already guarded above)
+            if (formData.forceConflict || formData.overrideBlackout) {
+                // Admin is forcing availability - skip engine check
+                if (!formData.campsiteId) {
+                    return NextResponse.json(
+                        { error: "Campsite ID required when using admin overrides" },
+                        { status: 400 }
+                    );
+                }
+                recommendedSiteId = formData.campsiteId;
+            } else {
+                // Normal availability check using new engine (org-scoped)
+                const availabilityResult = await checkAvailability({
+                    checkIn: formData.checkIn,
+                    checkOut: formData.checkOut,
+                    guestCount: formData.adults + formData.children,
+                    campsiteId: formData.campsiteId,
+                    organizationId
+                });
 
-            if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
-                return NextResponse.json(
-                    { error: availabilityResult.message || "Dates no longer available." },
-                    { status: 400 }
-                );
+                if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
+                    return NextResponse.json(
+                        { error: availabilityResult.message || "Dates no longer available." },
+                        { status: 400 }
+                    );
+                }
+                recommendedSiteId = availabilityResult.recommendedSiteId;
             }
-            recommendedSiteId = availabilityResult.recommendedSiteId;
         }
 
         // 3. Calculate Totals
