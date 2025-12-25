@@ -38,31 +38,11 @@ export async function logAudit({
     organizationId
 }: LogAuditParams) {
     try {
-        // Find a way to link non-reservation logs? 
-        // The table schema has reservation_id as required. 
-        // In some cases we might not have one. 
-        // Let's check the schema for audit_logs again.
-
-        // Actually, looking at the schema from previous tool calls:
-        // reservation_id IS required in the audit_logs table.
-        // If we want to log campsite changes, we might need a dummy ID or a schema change.
-        // For V1 of production readiness, I'll focus on reservation-linked audits 
-        // OR I can use a "System" reservation ID if needed.
-
-        // However, the USER's schema currently links audit_logs directly to reservations.
-        // For now, I'll only log if reservationId is present, or I'll provide a warning.
-
-        if (!reservationId && (action.startsWith('RESERVATION_') || action.startsWith('BLACKOUT_'))) {
-            // For blackouts, if they are linked to a reservation (rare) or global.
-            // Usually blackout dates aren't linked to a specific reservation.
-            // This suggests the audit_logs table might be too specific for "General Admin Audit".
-        }
-
         const { error } = await supabaseAdmin
             .from('audit_logs')
             .insert({
                 action,
-                reservation_id: reservationId || '00000000-0000-0000-0000-000000000000', // Dummy if none?
+                reservation_id: reservationId || null, // Nullable for non-reservation actions
                 old_data: oldData,
                 new_data: newData,
                 changed_by: changedBy,
