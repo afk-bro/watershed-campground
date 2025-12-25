@@ -85,7 +85,8 @@ export async function POST(request: Request) {
         await logAudit({
             action: 'CAMPSITE_UPDATE', // Reusing action type or could add CAMPSITE_CREATE
             newData: data,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ data }, { status: 201 });

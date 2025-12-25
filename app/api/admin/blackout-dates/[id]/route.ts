@@ -131,7 +131,8 @@ export async function PATCH(
             action: 'BLACKOUT_UPDATE',
             oldData: existingBlackout,
             newData: updatedBlackout,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json(updatedBlackout);
@@ -172,7 +173,8 @@ export async function DELETE(
         await logAudit({
             action: 'BLACKOUT_DELETE',
             oldData: existingBlackout as unknown as Json,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ message: 'Blackout date deleted successfully' });

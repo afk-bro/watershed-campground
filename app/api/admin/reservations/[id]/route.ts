@@ -140,7 +140,8 @@ export async function PATCH(
             reservationId: id,
             oldData: oldReservation,
             newData: updatedReservation,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         // 6. Best-effort email notification

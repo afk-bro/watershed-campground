@@ -36,7 +36,8 @@ export async function POST(request: Request) {
         await logAudit({
             action: 'RESERVATION_UPDATE',
             newData: { reservationIds, status },
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ updated: data });
