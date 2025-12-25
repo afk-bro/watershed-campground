@@ -18,6 +18,7 @@ interface LogAuditParams {
     oldData?: Json;
     newData?: Json;
     changedBy: string; // User ID
+    organizationId: string; // Required for multi-tenancy
 }
 
 /**
@@ -33,7 +34,8 @@ export async function logAudit({
     reservationId,
     oldData,
     newData,
-    changedBy
+    changedBy,
+    organizationId
 }: LogAuditParams) {
     try {
         // Find a way to link non-reservation logs? 
@@ -63,7 +65,8 @@ export async function logAudit({
                 reservation_id: reservationId || '00000000-0000-0000-0000-000000000000', // Dummy if none?
                 old_data: oldData,
                 new_data: newData,
-                changed_by: changedBy
+                changed_by: changedBy,
+                organization_id: organizationId
             });
 
         if (error) {

@@ -90,7 +90,8 @@ export async function PATCH(request: Request, { params }: Params) {
             action: 'CAMPSITE_UPDATE',
             oldData: existingCampsite as unknown as Json,
             newData: updatedCampsite as unknown as Json,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ data: updatedCampsite });
@@ -132,7 +133,8 @@ export async function DELETE(request: Request, { params }: Params) {
         await logAudit({
             action: 'CAMPSITE_DEACTIVATE', // Or add CAMPSITE_DELETE but current schema uses campsite_id as reservation_id dummy or similar. Actually logAudit handles it.
             oldData: existingCampsite as unknown as Json,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ message: "Campsite deleted permanently" });

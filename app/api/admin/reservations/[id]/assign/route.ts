@@ -87,7 +87,8 @@ export async function POST(
             reservationId: id,
             oldData: { campsite_id: reservation.campsite_id },
             newData: { campsite_id: campsiteId },
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ success: true, campsiteId });

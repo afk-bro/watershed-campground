@@ -70,7 +70,8 @@ export async function POST(request: Request) {
         await logAudit({
             action: 'RESERVATION_UPDATE', // Batch assign is effectively multiple updates
             newData: { reservationIds, results },
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json({ results });

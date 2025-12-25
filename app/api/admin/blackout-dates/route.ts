@@ -50,7 +50,8 @@ export async function POST(request: Request) {
         await logAudit({
             action: 'BLACKOUT_CREATE',
             newData: data,
-            changedBy: user!.id
+            changedBy: user!.id,
+            organizationId: organizationId!
         });
 
         return NextResponse.json(data);
