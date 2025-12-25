@@ -4,7 +4,6 @@ import Stripe from "stripe";
 import { checkAvailability } from "@/lib/availability/engine";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import { createClient } from "@/lib/supabase/server";
 import { reservationFormSchema } from "@/lib/reservation/validation";
 import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
@@ -69,7 +68,7 @@ export async function POST(request: Request) {
         // Security: Admin-only override flags - REJECT for non-admins
         const hasAdminOverrides = formData.forceConflict || formData.overrideBlackout || formData.isOffline || formData.overrideReason;
         if (hasAdminOverrides) {
-            const { authorized, response: authResponse } = await requireAdmin();
+            const { authorized } = await requireAdmin();
             if (!authorized) {
                 // Explicit rejection: public users cannot use override flags
                 return NextResponse.json(

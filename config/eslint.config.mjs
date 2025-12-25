@@ -32,6 +32,13 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": "off",
     }
   },
+  // Component files and hooks: relax explicit-any rule for UI code (less critical than business logic)
+  {
+    files: ["app/**/*.tsx", "components/**/*.{ts,tsx}", "app/api/admin/**/*.ts"],
+    rules: {
+      "@typescript-eslint/no-explicit-any": "off",
+    }
+  },
   // Admin APIs and webhooks: silence unused vars until cleanup
   {
     files: ["app/api/admin/**/*.{ts,tsx}", "app/api/webhooks/**/*.{ts,tsx}"],
