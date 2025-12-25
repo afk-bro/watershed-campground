@@ -26,11 +26,11 @@ async function uploadImageToSupabase(file: File): Promise<string> {
     return publicUrlData.publicUrl;
 }
 
-import { requireAdmin } from '@/lib/admin-auth';
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 
 export async function POST(request: NextRequest) {
     try {
-        const { authorized, response: authResponse } = await requireAdmin();
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
         const formData = await request.formData();
         const file = formData.get('file') as File;

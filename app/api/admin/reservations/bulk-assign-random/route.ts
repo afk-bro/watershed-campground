@@ -1,13 +1,13 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { searchCampsites } from "@/lib/availability/engine";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 
 export async function POST(request: Request) {
     try {
         // 1. Authorization
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { reservationIds } = await request.json();

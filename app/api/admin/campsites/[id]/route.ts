@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
-import { requireAdmin } from "@/lib/admin-auth";
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 
 type Params = {
@@ -13,7 +13,7 @@ type Params = {
 // GET /api/admin/campsites/[id] - Get a single campsite
 export async function GET(request: Request, { params }: Params) {
     try {
-        const { authorized, response: authResponse } = await requireAdmin();
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { id } = await params;
@@ -41,7 +41,7 @@ export async function GET(request: Request, { params }: Params) {
 // PATCH /api/admin/campsites/[id] - Update a campsite
 export async function PATCH(request: Request, { params }: Params) {
     try {
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { id } = await params;
@@ -118,7 +118,7 @@ export async function PATCH(request: Request, { params }: Params) {
 // DELETE /api/admin/campsites/[id] - Permanent delete a campsite
 export async function DELETE(request: Request, { params }: Params) {
     try {
-        const { authorized, user, response: authResponse } = await requireAdmin();
+        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
         if (!authorized) return authResponse!;
 
         const { id } = await params;
