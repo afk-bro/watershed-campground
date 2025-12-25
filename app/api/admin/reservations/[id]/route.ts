@@ -24,6 +24,7 @@ type UpdateReservationBody = {
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { reservationUpdateSchema } from "@/lib/schemas";
 import { logAudit } from "@/lib/audit/audit-service";
+import { verifyOrgResource, updateWithOrg } from '@/lib/db-helpers';
 
 export async function PATCH(
     request: Request,
@@ -36,11 +37,12 @@ export async function PATCH(
 
         const { id } = await params;
 
-        // 2. Fetch current reservation for comparison/logging
+        // 2. Fetch current reservation for comparison/logging (org-scoped)
         const { data: oldReservation, error: fetchError } = await supabaseAdmin
             .from('reservations')
             .select('*, campsites(id, name, code)')
             .eq('id', id)
+            .eq('organization_id', organizationId!)
             .single();
 
         if (fetchError || !oldReservation) {
@@ -80,15 +82,11 @@ export async function PATCH(
             return NextResponse.json({ error: "Check-out must be after check-in" }, { status: 400 });
         }
 
-        // Validate campsite if provided
+        // Validate campsite if provided (org-scoped)
         if (campsite_id !== undefined && campsite_id !== null) {
-            const { data: campsite, error: campsiteError } = await supabaseAdmin
-                .from('campsites')
-                .select('id, name, is_active')
-                .eq('id', campsite_id)
-                .single();
+            const campsite = await verifyOrgResource('campsites', campsite_id, organizationId!);
 
-            if (campsiteError || !campsite) {
+            if (!campsite) {
                 return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
             }
         }
@@ -97,10 +95,11 @@ export async function PATCH(
         // I will preserve the conflict check logic...
         const targetCampsiteId = campsite_id !== undefined ? campsite_id : oldReservation.campsite_id;
         if (targetCampsiteId !== null && (campsite_id !== undefined || check_in !== undefined || check_out !== undefined)) {
-            // [PRESERVED CONFLICT LOGIC]
+            // [PRESERVED CONFLICT LOGIC - org-scoped]
             const { data: blackoutConflicts } = await supabaseAdmin
                 .from('blackout_dates')
                 .select('reason')
+                .eq('organization_id', organizationId!)
                 .or(`campsite_id.is.null,campsite_id.eq.${targetCampsiteId}`)
                 .lt('start_date', finalCheckOut)
                 .gte('end_date', finalCheckIn);
@@ -112,6 +111,7 @@ export async function PATCH(
             const { data: conflicts } = await supabaseAdmin
                 .from('reservations')
                 .select('id, first_name, last_name')
+                .eq('organization_id', organizationId!)
                 .eq('campsite_id', targetCampsiteId)
                 .neq('id', id)
                 .lt('check_in', finalCheckOut)
@@ -123,11 +123,12 @@ export async function PATCH(
             }
         }
 
-        // 4. Update
+        // 4. Update (org-scoped)
         const { data: updatedReservation, error: updateError } = await supabaseAdmin
             .from('reservations')
             .update(updates)
             .eq('id', id)
+            .eq('organization_id', organizationId!)
             .select('*, campsites(id, name, code)')
             .single();
 

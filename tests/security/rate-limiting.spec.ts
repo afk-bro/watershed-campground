@@ -35,7 +35,7 @@ test.describe('Rate Limiting', () => {
 
             // Make 35 requests rapidly (limit is 30/minute)
             for (let i = 0; i < 35; i++) {
-                const response = await request.post('/api/availability', {
+                const response = await request.post('/api/availability/search?org=watershed-campground', {
                     data: payload,
                 });
 
@@ -68,7 +68,7 @@ test.describe('Rate Limiting', () => {
             const tomorrow = addDays(new Date(), 1);
             const checkOut = addDays(tomorrow, 2);
 
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: format(tomorrow, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -103,7 +103,7 @@ test.describe('Rate Limiting', () => {
             let rateLimitedResponse = null;
 
             for (let i = 0; i < 40; i++) {
-                const response = await request.post('/api/availability', {
+                const response = await request.post('/api/availability/search?org=watershed-campground', {
                     data: payload,
                 });
 
@@ -195,7 +195,7 @@ test.describe('Rate Limiting', () => {
             const paymentLimit = parseInt(paymentResponse.headers()['x-ratelimit-limit'] || '0');
 
             // Check availability endpoint limit
-            const availResponse = await request.post('/api/availability', {
+            const availResponse = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: format(tomorrow, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -294,7 +294,7 @@ test.describe('Rate Limiting', () => {
             }
 
             // Availability endpoint should still work (different rate limit bucket)
-            const availResponse = await request.post('/api/availability', {
+            const availResponse = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: format(tomorrow, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -315,7 +315,7 @@ test.describe('Rate Limiting', () => {
             const tomorrow = addDays(new Date(), 1);
             const checkOut = addDays(tomorrow, 2);
 
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: format(tomorrow, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),

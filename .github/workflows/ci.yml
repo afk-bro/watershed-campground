@@ -36,6 +36,33 @@ jobs:
       - name: Run TypeScript type check
         run: npm run type-check
 
+      - name: Verify tenant boundary invariants
+        run: |
+          echo "🔍 Verifying multi-tenant safety..."
+
+          # Check 1: All admin routes use requireAdminWithOrg
+          node scripts/check-admin-routes.js
+
+          # Check 2: Verify deprecated upload-image is guarded
+          if grep -q "migrationGate" app/api/admin/upload-image/route.ts; then
+            echo "✅ upload-image is migration-gated"
+          else
+            echo "❌ FAIL: upload-image missing migrationGate!"
+            echo "This endpoint is not multi-tenant safe and MUST be gated."
+            exit 1
+          fi
+
+          # Check 3: Ensure old availability system is deleted
+          if [ -f "lib/availability.ts" ]; then
+            echo "❌ FAIL: lib/availability.ts still exists!"
+            echo "This file is deprecated. Use lib/availability/engine.ts instead."
+            exit 1
+          else
+            echo "✅ Deprecated availability.ts is deleted"
+          fi
+
+          echo "✅ All tenant boundary checks passed"
+
   # Job 2: E2E Tests with Playwright
   e2e-tests:
     name: E2E Tests (Playwright)

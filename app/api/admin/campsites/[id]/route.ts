@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
+import { verifyOrgResource } from '@/lib/db-helpers';
 
 type Params = {
     params: Promise<{
@@ -18,20 +19,10 @@ export async function GET(request: Request, { params }: Params) {
 
         const { id } = await params;
 
-        const { data, error } = await supabaseAdmin
-            .from('campsites')
-            .select('*')
-            .eq('id', id)
-            .single();
+        // Use verifyOrgResource for 404 before any FK validation
+        const campsite = await verifyOrgResource('campsites', id, organizationId!);
 
-        if (error) {
-            if (error.code === 'PGRST116') {
-                return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
-            }
-            throw error;
-        }
-
-        return NextResponse.json({ data });
+        return NextResponse.json({ data: campsite });
     } catch (error) {
         console.error("Error in GET /api/admin/campsites/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -46,16 +37,8 @@ export async function PATCH(request: Request, { params }: Params) {
 
         const { id } = await params;
 
-        // Fetch existing for comparison/logging
-        const { data: existingCampsite, error: fetchError } = await supabaseAdmin
-            .from('campsites')
-            .select('*')
-            .eq('id', id)
-            .single();
-
-        if (fetchError || !existingCampsite) {
-            return NextResponse.json({ error: 'Campsite not found' }, { status: 404 });
-        }
+        // Fetch existing for comparison/logging - use verifyOrgResource for 404 before validation
+        const existingCampsite = await verifyOrgResource('campsites', id, organizationId!);
 
         const body = await request.json();
 
@@ -85,11 +68,12 @@ export async function PATCH(request: Request, { params }: Params) {
         if (formData.imageUrl !== undefined) updateData.image_url = formData.imageUrl || null;
         updateData.updated_at = new Date().toISOString();
 
-        // Update campsite
+        // Update campsite (org-scoped)
         const { data: updatedCampsite, error: updateError } = await supabaseAdmin
             .from('campsites')
             .update(updateData)
             .eq('id', id)
+            .eq('organization_id', organizationId!)
             .select()
             .single();
 
@@ -123,22 +107,15 @@ export async function DELETE(request: Request, { params }: Params) {
 
         const { id } = await params;
 
-        // Fetch existing for logging
-        const { data: existingCampsite, error: fetchError } = await supabaseAdmin
-            .from('campsites')
-            .select('*')
-            .eq('id', id)
-            .single();
+        // Fetch existing for logging - use verifyOrgResource for 404 before deletion
+        const existingCampsite = await verifyOrgResource('campsites', id, organizationId!);
 
-        if (fetchError || !existingCampsite) {
-            return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
-        }
-
-        // Delete the campsite record
+        // Delete the campsite record (org-scoped)
         const { error: deleteError } = await supabaseAdmin
             .from('campsites')
             .delete()
-            .eq('id', id);
+            .eq('id', id)
+            .eq('organization_id', organizationId!);
 
         if (deleteError) {
             if (deleteError.code === '23503') {

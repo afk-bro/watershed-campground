@@ -18,20 +18,22 @@ export async function GET(request: Request) {
         const startDate = startOfMonth(parse(monthStr, 'yyyy-MM', new Date()));
         const endDate = endOfMonth(startDate);
 
-        // 1. Get all confirmed/checked_in/checked_out reservations that overlap with this month
+        // 1. Get all confirmed/checked_in/checked_out reservations that overlap with this month (org-scoped)
         // We check overlap: start < end_month AND end > start_month
         const { data: reservations, error: resError } = await supabaseAdmin
             .from('reservations')
             .select('id, total_amount, check_in, check_out, status, campsite_id')
+            .eq('organization_id', organizationId!)
             .in('status', ['confirmed', 'checked_in', 'checked_out', 'deposit_paid'])
             .or(`and(check_in.lte.${endDate.toISOString()},check_out.gte.${startDate.toISOString()})`);
 
         if (resError) throw resError;
 
-        // 2. Get active campsites count for occupancy calculation
+        // 2. Get active campsites count for occupancy calculation (org-scoped)
         const { count: totalCampsites, error: siteError } = await supabaseAdmin
             .from('campsites')
             .select('*', { count: 'exact', head: true })
+            .eq('organization_id', organizationId!)
             .eq('is_active', true);
 
         if (siteError) throw siteError;

@@ -121,34 +121,53 @@ export async function requireAdminWithOrg() {
  * @param method - HTTP method (e.g., 'GET', 'POST', 'PATCH', 'DELETE')
  * @returns NextResponse if should fail closed, null if should continue
  */
-export function migrationGate(route: string, method: string = 'UNKNOWN'): NextResponse | null {
+export function migrationGate(
+    route: string,
+    reason?: string,
+    replacementEndpoint?: string
+): NextResponse | null {
     const isDevelopment = process.env.NODE_ENV === 'development';
 
     if (isDevelopment) {
         // In dev, allow legacy behavior but log warning
-        console.warn(`[Migration Gate] ${method} ${route} - NOT YET MIGRATED (allowed in dev)`);
+        console.warn(`[MIGRATION_GATE] ${route} - NOT MIGRATED (allowed in dev)`, {
+            reason: reason || 'not migrated to multi-tenancy',
+            replacement: replacementEndpoint
+        });
         return null;
     }
 
     // In preview/production, fail closed with consistent payload
-    console.error(`[Migration Gate] ${method} ${route} - BLOCKED (not migrated to multi-tenancy)`);
+    // Use structured logging with clear tag for monitoring
+    console.error(`[MIGRATION_GATE] ${route} - BLOCKED`, {
+        route,
+        reason: reason || 'not migrated to multi-tenancy',
+        replacement: replacementEndpoint,
+        timestamp: new Date().toISOString(),
+        tag: 'DEPRECATED_ENDPOINT_USAGE' // For monitoring/alerting
+    });
 
-    return NextResponse.json(
-        {
-            error: 'MULTI_TENANT_MIGRATION_IN_PROGRESS',
-            route,
-            method,
-            message: 'This endpoint has not been migrated to multi-tenancy yet. It is blocked in production for security.',
-            documentation: 'See migration-recipe.md for migration instructions'
-        },
-        {
-            status: 501,
-            headers: {
-                'X-Migration-Status': 'pending',
-                'X-Blocked-Route': route
-            }
+    const response: Record<string, any> = {
+        error: 'ENDPOINT_DEPRECATED',
+        route,
+        message: reason || 'This endpoint is deprecated and blocked in production for security.',
+        documentation: 'See docs/MULTI_TENANCY.md for migration guide'
+    };
+
+    // Include replacement hint if provided
+    if (replacementEndpoint) {
+        response.replacement = replacementEndpoint;
+        response.message += ` Use ${replacementEndpoint} instead.`;
+    }
+
+    return NextResponse.json(response, {
+        status: 501,
+        headers: {
+            'X-Migration-Status': 'blocked',
+            'X-Blocked-Route': route,
+            ...(replacementEndpoint ? { 'X-Replacement-Endpoint': replacementEndpoint } : {})
         }
-    );
+    });
 }
 
 /**

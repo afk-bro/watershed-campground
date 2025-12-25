@@ -31,6 +31,7 @@ export async function POST(request: Request) {
         const { data, error } = await supabaseAdmin
             .from('reservations')
             .update(updates)
+            .eq('organization_id', organizationId!)
             .in('id', reservationIds)
             .select('id, archived_at');
 

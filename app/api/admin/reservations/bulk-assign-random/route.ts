@@ -24,6 +24,7 @@ export async function POST(request: Request) {
                 .from('reservations')
                 .select('*')
                 .eq('id', id)
+                .eq('organization_id', organizationId!)
                 .single();
 
             if (!reservation) {
@@ -41,7 +42,8 @@ export async function POST(request: Request) {
                 checkOut: reservation.check_out,
                 guestCount: (reservation.adults || 0) + (reservation.children || 0),
                 rvLength: reservation.rv_length ? parseInt(reservation.rv_length) : undefined,
-                unitType: reservation.camping_unit
+                unitType: reservation.camping_unit,
+                organizationId: organizationId! // Ensure campsites are org-scoped
             });
 
             if (availableSites.length === 0) {
@@ -54,7 +56,8 @@ export async function POST(request: Request) {
             const { error: assignError } = await supabaseAdmin
                 .from('reservations')
                 .update({ campsite_id: targetSite.id })
-                .eq('id', id);
+                .eq('id', id)
+                .eq('organization_id', organizationId!);
 
             if (assignError) {
                 results.push({ id, success: false, reason: "Database update failed" });

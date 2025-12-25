@@ -10,6 +10,7 @@ import {
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { checkAvailability } from "@/lib/availability/engine";
 import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
+import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
@@ -50,6 +51,12 @@ export async function POST(request: Request) {
             );
         }
 
+        // 0.5. Org Resolution (CRITICAL - before any queries)
+        const organizationId = await resolvePublicOrganizationId(request);
+        if (!organizationId) {
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
         let stripe: Stripe;
         try {
             stripe = getStripeClient();
@@ -79,13 +86,14 @@ export async function POST(request: Request) {
             );
         }
 
-        // 1. Check Availability
+        // 1. Check Availability (org-scoped)
         // Note: We re-check availability to ensure the spot wasn't taken in the last few seconds
         const availability = await checkAvailability({
             checkIn,
             checkOut,
             guestCount: adults + children,
-            campsiteId: requestedSiteId
+            campsiteId: requestedSiteId,
+            organizationId
         });
 
         if (!availability.available || !availability.recommendedSiteId) {
@@ -94,11 +102,12 @@ export async function POST(request: Request) {
 
         const campsiteId = availability.recommendedSiteId;
 
-        // 2. Get Campsite Details for Pricing
+        // 2. Get Campsite Details for Pricing (org-scoped)
         const { data: campsite, error: siteError } = await supabaseAdmin
             .from("campsites")
             .select("*")
             .eq("id", campsiteId)
+            .eq("organization_id", organizationId)
             .single();
 
         if (siteError || !campsite) {
