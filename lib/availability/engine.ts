@@ -196,7 +196,7 @@ export async function checkAvailability(params: {
     guestCount: number;
     campsiteId?: string;
     organizationId: string; // REQUIRED for multi-tenancy
-}): Promise<{ available: boolean; recommendedSiteId: string | null }> {
+}): Promise<{ available: boolean; recommendedSiteId: string | null; message?: string }> {
     const { checkIn, checkOut, guestCount, campsiteId, organizationId } = params;
 
     // Search for available campsites (org-scoped)
@@ -211,7 +211,11 @@ export async function checkAvailability(params: {
 
     // If no sites available at all
     if (availableSites.length === 0) {
-        return { available: false, recommendedSiteId: null };
+        return {
+            available: false,
+            recommendedSiteId: null,
+            message: "No campsites available for the selected dates. Please try different dates or contact us for assistance."
+        };
     }
 
     // If specific campsite requested, verify it's available
