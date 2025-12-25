@@ -4,6 +4,7 @@ import { campsiteFormSchema } from "@/lib/schemas";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 import { verifyOrgResource } from '@/lib/db-helpers';
+import type { Json } from '@/lib/database.types';
 
 type Params = {
     params: Promise<{
@@ -87,8 +88,8 @@ export async function PATCH(request: Request, { params }: Params) {
         // Audit Logging
         await logAudit({
             action: 'CAMPSITE_UPDATE',
-            oldData: existingCampsite,
-            newData: updatedCampsite,
+            oldData: existingCampsite as unknown as Json,
+            newData: updatedCampsite as unknown as Json,
             changedBy: user!.id
         });
 
@@ -130,7 +131,7 @@ export async function DELETE(request: Request, { params }: Params) {
         // Audit Logging
         await logAudit({
             action: 'CAMPSITE_DEACTIVATE', // Or add CAMPSITE_DELETE but current schema uses campsite_id as reservation_id dummy or similar. Actually logAudit handles it.
-            oldData: existingCampsite,
+            oldData: existingCampsite as unknown as Json,
             changedBy: user!.id
         });
 

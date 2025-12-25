@@ -1,5 +1,4 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
-import type { PostgrestFilterBuilder } from '@supabase/postgrest-js';
 
 /**
  * Database helper utilities for multi-tenant operations.
@@ -51,7 +50,7 @@ export function withOrg(table: string, organizationId: string) {
  * }
  * ```
  */
-export async function verifyOrgResource<T = any>(
+export async function verifyOrgResource<T = Record<string, unknown>>(
     table: string,
     id: string,
     organizationId: string
@@ -88,7 +87,7 @@ export async function verifyOrgResource<T = any>(
  */
 export function insertWithOrg(
     table: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     organizationId: string
 ) {
     return supabaseAdmin
@@ -119,7 +118,7 @@ export function insertWithOrg(
 export function updateWithOrg(
     table: string,
     id: string,
-    data: Record<string, any>,
+    data: Record<string, unknown>,
     organizationId: string
 ) {
     return supabaseAdmin

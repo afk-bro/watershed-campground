@@ -77,7 +77,7 @@ export type Reservation = {
         audit_version?: number;
         source?: string;
         created_by?: string;
-        [key: string]: any;
+        [key: string]: unknown;
     } | null;
     archived_at?: string | null;
     archived_by?: string | null;

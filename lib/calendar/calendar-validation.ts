@@ -1,4 +1,4 @@
-import { format, parseISO, subDays, addDays } from 'date-fns';
+import { format, parseISO, addDays } from 'date-fns';
 import type { CalendarBlock } from './calendar-types';
 import type { Reservation, Campsite, BlackoutDate } from '@/lib/supabase';
 

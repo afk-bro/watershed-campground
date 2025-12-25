@@ -4,6 +4,7 @@ import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { blackoutFormSchema } from '@/lib/schemas';
 import { logAudit } from '@/lib/audit/audit-service';
 import { verifyOrgResource } from '@/lib/db-helpers';
+import type { Json } from '@/lib/database.types';
 
 /**
  * PATCH /api/admin/blackout-dates/[id]
@@ -27,6 +28,13 @@ export async function PATCH(
             campsite_id: string | null;
             reason: string;
         }>('blackout_dates', id, organizationId!);
+
+        if (!existingBlackout) {
+            return NextResponse.json(
+                { error: 'Blackout date not found or access denied' },
+                { status: 404 }
+            );
+        }
 
         // 3. Validation
         const body = await request.json();
@@ -163,7 +171,7 @@ export async function DELETE(
         // 4. Audit Logging
         await logAudit({
             action: 'BLACKOUT_DELETE',
-            oldData: existingBlackout,
+            oldData: existingBlackout as unknown as Json,
             changedBy: user!.id
         });
 

@@ -102,8 +102,8 @@ export function useDragResize({
   const dragOffsetDaysRef = useRef<number>(0);
 
   // Persistent Throttlers
-  const throttledDragRef = useRef<ThrottledFn | null>(null);
-  const throttledResizeRef = useRef<ThrottledFn | null>(null);
+  const throttledDragRef = useRef<ThrottledFn<[PointerEvent]> | null>(null);
+  const throttledResizeRef = useRef<ThrottledFn<[PointerEvent]> | null>(null);
 
   // Unified State/Ref Syncing
   const updateDraggedItem = useCallback((item: DragResizeItem | null) => {
