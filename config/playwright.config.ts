@@ -65,15 +65,18 @@ export default defineConfig({
         },
 
         // ============================================
-        // All Tests (Default)
+        // Shared Tests (Integration, Security, Unit)
         // ============================================
-        // Runs all tests with appropriate auth state
+        // Tests that don't fit admin/guest categories
         {
-            name: 'chromium',
-            testMatch: /tests\/.*\.spec\.ts/,
+            name: 'shared',
+            testMatch: [
+                /tests\/integration\/.*\.spec\.ts/,
+                /tests\/security\/.*\.spec\.ts/,
+                /tests\/unit\/.*\.spec\.ts/,
+            ],
             use: {
                 ...devices['Desktop Chrome'],
-                // Admin tests will override this in their describe blocks
                 storageState: 'tests/.auth/admin.json',
             },
             dependencies: ['setup'],
