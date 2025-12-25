@@ -50,7 +50,7 @@ export function computeCounts(items: OverviewItem[]): { statusCounts: Record<Res
     return { statusCounts, maintenanceCount };
 }
 
-export function getPaymentStatus(reservation: any): PaymentStatus {
+export function getPaymentStatus(reservation: { payment_transactions?: Array<{ status: string; type: string }> }): PaymentStatus {
     const transactions: PaymentTransaction[] = reservation.payment_transactions || [];
     const totalAmount = reservation.metadata?.total_amount || 0;
 
