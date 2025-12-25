@@ -82,14 +82,14 @@ ON CONFLICT (id) DO NOTHING;
 -- ============================================
 -- 2. Seed Campsites
 -- ============================================
-INSERT INTO public.campsites (id, code, name, type, max_guests, base_rate, is_active, sort_order, notes) VALUES
-  ('10000000-0000-0000-0000-000000000001'::uuid, 'S1', 'Riverfront Site 1', 'rv', 4, 45.00, true, 1, 'Premium riverfront location with full hookups'),
-  ('10000000-0000-0000-0000-000000000002'::uuid, 'S2', 'Riverfront Site 2', 'rv', 4, 45.00, true, 2, 'Premium riverfront location with full hookups'),
-  ('10000000-0000-0000-0000-000000000003'::uuid, 'S3', 'Riverfront Site 3', 'rv', 6, 50.00, true, 3, 'Large riverfront site with full hookups'),
-  ('10000000-0000-0000-0000-000000000004'::uuid, 'S4', 'Forest Site 4', 'tent', 4, 30.00, true, 4, 'Shaded tent site near hiking trails'),
-  ('10000000-0000-0000-0000-000000000005'::uuid, 'S5', 'Forest Site 5', 'tent', 2, 25.00, true, 5, 'Cozy tent site with fire pit'),
-  ('10000000-0000-0000-0000-000000000006'::uuid, 'C1', 'Cabin Alpha', 'cabin', 6, 120.00, true, 10, 'Two-bedroom cabin with kitchen'),
-  ('10000000-0000-0000-0000-000000000007'::uuid, 'C2', 'Cabin Beta', 'cabin', 4, 100.00, true, 11, 'One-bedroom cabin with kitchenette')
+INSERT INTO public.campsites (id, code, name, type, max_guests, base_rate, is_active, sort_order, notes, organization_id) VALUES
+  ('10000000-0000-0000-0000-000000000001'::uuid, 'S1', 'Riverfront Site 1', 'rv', 4, 45.00, true, 1, 'Premium riverfront location with full hookups', '00000000-0000-0000-0000-000000000001'::uuid),
+  ('10000000-0000-0000-0000-000000000002'::uuid, 'S2', 'Riverfront Site 2', 'rv', 4, 45.00, true, 2, 'Premium riverfront location with full hookups', '00000000-0000-0000-0000-000000000001'::uuid),
+  ('10000000-0000-0000-0000-000000000003'::uuid, 'S3', 'Riverfront Site 3', 'rv', 6, 50.00, true, 3, 'Large riverfront site with full hookups', '00000000-0000-0000-0000-000000000001'::uuid),
+  ('10000000-0000-0000-0000-000000000004'::uuid, 'S4', 'Forest Site 4', 'tent', 4, 30.00, true, 4, 'Shaded tent site near hiking trails', '00000000-0000-0000-0000-000000000001'::uuid),
+  ('10000000-0000-0000-0000-000000000005'::uuid, 'S5', 'Forest Site 5', 'tent', 2, 25.00, true, 5, 'Cozy tent site with fire pit', '00000000-0000-0000-0000-000000000001'::uuid),
+  ('10000000-0000-0000-0000-000000000006'::uuid, 'C1', 'Cabin Alpha', 'cabin', 6, 120.00, true, 10, 'Two-bedroom cabin with kitchen', '00000000-0000-0000-0000-000000000001'::uuid),
+  ('10000000-0000-0000-0000-000000000007'::uuid, 'C2', 'Cabin Beta', 'cabin', 4, 100.00, true, 11, 'One-bedroom cabin with kitchenette', '00000000-0000-0000-0000-000000000001'::uuid)
 ON CONFLICT (code) DO NOTHING;  -- Business key: campsite code must be unique
 
 -- ============================================
@@ -115,7 +115,8 @@ INSERT INTO public.reservations (
   contact_method,
   status,
   total_amount,
-  stripe_payment_intent_id
+  stripe_payment_intent_id,
+  organization_id
 ) VALUES
   -- Assigned reservation #1 (confirmed)
   (
@@ -137,7 +138,8 @@ INSERT INTO public.reservations (
     'email',
     'confirmed',
     90.00,
-    'pi_test_assigned_1'
+    'pi_test_assigned_1',
+    '00000000-0000-0000-0000-000000000001'::uuid
   ),
   -- Assigned reservation #2 (confirmed)
   (
@@ -159,7 +161,8 @@ INSERT INTO public.reservations (
     'email',
     'confirmed',
     60.00,
-    'pi_test_assigned_2'
+    'pi_test_assigned_2',
+    '00000000-0000-0000-0000-000000000001'::uuid
   ),
   -- UNASSIGNED reservation (pending) - critical for testing assignment flow
   (
@@ -181,7 +184,8 @@ INSERT INTO public.reservations (
     'email',
     'pending',
     100.00,
-    'pi_test_unassigned'
+    'pi_test_unassigned',
+    '00000000-0000-0000-0000-000000000001'::uuid
   )
 ON CONFLICT (id) DO NOTHING;
 

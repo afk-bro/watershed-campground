@@ -180,7 +180,31 @@ TO service_role
 USING (true);
 
 -- ============================================================================
--- STEP 6: Assign current admin users to default organization
+-- STEP 6: Update audit log trigger to include organization_id
+-- ============================================================================
+
+CREATE OR REPLACE FUNCTION public.log_reservation_changes()
+RETURNS trigger AS $$
+BEGIN
+  IF (TG_OP = 'INSERT') THEN
+    INSERT INTO public.audit_logs (reservation_id, action, new_data, changed_by, organization_id)
+    VALUES (NEW.id, 'INSERT', to_jsonb(NEW), auth.uid(), NEW.organization_id);
+    RETURN NEW;
+  ELSIF (TG_OP = 'UPDATE') THEN
+    INSERT INTO public.audit_logs (reservation_id, action, old_data, new_data, changed_by, organization_id)
+    VALUES (NEW.id, 'UPDATE', to_jsonb(OLD), to_jsonb(NEW), auth.uid(), NEW.organization_id);
+    RETURN NEW;
+  ELSIF (TG_OP = 'DELETE') THEN
+    INSERT INTO public.audit_logs (reservation_id, action, old_data, changed_by, organization_id)
+    VALUES (OLD.id, 'DELETE', to_jsonb(OLD), auth.uid(), OLD.organization_id);
+    RETURN OLD;
+  END IF;
+  RETURN NULL;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- ============================================================================
+-- STEP 7: Assign current admin users to default organization
 -- ============================================================================
 
 -- This will need to be run manually or via a separate script
