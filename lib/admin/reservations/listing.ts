@@ -50,8 +50,14 @@ export function computeCounts(items: OverviewItem[]): { statusCounts: Record<Res
     return { statusCounts, maintenanceCount };
 }
 
-export function getPaymentStatus(reservation: { payment_transactions?: Array<{ status: string; type: string }> }): PaymentStatus {
-    const transactions: PaymentTransaction[] = reservation.payment_transactions || [];
+export function getPaymentStatus(reservation: {
+    check_in?: string;
+    status: string | ReservationStatus;
+    metadata?: { total_amount?: number; [key: string]: unknown };
+    payment_transactions?: Array<{ status: string; type: string; amount?: number; [key: string]: unknown }>;
+    [key: string]: unknown;
+}): PaymentStatus {
+    const transactions: PaymentTransaction[] = (reservation.payment_transactions || []) as PaymentTransaction[];
     const totalAmount = reservation.metadata?.total_amount || 0;
 
     // No transactions yet
