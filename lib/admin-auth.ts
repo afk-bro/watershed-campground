@@ -97,3 +97,70 @@ export async function requireAdminWithOrg() {
         };
     }
 }
+
+/**
+ * Migration gate for endpoints that haven't been updated with multi-tenancy yet.
+ * 
+ * **CRITICAL SAFETY FEATURE:**
+ * - In development: Allows legacy behavior (returns null, endpoint continues)
+ * - In preview/production: Fails closed with 501 Not Implemented
+ * 
+ * This prevents accidentally deploying unmigrated endpoints that could leak data.
+ * 
+ * **Usage (MUST be first line in handler):**
+ * ```typescript
+ * export async function GET(request: Request) {
+ *     const gateResponse = migrationGate('GET /api/admin/some-endpoint');
+ *     if (gateResponse) return gateResponse;
+ *     
+ *     // ... rest of unmigrated endpoint code
+ * }
+ * ```
+ * 
+ * @param route - Route identifier (e.g., 'reservations.bulk-archive')
+ * @param method - HTTP method (e.g., 'GET', 'POST', 'PATCH', 'DELETE')
+ * @returns NextResponse if should fail closed, null if should continue
+ */
+export function migrationGate(route: string, method: string = 'UNKNOWN'): NextResponse | null {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    if (isDevelopment) {
+        // In dev, allow legacy behavior but log warning
+        console.warn(`[Migration Gate] ${method} ${route} - NOT YET MIGRATED (allowed in dev)`);
+        return null;
+    }
+
+    // In preview/production, fail closed with consistent payload
+    console.error(`[Migration Gate] ${method} ${route} - BLOCKED (not migrated to multi-tenancy)`);
+
+    return NextResponse.json(
+        {
+            error: 'MULTI_TENANT_MIGRATION_IN_PROGRESS',
+            route,
+            method,
+            message: 'This endpoint has not been migrated to multi-tenancy yet. It is blocked in production for security.',
+            documentation: 'See migration-recipe.md for migration instructions'
+        },
+        {
+            status: 501,
+            headers: {
+                'X-Migration-Status': 'pending',
+                'X-Blocked-Route': route
+            }
+        }
+    );
+}
+
+/**
+ * Helper to assert that a tenant-scoped operation is safe.
+ * Use this in migrated endpoints as documentation and runtime check.
+ * 
+ * @param endpointName - Name of the endpoint for logging
+ */
+export function assertTenantMigrated(endpointName: string): void {
+    // This is primarily for documentation and future runtime checks
+    // Could be extended to verify organization_id is present in queries
+    if (process.env.NODE_ENV === 'development') {
+        console.log(`[Tenant Check] ${endpointName} - MIGRATED ✓`);
+    }
+}
