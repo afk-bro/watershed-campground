@@ -57,7 +57,7 @@ export function getPaymentStatus(reservation: {
     payment_transactions?: Array<{ status: string; type: string; amount?: number; [key: string]: unknown }>;
     [key: string]: unknown;
 }): PaymentStatus {
-    const transactions: PaymentTransaction[] = (reservation.payment_transactions || []) as PaymentTransaction[];
+    const transactions: PaymentTransaction[] = (reservation.payment_transactions || []) as unknown as PaymentTransaction[];
     const totalAmount = reservation.metadata?.total_amount || 0;
 
     // No transactions yet

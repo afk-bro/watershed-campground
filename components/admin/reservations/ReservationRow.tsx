@@ -43,7 +43,7 @@ export default function ReservationRow({
                     : 'hover:bg-[var(--color-surface-elevated)]'
     }`;
 
-    const paymentStatus = getPaymentStatus(reservation);
+    const paymentStatus = getPaymentStatus(reservation as Parameters<typeof getPaymentStatus>[0]);
     const paymentConfig = {
         paid: { icon: '✓', label: 'Paid in full', color: 'text-green-600/60 dark:text-green-400/60' },
         deposit_paid: { icon: '💳', label: 'Deposit paid', color: 'text-blue-600/60 dark:text-blue-400/60' },
