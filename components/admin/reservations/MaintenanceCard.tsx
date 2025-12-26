@@ -29,7 +29,7 @@ export default function MaintenanceCard({
     `;
 
     return (
-        <div className={cardClass}>
+        <div className={cardClass} data-testid={`maintenance-card-${item.id}`}>
             {/* Header Row: Checkbox + Title + Actions */}
             <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -37,6 +37,7 @@ export default function MaintenanceCard({
                         <input
                             type="checkbox"
                             disabled={isSubmitting}
+                            aria-label="Select maintenance block"
                             className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
                                 isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                             }`}

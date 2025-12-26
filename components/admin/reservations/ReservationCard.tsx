@@ -27,7 +27,7 @@ export default function ReservationCard({
 }: ReservationCardProps) {
     const isCancelled = reservation.status === 'cancelled' || reservation.status === 'no_show';
     const isCheckedIn = reservation.status === 'checked_in';
-    const isArchived = !!(reservation as any).archived_at;
+    const isArchived = !!reservation.archived_at;
 
     const cardClass = `
         bg-[var(--color-surface-card)]
@@ -46,7 +46,10 @@ export default function ReservationCard({
         }
     `;
 
-    const paymentStatus = getPaymentStatus(reservation as Parameters<typeof getPaymentStatus>[0]);
+    const paymentStatus = getPaymentStatus({
+        ...reservation,
+        metadata: reservation.metadata || undefined
+    });
     const paymentConfig = {
         paid: { icon: '✓', label: 'Paid in full', color: 'text-green-600/60 dark:text-green-400/60' },
         deposit_paid: { icon: '💳', label: 'Deposit paid', color: 'text-blue-600/60 dark:text-blue-400/60' },
@@ -58,7 +61,7 @@ export default function ReservationCard({
     const config = paymentConfig[paymentStatus];
 
     return (
-        <div className={cardClass}>
+        <div className={cardClass} data-testid={`reservation-card-${reservation.id}`}>
             {/* Header Row: Checkbox + Name + Actions */}
             <div className="flex items-start justify-between gap-3 mb-3">
                 <div className="flex items-start gap-3 flex-1 min-w-0">
@@ -66,6 +69,7 @@ export default function ReservationCard({
                         <input
                             type="checkbox"
                             disabled={isSubmitting}
+                            aria-label={`Select reservation for ${reservation.first_name} ${reservation.last_name}`}
                             className={`rounded-md border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:ring-offset-0 cursor-pointer w-5 h-5 transition-all hover:border-[var(--color-accent-gold)]/60 ${
                                 isSubmitting ? 'opacity-50 cursor-not-allowed' : ''
                             }`}
@@ -73,7 +77,18 @@ export default function ReservationCard({
                             onChange={() => onToggle(reservation.id!)}
                         />
                     </div>
-                    <div className="flex-1 min-w-0 cursor-pointer" onClick={() => onClick(reservation)}>
+                    <div
+                        className="flex-1 min-w-0 cursor-pointer"
+                        onClick={() => onClick(reservation)}
+                        role="button"
+                        tabIndex={0}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                onClick(reservation);
+                            }
+                        }}
+                    >
                         <div className="font-semibold text-[var(--color-text-primary)] text-base truncate">
                             {reservation.first_name} {reservation.last_name}
                         </div>
@@ -95,7 +110,18 @@ export default function ReservationCard({
             </div>
 
             {/* Status Badge */}
-            <div className="mb-3 cursor-pointer" onClick={() => onClick(reservation)}>
+            <div
+                className="mb-3 cursor-pointer"
+                onClick={() => onClick(reservation)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick(reservation);
+                    }
+                }}
+            >
                 <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
                     reservation.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-200 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800' :
                     reservation.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800' :
@@ -107,7 +133,18 @@ export default function ReservationCard({
             </div>
 
             {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-3 cursor-pointer" onClick={() => onClick(reservation)}>
+            <div
+                className="grid grid-cols-2 gap-3 cursor-pointer"
+                onClick={() => onClick(reservation)}
+                role="button"
+                tabIndex={0}
+                onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                        e.preventDefault();
+                        onClick(reservation);
+                    }
+                }}
+            >
                 {/* Dates */}
                 <div>
                     <div className="text-xs text-[var(--color-text-muted)] mb-0.5">Dates</div>
