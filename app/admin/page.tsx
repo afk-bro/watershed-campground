@@ -14,12 +14,16 @@ import type { ReservationOverviewItem, BlockingEventOverviewItem } from "@/lib/s
 // New modular components
 import ReservationRow from "@/components/admin/reservations/ReservationRow";
 import MaintenanceRow from "@/components/admin/reservations/MaintenanceRow";
+import ReservationCard from "@/components/admin/reservations/ReservationCard";
+import MaintenanceCard from "@/components/admin/reservations/MaintenanceCard";
 import DashboardStats from "@/components/admin/reservations/DashboardStats";
 import DashboardSearch from "@/components/admin/reservations/DashboardSearch";
 import { DemoDataBanner } from "@/components/admin/DemoDataBanner";
+import { useViewportModeContext } from "@/components/providers/ViewportModeProvider";
 
 export default function AdminPage() {
     const { showToast } = useToast();
+    const { isPhone } = useViewportModeContext();
     const [items, setItems] = useState<OverviewItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -308,60 +312,114 @@ export default function AdminPage() {
                     searchInputRef={searchInputRef}
                 />
 
-                <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm overflow-hidden">
-                    <div className="overflow-x-auto">
-                        <table className="w-full table-fixed border-collapse">
-                            <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
-                                <tr>
-                                    <th className="px-3 pl-4 py-3 w-10 text-left">
-                                        <input
-                                            type="checkbox"
-                                            className="rounded-md w-5 h-5 cursor-pointer"
-                                            checked={selectedIds.size > 0 && selectedIds.size === selectableReservations.length}
-                                            onChange={() => setSelectedIds(selectedIds.size === selectableReservations.length ? new Set() : new Set(selectableReservations.map(i => i.id)))}
-                                        />
-                                    </th>
-                                    <th className="px-5 py-3 w-[260px] border-l border-[var(--color-border-default)]/20">Guest</th>
-                                    <th className="px-5 py-3 w-[180px] border-l border-[var(--color-border-default)]/20">Dates</th>
-                                    <th className="px-5 py-3 min-w-0 border-l border-[var(--color-border-default)]/20">Details</th>
-                                    <th className="px-5 py-3 w-[110px] text-center border-l border-[var(--color-border-default)]/20">Campsite</th>
-                                    <th className="px-5 py-3 w-[180px] text-center border-l border-[var(--color-border-default)]/20">Status</th>
-                                    <th className="px-5 py-3 w-[90px] text-center border-l border-[var(--color-border-default)]/20">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody className="divide-y divide-[var(--color-border-subtle)] text-sm">
-                                {sortedItems.length === 0 ? (
-                                    <tr><td colSpan={7} className="px-5 py-12 text-center text-[var(--color-text-muted)]">No items found.</td></tr>
-                                ) : (
-                                    sortedItems.map(item => (
-                                        item.type === 'reservation' ? (
-                                            <ReservationRow
-                                                key={item.id}
-                                                reservation={item as any}
-                                                isSelected={selectedIds.has(item.id)}
-                                                isSubmitting={isSubmitting}
-                                                onToggle={() => toggleSelection(item.id)}
-                                                onClick={setSelectedReservation}
-                                                updateStatus={updateStatus}
-                                                handleArchive={handleArchive}
-                                                setAssigningReservation={setAssigningReservation}
+                {/* Mobile Card View */}
+                {isPhone ? (
+                    <div className="space-y-3">
+                        {sortedItems.length === 0 ? (
+                            <div className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border-subtle)] p-8 text-center text-[var(--color-text-muted)]">
+                                No items found.
+                            </div>
+                        ) : (
+                            <>
+                                {selectableReservations.length > 0 && (
+                                    <div className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border-subtle)] p-3">
+                                        <label className="flex items-center gap-3 cursor-pointer">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded-md w-5 h-5 cursor-pointer border-2 border-[var(--color-border-subtle)] checked:border-[var(--color-accent-gold)] text-[var(--color-accent-gold)] focus:ring-2 focus:ring-[var(--color-accent-gold)]"
+                                                checked={selectedIds.size > 0 && selectedIds.size === selectableReservations.length}
+                                                onChange={() => setSelectedIds(selectedIds.size === selectableReservations.length ? new Set() : new Set(selectableReservations.map(i => i.id)))}
                                             />
-                                        ) : (
-                                            <MaintenanceRow
-                                                key={item.id}
-                                                item={item as BlockingEventOverviewItem}
-                                                isSelected={selectedIds.has(item.id)}
-                                                isSubmitting={isSubmitting}
-                                                onToggle={() => toggleSelection(item.id)}
-                                                onDelete={handleDeleteMaintenance}
-                                            />
-                                        )
-                                    ))
+                                            <span className="text-sm text-[var(--color-text-secondary)]">
+                                                {selectedIds.size > 0 ? `${selectedIds.size} selected` : 'Select all'}
+                                            </span>
+                                        </label>
+                                    </div>
                                 )}
-                            </tbody>
-                        </table>
+                                {sortedItems.map(item => (
+                                    item.type === 'reservation' ? (
+                                        <ReservationCard
+                                            key={item.id}
+                                            reservation={item as any}
+                                            isSelected={selectedIds.has(item.id)}
+                                            isSubmitting={isSubmitting}
+                                            onToggle={() => toggleSelection(item.id)}
+                                            onClick={setSelectedReservation}
+                                            updateStatus={updateStatus}
+                                            handleArchive={handleArchive}
+                                            setAssigningReservation={setAssigningReservation}
+                                        />
+                                    ) : (
+                                        <MaintenanceCard
+                                            key={item.id}
+                                            item={item as BlockingEventOverviewItem}
+                                            isSelected={selectedIds.has(item.id)}
+                                            isSubmitting={isSubmitting}
+                                            onToggle={() => toggleSelection(item.id)}
+                                            onDelete={handleDeleteMaintenance}
+                                        />
+                                    )
+                                ))}
+                            </>
+                        )}
                     </div>
-                </div>
+                ) : (
+                    /* Desktop Table View */
+                    <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm overflow-hidden">
+                        <div className="overflow-x-auto">
+                            <table className="w-full table-fixed border-collapse">
+                                <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)] text-xs font-semibold text-[var(--color-text-secondary)] uppercase tracking-wider">
+                                    <tr>
+                                        <th className="px-3 pl-4 py-3 w-10 text-left">
+                                            <input
+                                                type="checkbox"
+                                                className="rounded-md w-5 h-5 cursor-pointer"
+                                                checked={selectedIds.size > 0 && selectedIds.size === selectableReservations.length}
+                                                onChange={() => setSelectedIds(selectedIds.size === selectableReservations.length ? new Set() : new Set(selectableReservations.map(i => i.id)))}
+                                            />
+                                        </th>
+                                        <th className="px-5 py-3 w-[260px] border-l border-[var(--color-border-default)]/20">Guest</th>
+                                        <th className="px-5 py-3 w-[180px] border-l border-[var(--color-border-default)]/20">Dates</th>
+                                        <th className="px-5 py-3 min-w-0 border-l border-[var(--color-border-default)]/20">Details</th>
+                                        <th className="px-5 py-3 w-[110px] text-center border-l border-[var(--color-border-default)]/20">Campsite</th>
+                                        <th className="px-5 py-3 w-[180px] text-center border-l border-[var(--color-border-default)]/20">Status</th>
+                                        <th className="px-5 py-3 w-[90px] text-center border-l border-[var(--color-border-default)]/20">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-[var(--color-border-subtle)] text-sm">
+                                    {sortedItems.length === 0 ? (
+                                        <tr><td colSpan={7} className="px-5 py-12 text-center text-[var(--color-text-muted)]">No items found.</td></tr>
+                                    ) : (
+                                        sortedItems.map(item => (
+                                            item.type === 'reservation' ? (
+                                                <ReservationRow
+                                                    key={item.id}
+                                                    reservation={item as any}
+                                                    isSelected={selectedIds.has(item.id)}
+                                                    isSubmitting={isSubmitting}
+                                                    onToggle={() => toggleSelection(item.id)}
+                                                    onClick={setSelectedReservation}
+                                                    updateStatus={updateStatus}
+                                                    handleArchive={handleArchive}
+                                                    setAssigningReservation={setAssigningReservation}
+                                                />
+                                            ) : (
+                                                <MaintenanceRow
+                                                    key={item.id}
+                                                    item={item as BlockingEventOverviewItem}
+                                                    isSelected={selectedIds.has(item.id)}
+                                                    isSubmitting={isSubmitting}
+                                                    onToggle={() => toggleSelection(item.id)}
+                                                    onDelete={handleDeleteMaintenance}
+                                                />
+                                            )
+                                        ))
+                                    )}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )}
             </Container>
 
             <ReservationDrawer reservation={selectedReservation} isOpen={!!selectedReservation} onClose={() => setSelectedReservation(null)} />
