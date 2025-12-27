@@ -40,15 +40,29 @@ jobs:
           echo "✅ E2E fixtures loaded"
       - name: Get Supabase credentials
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=$(npx supabase status | grep 'API URL' | awk '{print $3}')" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$(npx supabase status | grep 'anon key' | awk '{print $3}')" >> $GITHUB_ENV
-          echo "SUPABASE_SERVICE_ROLE_KEY=$(npx supabase status | grep 'service_role key' | awk '{print $3}')" >> $GITHUB_ENV
+          # Extract credentials from Supabase status using JSON output for reliability
+          STATUS_JSON=$(npx supabase status -o json)
+
+          # Extract values using bracket notation for fields with spaces
+          API_URL=$(echo "$STATUS_JSON" | jq -r '.["API URL"] // .API_URL')
+          ANON_KEY=$(echo "$STATUS_JSON" | jq -r '.["anon key"] // .ANON_KEY // .PUBLISHABLE_KEY')
+          SERVICE_KEY=$(echo "$STATUS_JSON" | jq -r '.["service_role key"] // .SERVICE_ROLE_KEY // .SECRET_KEY')
+
+          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
+          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
           echo "TEST_ADMIN_EMAIL=admin@test.com" >> $GITHUB_ENV
           echo "TEST_ADMIN_PASSWORD=testpass123" >> $GITHUB_ENV
           echo "ADMIN_EMAILS=admin@test.com" >> $GITHUB_ENV
           echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_SECRET_KEY || 'sk_test_dummy' }}" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || 'pk_test_dummy' }}" >> $GITHUB_ENV
           echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET || 'whsec_dummy' }}" >> $GITHUB_ENV
+
+          # Debug: verify extraction succeeded
+          echo "Supabase credentials extracted:"
+          echo "  API_URL: $([ -n "$API_URL" ] && echo "✓ set" || echo "✗ missing")"
+          echo "  ANON_KEY: $([ -n "$ANON_KEY" ] && echo "✓ set" || echo "✗ missing")"
+          echo "  SERVICE_KEY: $([ -n "$SERVICE_KEY" ] && echo "✓ set" || echo "✗ missing")"
       - name: Create .env.test for Playwright
         run: |
           cat > .env.test << 'ENVEOF'
