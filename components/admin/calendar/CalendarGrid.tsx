@@ -17,7 +17,6 @@ import CreationDialog from "./CreationDialog";
 import { useRouter } from "next/navigation";
 import type { GhostState, CalendarData } from "@/lib/calendar/calendar-types";
 import { useAutoScroll } from "./hooks/useAutoScroll";
-import { useCalendarSelection } from "./hooks/useCalendarSelection";
 import { useDragResize } from "./hooks/useDragResize";
 import { useBlackoutManager } from "./hooks/useBlackoutManager";
 import { useCalendarPanning } from "./hooks/useCalendarPanning";
@@ -25,6 +24,7 @@ import { useSyncedScroll } from "./hooks/useSyncedScroll";
 import { useStuckSavingFailsafe } from "./hooks/useStuckSavingFailsafe";
 import { useReservationMutations } from "./hooks/useReservationMutations";
 import { useCalendarFilters } from "./hooks/useCalendarFilters";
+import { useCreationWorkflow } from "./hooks/useCreationWorkflow";
 import SyncedScrollbar from "./SyncedScrollbar";
 import BlackoutDrawer from "./BlackoutDrawer";
 import NoCampsitesCTA from "./NoCampsitesCTA";
@@ -62,7 +62,6 @@ export default function CalendarGrid({
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
   const [showConfirmDialog, setShowConfirmDialog] = useState(false);
-  const [showCreationDialog, setShowCreationDialog] = useState(false);
   const [todayX, setTodayX] = useState<number | null>(null);
   const headerTodayRef = useRef<HTMLDivElement>(null);
 
@@ -304,43 +303,29 @@ export default function CalendarGrid({
     stopAutoScroll,
   });
 
-  // Validation for cell selection during creation
-  const isValidSelectionCell = useCallback((campsiteId: string, dateStr: string) => {
-    // Check if cell is occupied by reservation
-    const isOccupiedByReservation = reservations.some(res =>
-      res.campsite_id === campsiteId && dateStr >= res.check_in && dateStr < res.check_out && res.status !== 'cancelled'
-    );
-    // Check if cell is occupied by blackout
-    const isOccupiedByBlackout = blackoutDates.some(b =>
-      (b.campsite_id === campsiteId || b.campsite_id === null) && dateStr >= b.start_date && dateStr <= b.end_date
-    );
-    return !isOccupiedByReservation && !isOccupiedByBlackout;
-  }, [reservations, blackoutDates]);
-
-  // Calendar selection hook (after drag/resize so we can check their state)
+  // Creation Workflow (selection, dialog, and blackout creation)
   const {
     isCreating,
+    selection,
     creationStart,
     creationEnd,
-    selection,
+    showCreationDialog,
+    setShowCreationDialog,
     handleCellPointerDown,
     handleCellPointerEnter,
-    handleCellPointerUp: handleCellPointerUpBase,
+    handleCellPointerUp,
     handleCellPointerCancel,
-    clearSelection,
-  } = useCalendarSelection(!isDragging && !resizeState, isValidSelectionCell);
-
-  // Wrap handleCellPointerUp to also show dialog
-  const handleCellPointerUp = useCallback(() => {
-    handleCellPointerUpBase();
-  }, [handleCellPointerUpBase]);
-
-  // Show creation dialog when selection is non-null and creation has ended
-  useEffect(() => {
-    if (!isCreating && selection && creationStart && creationEnd) {
-      setShowCreationDialog(true);
-    }
-  }, [isCreating, selection, creationStart, creationEnd]);
+    handleCreateBlackout,
+    clearSelection
+  } = useCreationWorkflow({
+    isDragging,
+    resizeState,
+    reservations,
+    blackoutDates,
+    updateScrollDirection,
+    stopAutoScroll,
+    createBlackout
+  });
   
   const handleReservationClick = (res: Reservation) => {
     setSelectedReservation(res);
@@ -388,52 +373,6 @@ export default function CalendarGrid({
       setConfirmDialogError(adminError.userMessage);
     } finally {
       setIsSubmitting(false);
-    }
-  };
-
-  // Ref to track if we're currently creating (prevents stale closures)
-  const isCreatingRef = useRef(isCreating);
-  useEffect(() => {
-    isCreatingRef.current = isCreating;
-  }, [isCreating]);
-
-  // Auto-scroll during creation drag - stabilized handler using refs
-  // This function is created once and never recreates, preventing listener thrash
-  const handleCreationPointerMove = useCallback((e: PointerEvent) => {
-    // Read current state from ref to avoid stale closures
-    if (!isCreatingRef.current) return;
-    updateScrollDirection(e.clientX, e.clientY);
-  }, [updateScrollDirection]); // Only depends on updateScrollDirection, not isCreating
-
-  // Add/remove window pointer listeners for creation drag
-  // Attaches ONCE when isCreating becomes true, removes when it becomes false
-  useEffect(() => {
-    if (isCreating) {
-      console.log('[CREATION] Setting up pointermove listener for auto-scroll');
-      window.addEventListener('pointermove', handleCreationPointerMove);
-      return () => {
-        console.log('[CREATION] Removing pointermove listener');
-        window.removeEventListener('pointermove', handleCreationPointerMove);
-        stopAutoScroll(); // Stop any active scrolling
-      };
-    }
-    return undefined;
-  }, [isCreating, handleCreationPointerMove, stopAutoScroll]);
-
-  const handleCreateBlackout = async (reason: string) => {
-    if (!creationStart || !creationEnd) return;
-
-    // Check if we have a valid campsite ID
-    if (!creationStart.campsiteId || creationStart.campsiteId === 'UNASSIGNED') {
-        showToast('Cannot create blackout on Unassigned row', 'error');
-        return;
-    }
-
-    try {
-      await createBlackout(creationStart.date, creationEnd.date, creationStart.campsiteId, reason);
-    } catch (error: unknown) {
-      // Error already logged and toasted by the hook
-      handleAdminError(error, 'CalendarGrid.confirmCreation');
     }
   };
 
