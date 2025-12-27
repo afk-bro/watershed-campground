@@ -108,9 +108,9 @@ jobs:
           STATUS_JSON=$(npx supabase status -o json)
 
           # Extract values using correct field names (note: API URL, anon key, service_role key)
-          API_URL=$(echo "$STATUS_JSON" | jq -r '.API URL // .API_URL // ."API URL"')
-          ANON_KEY=$(echo "$STATUS_JSON" | jq -r '.anon key // .ANON_KEY // .PUBLISHABLE_KEY // ."anon key"')
-          SERVICE_KEY=$(echo "$STATUS_JSON" | jq -r '.service_role key // .SERVICE_ROLE_KEY // .SECRET_KEY // ."service_role key"')
+          API_URL=$(echo "$STATUS_JSON" | jq -r '.["API URL"] // .API_URL')
+          ANON_KEY=$(echo "$STATUS_JSON" | jq -r '.["anon key"] // .ANON_KEY // .PUBLISHABLE_KEY')
+          SERVICE_KEY=$(echo "$STATUS_JSON" | jq -r '.["service_role key"] // .SERVICE_ROLE_KEY // .SECRET_KEY')
 
           echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
           echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
