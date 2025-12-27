@@ -144,10 +144,15 @@
 
   /* Status Colors */
   --color-status-pending: var(--color-status-pending);
+  --color-status-pending-border: var(--color-status-pending-border);
   --color-status-confirmed: var(--color-status-confirmed);
+  --color-status-confirmed-border: var(--color-status-confirmed-border);
   --color-status-cancelled: var(--color-status-cancelled);
+  --color-status-cancelled-border: var(--color-status-cancelled-border);
   --color-status-active: var(--color-status-active);
+  --color-status-active-border: var(--color-status-active-border);
   --color-status-neutral: var(--color-status-neutral);
+  --color-status-neutral-border: var(--color-status-neutral-border);
 
   /* Typography */
   --font-heading: var(--font-heading);
