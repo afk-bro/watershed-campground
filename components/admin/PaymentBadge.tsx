@@ -10,32 +10,32 @@ export default function PaymentBadge({ status, amount }: PaymentBadgeProps) {
         paid: {
             icon: '✓',
             label: 'Paid',
-            className: 'bg-green-500/10 text-green-600 dark:text-green-400'
+            className: 'bg-[var(--color-status-confirmed-bg)] text-[var(--color-status-confirmed)]'
         },
         deposit_paid: {
             icon: '💳',
             label: 'Deposit',
-            className: 'bg-blue-500/10 text-blue-600 dark:text-blue-400'
+            className: 'bg-[var(--color-status-active-bg)] text-[var(--color-status-active)]'
         },
         payment_due: {
             icon: '⏳',
             label: 'Due',
-            className: 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
+            className: 'bg-[var(--color-status-pending-bg)] text-[var(--color-status-pending)]'
         },
         overdue: {
             icon: '!',
             label: 'Overdue',
-            className: 'bg-orange-500/10 text-orange-600 dark:text-orange-400'
+            className: 'bg-[var(--color-warning-bg)] text-[var(--color-warning)]'
         },
         failed: {
             icon: '✕',
             label: 'Failed',
-            className: 'bg-red-500/10 text-red-600 dark:text-red-400'
+            className: 'bg-[var(--color-error-bg)] text-[var(--color-error)]'
         },
         refunded: {
             icon: '↩',
             label: 'Refund',
-            className: 'bg-gray-500/10 text-gray-600 dark:text-gray-400'
+            className: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)]'
         }
     };
 

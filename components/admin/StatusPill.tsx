@@ -11,32 +11,32 @@ const StatusPill = memo(function StatusPill({ status }: Props) {
         pending: {
             label: 'Pending',
             icon: Clock,
-            classes: 'bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-800'
+            classes: 'bg-[var(--color-status-pending-bg)] text-[var(--color-status-pending)] border-[var(--color-status-pending-border)]'
         },
         confirmed: {
             label: 'Confirmed',
             icon: CheckCircle2,
-            classes: 'bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-800'
+            classes: 'bg-[var(--color-status-confirmed-bg)] text-[var(--color-status-confirmed)] border-[var(--color-status-confirmed-border)]'
         },
         cancelled: {
             label: 'Cancelled',
             icon: XCircle,
-            classes: 'bg-red-50 text-red-700 border-red-100 dark:bg-red-900/10 dark:text-red-400 dark:border-red-900/30'
+            classes: 'bg-[var(--color-status-cancelled-bg)] text-[var(--color-status-cancelled)] border-[var(--color-status-cancelled-border)]'
         },
         checked_in: {
             label: 'Checked In',
             icon: LogIn,
-            classes: 'bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-900/30 dark:text-blue-300 dark:border-blue-800'
+            classes: 'bg-[var(--color-status-active-bg)] text-[var(--color-status-active)] border-[var(--color-status-active-border)]'
         },
         checked_out: {
             label: 'Checked Out',
             icon: LogOut,
-            classes: 'bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700'
+            classes: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border-[var(--color-status-neutral-border)]'
         },
         no_show: {
             label: 'No Show',
             icon: HelpCircle,
-            classes: 'bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-500 dark:border-gray-700'
+            classes: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border-[var(--color-status-neutral-border)]'
         },
     };
 
