@@ -3,6 +3,7 @@ import { type OverviewItem, type Reservation, type ReservationStatus } from "@/l
 import { getNights } from "@/lib/admin/reservations/listing";
 import StatusPill from "@/components/admin/StatusPill";
 import RowActions from "@/components/admin/RowActions";
+import SkeletonLoader from "@/components/admin/shared/ui/SkeletonLoader";
 
 interface ReservationsTableProps {
     items: OverviewItem[];
@@ -30,21 +31,7 @@ export default function ReservationsTable({
     onClearFilters,
 }: ReservationsTableProps) {
     if (loading) {
-        return (
-            <div className="bg-[var(--color-surface-card)] rounded-xl border border-[var(--color-border-subtle)] shadow-sm overflow-hidden p-0">
-                <div className="divide-y divide-[var(--color-border-subtle)]">
-                    {[1, 2, 3, 4, 5, 6].map(i => (
-                        <div key={i} className="flex items-center p-4 gap-4 animate-pulse">
-                            <div className="w-5 h-5 bg-gray-200 dark:bg-gray-800 rounded" />
-                            <div className="w-48 h-5 bg-gray-200 dark:bg-gray-800 rounded" />
-                            <div className="w-32 h-5 bg-gray-200 dark:bg-gray-800 rounded" />
-                            <div className="flex-1" />
-                            <div className="w-24 h-5 bg-gray-200 dark:bg-gray-800 rounded" />
-                        </div>
-                    ))}
-                </div>
-            </div>
-        );
+        return <SkeletonLoader rows={6} variant="table-row" />;
     }
 
     if (items.length === 0) {
