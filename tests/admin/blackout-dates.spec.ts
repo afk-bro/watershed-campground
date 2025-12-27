@@ -148,7 +148,9 @@ test.describe('Admin Blackout Dates', () => {
             expect(response.status()).toBe(400);
 
             const body = await response.json();
-            expect(body.error).toContain('required');
+            expect(body.error).toBe('Validation failed');
+            expect(body.details.start_date).toBeDefined();
+            expect(body.details.start_date[0]).toContain('required');
         });
 
         test('should reject blackout without end date', async ({ request }) => {
@@ -165,7 +167,9 @@ test.describe('Admin Blackout Dates', () => {
             expect(response.status()).toBe(400);
 
             const body = await response.json();
-            expect(body.error).toContain('required');
+            expect(body.error).toBe('Validation failed');
+            expect(body.details.end_date).toBeDefined();
+            expect(body.details.end_date[0]).toContain('required');
         });
 
         test('should reject blackout where end date is before start date', async ({ request }) => {

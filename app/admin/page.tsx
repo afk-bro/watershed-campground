@@ -1,15 +1,15 @@
 "use client";
 
-import { useEffect, useState, useCallback, useMemo, useRef } from "react";
-import { type Reservation, type ReservationStatus, type OverviewItem } from "@/lib/supabase";
+import { useEffect, useState, useMemo, useRef } from "react";
+import { type Reservation, type ReservationStatus } from "@/lib/supabase";
 import ReservationDrawer from "@/components/admin/calendar/ReservationDrawer";
 import AssignmentDialog from "@/components/admin/AssignmentDialog";
 import Container from "@/components/Container";
 import OnboardingChecklist from "@/components/admin/dashboard/OnboardingChecklist";
 import BulkBar from "@/components/admin/reservations/BulkBar";
-import { computeCounts, sortItems, type SortMode, type FilterType } from "@/lib/admin/reservations/listing";
+import { computeCounts } from "@/lib/admin/reservations/listing";
 import { useToast } from "@/components/ui/Toast";
-import type { ReservationOverviewItem, BlockingEventOverviewItem } from "@/lib/supabase";
+import type { BlockingEventOverviewItem } from "@/lib/supabase";
 
 // New modular components
 import ReservationRow from "@/components/admin/reservations/ReservationRow";
@@ -21,50 +21,51 @@ import DashboardSearch from "@/components/admin/reservations/DashboardSearch";
 import { DemoDataBanner } from "@/components/admin/DemoDataBanner";
 import { useViewportModeContext } from "@/components/providers/ViewportModeProvider";
 
+// Custom hooks
+import { useReservationData } from "@/hooks/admin/useReservationData";
+import { useReservationFilters } from "@/hooks/admin/useReservationFilters";
+import { useBulkActions } from "@/hooks/admin/useBulkActions";
+import { adminAPI } from "@/lib/admin/api-client";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/lib/admin/constants";
+
 export default function AdminPage() {
     const { showToast } = useToast();
     const { isPhone } = useViewportModeContext();
-    const [items, setItems] = useState<OverviewItem[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [filter, setFilter] = useState<FilterType>('all');
-    const [sortMode, setSortMode] = useState<SortMode>('start_date');
+
+    // UI state
     const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
     const [assigningReservation, setAssigningReservation] = useState<Reservation | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [showArchived, setShowArchived] = useState(false);
-    const [searchQuery, setSearchQuery] = useState('');
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const fetchReservations = useCallback(async () => {
-        setLoading(true);
-        try {
-            const response = await fetch('/api/admin/reservations');
-            if (!response.ok) throw new Error('Failed to fetch reservations');
+    // Data fetching hook
+    const { items, loading, error, refetch } = useReservationData({ showArchived });
 
-            const { data } = await response.json();
+    // Filtering and sorting hook
+    const {
+        filter,
+        setFilter,
+        sortMode,
+        setSortMode,
+        searchQuery,
+        setSearchQuery,
+        sortedItems,
+    } = useReservationFilters(items);
 
-            const filtered = showArchived
-                ? (data || []).filter((item: any) => item.type === 'reservation' && item.archived_at != null)
-                : (Array.isArray(data) ? data : []);
+    // Bulk actions hook
+    const bulkActions = useBulkActions({
+        onSuccess: async () => {
+            await refetch();
+            setSelectedIds(new Set());
+        },
+    });
 
-            setItems(filtered);
-        } catch (err) {
-            console.error('Error fetching reservations:', err);
-            setError('Failed to load reservations');
-        } finally {
-            setLoading(false);
-        }
-    }, [showArchived]);
-
+    // Clear selection when filter or archived state changes
     useEffect(() => {
         setSelectedIds(new Set());
     }, [filter, showArchived]);
-
-    useEffect(() => {
-        void fetchReservations();
-    }, [fetchReservations]);
 
     // Keyboard shortcuts
     useEffect(() => {
@@ -76,7 +77,7 @@ export default function AdminPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [searchQuery]);
+    }, [searchQuery, setSearchQuery]);
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
         if (isSubmitting) return;
@@ -84,19 +85,12 @@ export default function AdminPage() {
 
         setIsSubmitting(true);
         try {
-            const response = await fetch(`/api/admin/reservations/${id}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-
-            if (!response.ok) throw new Error('Failed to update status');
-
-            await fetchReservations();
+            await adminAPI.updateReservationStatus(id, status);
+            await refetch();
             showToast(`Reservation ${status.replace('_', ' ')}`, 'success');
         } catch (error) {
             console.error('Error updating status:', error);
-            showToast('Failed to update status', 'error');
+            showToast(ERROR_MESSAGES.RESERVATION_UPDATE_FAILED, 'error');
         } finally {
             setIsSubmitting(false);
         }
@@ -106,152 +100,16 @@ export default function AdminPage() {
         if (isSubmitting) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch(`/api/admin/reservations/${reservationId}/assign`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campsiteId }),
-            });
-
-            if (!res.ok) throw new Error('Failed to assign campsite');
-
-            await fetchReservations();
-            showToast('Campsite assigned successfully', 'success');
+            await adminAPI.assignCampsite(reservationId, campsiteId);
+            await refetch();
+            showToast(SUCCESS_MESSAGES.CAMPSITE_ASSIGNED, 'success');
         } catch (error) {
-            showToast('Failed to assign campsite', 'error');
+            showToast(ERROR_MESSAGES.CAMPSITE_ASSIGN_FAILED, 'error');
             throw error;
         } finally {
             setIsSubmitting(false);
         }
     };
-
-    const handleBulkAction = async (action: 'check_in' | 'check_out' | 'cancel') => {
-        if (isSubmitting || !confirm(`Process ${selectedIds.size} reservations?`)) return;
-        setIsSubmitting(true);
-        try {
-            const res = await fetch('/api/admin/reservations/bulk-status', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reservationIds: Array.from(selectedIds), status: action }),
-            });
-            if (!res.ok) throw new Error('Bulk update failed');
-            await fetchReservations();
-            setSelectedIds(new Set());
-            showToast(`${selectedIds.size} reservations updated`, 'success');
-        } catch (error) {
-            showToast("Failed to perform bulk action", 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleBulkAssignRandom = async () => {
-        if (isSubmitting || !confirm(`Auto-assign ${selectedIds.size} reservations?`)) return;
-        setIsSubmitting(true);
-        try {
-            const res = await fetch('/api/admin/reservations/bulk-assign-random', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reservationIds: Array.from(selectedIds) }),
-            });
-            const data = await res.json();
-            const successCount = (data.results || []).filter((r: any) => r.success).length;
-            showToast(`Assigned ${successCount} reservations.`, 'success');
-            await fetchReservations();
-            setSelectedIds(new Set());
-        } catch (error) {
-            showToast("Failed to run bulk assignment", 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleBulkArchive = async (action: 'archive' | 'restore') => {
-        if (isSubmitting || !confirm(`${action} ${selectedIds.size} items?`)) return;
-        setIsSubmitting(true);
-        try {
-            await fetch('/api/admin/reservations/bulk-archive', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reservationIds: Array.from(selectedIds), action }),
-            });
-            await fetchReservations();
-            setSelectedIds(new Set());
-            showToast(`Items ${action}d`, 'success');
-        } catch (error) {
-            showToast(`Failed to ${action} items`, 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleArchive = async (reservationId: string) => {
-        if (isSubmitting || !confirm('Archive this reservation?')) return;
-        setIsSubmitting(true);
-        try {
-            await fetch('/api/admin/reservations/bulk-archive', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ reservationIds: [reservationId], action: 'archive' }),
-            });
-            await fetchReservations();
-            showToast('Reservation archived', 'success');
-        } catch (error) {
-            showToast('Failed to archive reservation', 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    const handleDeleteMaintenance = async (maintenanceId: string) => {
-        if (isSubmitting || !confirm('Delete maintenance block?')) return;
-        setIsSubmitting(true);
-        try {
-            await fetch(`/api/admin/blackout-dates/${maintenanceId}`, { method: 'DELETE' });
-            await fetchReservations();
-            showToast('Maintenance block deleted', 'success');
-        } catch (error) {
-            showToast('Failed to delete', 'error');
-        } finally {
-            setIsSubmitting(false);
-        }
-    };
-
-    // Filter and Sort Logic
-    const statusFilteredItems = useMemo(() => {
-        if (filter === 'all') return items;
-        if (filter === 'maintenance') return items.filter(item => item.type === 'maintenance' || item.type === 'blackout');
-        return items.filter(item => item.type === 'reservation' && item.status === filter);
-    }, [items, filter]);
-
-    const filteredItems = useMemo(() => {
-        if (!searchQuery.trim()) return statusFilteredItems;
-        const q = searchQuery.toLowerCase();
-        
-        return statusFilteredItems.filter(item => {
-            if (item.type === 'reservation') {
-                const res = item as any;
-                const fullName = `${res.first_name || ''} ${res.last_name || ''}`.toLowerCase();
-                const email = (res.email || '').toLowerCase();
-                const phone = (res.phone || '').toLowerCase();
-                const id = (res.id || '').toLowerCase();
-                const campsiteCode = (res.campsites?.code || '').toLowerCase();
-                
-                return fullName.includes(q) || 
-                       email.includes(q) || 
-                       phone.includes(q) || 
-                       id.includes(q) || 
-                       campsiteCode.includes(q);
-            } else {
-                // Maintenance / Blackout items
-                const mt = item as any;
-                const reason = (mt.reason || '').toLowerCase();
-                const campsiteCode = (mt.campsite_code || '').toLowerCase();
-                return reason.includes(q) || campsiteCode.includes(q);
-            }
-        });
-    }, [statusFilteredItems, searchQuery]);
-
-    const sortedItems = useMemo(() => sortItems(filteredItems, sortMode), [filteredItems, sortMode]);
     const selectableReservations = useMemo(() => sortedItems.filter(item => item.type === 'reservation'), [sortedItems]);
     const { statusCounts, maintenanceCount } = useMemo(() => computeCounts(items), [items]);
 
@@ -279,12 +137,12 @@ export default function AdminPage() {
                     <p className="text-sm text-[var(--color-text-muted)] mt-0.5">Manage bookings and blocks</p>
                 </div>
 
-                <DemoDataBanner 
-                    hasNonDemoReservations={items.some(item => 
-                        item.type === 'reservation' && 
+                <DemoDataBanner
+                    hasNonDemoReservations={items.some(item =>
+                        item.type === 'reservation' &&
                         (!(item as any).metadata || (item as any).metadata.is_demo !== true)
                     )}
-                    onSeedComplete={() => fetchReservations()}
+                    onSeedComplete={() => refetch()}
                 />
 
                 <OnboardingChecklist />
@@ -342,11 +200,11 @@ export default function AdminPage() {
                                             key={item.id}
                                             reservation={item as any}
                                             isSelected={selectedIds.has(item.id)}
-                                            isSubmitting={isSubmitting}
+                                            isSubmitting={bulkActions.isSubmitting || isSubmitting}
                                             onToggle={() => toggleSelection(item.id)}
                                             onClick={setSelectedReservation}
                                             updateStatus={updateStatus}
-                                            handleArchive={handleArchive}
+                                            handleArchive={bulkActions.handleArchive}
                                             setAssigningReservation={setAssigningReservation}
                                         />
                                     ) : (
@@ -354,9 +212,9 @@ export default function AdminPage() {
                                             key={item.id}
                                             item={item as BlockingEventOverviewItem}
                                             isSelected={selectedIds.has(item.id)}
-                                            isSubmitting={isSubmitting}
+                                            isSubmitting={bulkActions.isSubmitting}
                                             onToggle={() => toggleSelection(item.id)}
-                                            onDelete={handleDeleteMaintenance}
+                                            onDelete={bulkActions.handleDeleteMaintenance}
                                         />
                                     )
                                 ))}
@@ -396,11 +254,11 @@ export default function AdminPage() {
                                                     key={item.id}
                                                     reservation={item as any}
                                                     isSelected={selectedIds.has(item.id)}
-                                                    isSubmitting={isSubmitting}
+                                                    isSubmitting={bulkActions.isSubmitting || isSubmitting}
                                                     onToggle={() => toggleSelection(item.id)}
                                                     onClick={setSelectedReservation}
                                                     updateStatus={updateStatus}
-                                                    handleArchive={handleArchive}
+                                                    handleArchive={bulkActions.handleArchive}
                                                     setAssigningReservation={setAssigningReservation}
                                                 />
                                             ) : (
@@ -408,9 +266,9 @@ export default function AdminPage() {
                                                     key={item.id}
                                                     item={item as BlockingEventOverviewItem}
                                                     isSelected={selectedIds.has(item.id)}
-                                                    isSubmitting={isSubmitting}
+                                                    isSubmitting={bulkActions.isSubmitting}
                                                     onToggle={() => toggleSelection(item.id)}
-                                                    onDelete={handleDeleteMaintenance}
+                                                    onDelete={bulkActions.handleDeleteMaintenance}
                                                 />
                                             )
                                         ))
@@ -427,13 +285,13 @@ export default function AdminPage() {
             <BulkBar
                 selectedCount={selectedIds.size}
                 showArchived={showArchived}
-                isSubmitting={isSubmitting}
-                onCheckIn={() => handleBulkAction('check_in')}
-                onCheckOut={() => handleBulkAction('check_out')}
-                onCancel={() => handleBulkAction('cancel')}
-                onAssign={handleBulkAssignRandom}
-                onArchive={() => handleBulkArchive('archive')}
-                onRestore={() => handleBulkArchive('restore')}
+                isSubmitting={bulkActions.isSubmitting || isSubmitting}
+                onCheckIn={() => bulkActions.handleBulkAction('check_in', selectedIds)}
+                onCheckOut={() => bulkActions.handleBulkAction('check_out', selectedIds)}
+                onCancel={() => bulkActions.handleBulkAction('cancel', selectedIds)}
+                onAssign={() => bulkActions.handleBulkAssignRandom(selectedIds)}
+                onArchive={() => bulkActions.handleBulkArchive('archive', selectedIds)}
+                onRestore={() => bulkActions.handleBulkArchive('restore', selectedIds)}
                 onClearSelection={() => setSelectedIds(new Set())}
             />
         </div>

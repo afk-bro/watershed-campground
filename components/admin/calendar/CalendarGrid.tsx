@@ -11,6 +11,7 @@ import GhostPreview from "./GhostPreview";
 import CalendarCell from "./CalendarCell";
 import { ChevronLeft, ChevronRight, ArrowLeftToLine, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/components/ui/Toast";
+import { handleAdminError } from "@/lib/admin/error-handler";
 import InstructionalOverlay from "./InstructionalOverlay";
 import CreationDialog from "./CreationDialog";
 import { useRouter } from "next/navigation";
@@ -29,6 +30,7 @@ import NoCampsitesCTA from "./NoCampsitesCTA";
 import CalendarMonthHeader from "./CalendarMonthHeader";
 import CalendarDaysHeader from "./CalendarDaysHeader";
 import CalendarRow from "./CalendarRow";
+import { UI_CONSTANTS } from "@/lib/admin/constants";
 
 
 interface CalendarGridProps {
@@ -257,11 +259,8 @@ export default function CalendarGrid({
   // Toggle floating rail based on scroll position - Show when valid
   useEffect(() => {
     const handleScroll = () => {
-       // Show when scrolled down a bit to keep header accessible optionally, 
-       // but here we just show it always or based on user pref?
-       // User asked: "Add a floating mini rail at bottom only when scrolled down".
-       // So we check window.scrollY.
-       setShowFloatingRail(window.scrollY > 200); 
+       // Show when scrolled down past threshold
+       setShowFloatingRail(window.scrollY > UI_CONSTANTS.FLOATING_RAIL_SCROLL_THRESHOLD);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
@@ -297,8 +296,8 @@ export default function CalendarGrid({
         start_date: newStartDate,
         end_date: newEndDate,
       });
-    } catch (error) {
-      console.error('[BLACKOUT MOVE ERROR]', error);
+    } catch (error: unknown) {
+      handleAdminError(error, 'CalendarGrid.handleBlackoutDrop');
     }
   }, [updateBlackout]);
 
@@ -405,7 +404,8 @@ export default function CalendarGrid({
       setConfirmDialogError(null);
     } catch (error: unknown) {
       // Show error in dialog, keep it open for retry
-      setConfirmDialogError(error instanceof Error ? error.message : 'Unknown error');
+      const adminError = handleAdminError(error, 'CalendarGrid.confirmReschedule');
+      setConfirmDialogError(adminError.userMessage);
     } finally {
       setIsSubmitting(false);
     }
@@ -452,7 +452,7 @@ export default function CalendarGrid({
       await createBlackout(creationStart.date, creationEnd.date, creationStart.campsiteId, reason);
     } catch (error: unknown) {
       // Error already logged and toasted by the hook
-      console.error('[CREATE BLACKOUT] Failed:', error);
+      handleAdminError(error, 'CalendarGrid.confirmCreation');
     }
   };
 

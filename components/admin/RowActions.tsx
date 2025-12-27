@@ -1,3 +1,4 @@
+import { memo } from "react";
 import { Check, X, LogIn, LogOut, Archive } from "lucide-react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import type { LucideIcon } from "lucide-react";
@@ -39,7 +40,7 @@ function ActionButton({ onClick, icon: Icon, colorClass, title, disabled = false
     );
 }
 
-export default function RowActions({ reservation, updateStatus, onArchive, isSubmitting = false }: Props) {
+const RowActions = memo(function RowActions({ reservation, updateStatus, onArchive, isSubmitting = false }: Props) {
     const { id, status } = reservation;
 
     if (!id) return null;
@@ -116,4 +117,6 @@ export default function RowActions({ reservation, updateStatus, onArchive, isSub
     }
 
     return null;
-}
+});
+
+export default RowActions;
