@@ -68,8 +68,13 @@ setup('authenticate as admin', async ({ page }) => {
         throw err;
     });
 
-    // Verify we're logged in by checking for admin content
-    await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible();
+    // Verify authentication was successful by checking for admin-only navigation
+    // We check the admin nav instead of page data because it's always present
+    // Note: The page may show "Failed to load reservations" due to a known API issue,
+    // but the presence of admin navigation proves authentication succeeded
+    await expect(page.getByRole('heading', { name: 'Admin Panel' })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Calendar' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Logout' })).toBeVisible();
 
     // Save signed-in state to 'tests/.auth/admin.json'
     await page.context().storageState({ path: authFile });
