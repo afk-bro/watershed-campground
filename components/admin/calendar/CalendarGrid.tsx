@@ -29,6 +29,7 @@ import NoCampsitesCTA from "./NoCampsitesCTA";
 import CalendarMonthHeader from "./CalendarMonthHeader";
 import CalendarDaysHeader from "./CalendarDaysHeader";
 import CalendarRow from "./CalendarRow";
+import { UI_CONSTANTS } from "@/lib/admin/constants";
 
 
 interface CalendarGridProps {
@@ -257,11 +258,8 @@ export default function CalendarGrid({
   // Toggle floating rail based on scroll position - Show when valid
   useEffect(() => {
     const handleScroll = () => {
-       // Show when scrolled down a bit to keep header accessible optionally, 
-       // but here we just show it always or based on user pref?
-       // User asked: "Add a floating mini rail at bottom only when scrolled down".
-       // So we check window.scrollY.
-       setShowFloatingRail(window.scrollY > 200); 
+       // Show when scrolled down past threshold
+       setShowFloatingRail(window.scrollY > UI_CONSTANTS.FLOATING_RAIL_SCROLL_THRESHOLD);
     };
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
