@@ -36,6 +36,9 @@ jobs:
       - name: Run TypeScript type check
         run: npm run type-check
 
+      - name: Run unit tests
+        run: npx vitest run
+
       - name: Verify tenant boundary invariants
         run: |
           echo "🔍 Verifying multi-tenant safety..."
@@ -143,7 +146,14 @@ jobs:
           echo "✅ All required env vars are present"
 
       - name: Run Playwright tests
-        run: npx playwright test
+        run: |
+          if [ "${{ github.event_name }}" = "push" ]; then
+            echo "Running smoke tests only (push event)"
+            npx playwright test tests/admin/smoke.spec.ts
+          else
+            echo "Running all E2E tests (pull request event)"
+            npx playwright test
+          fi
         env:
           CI: true
           # Pass Supabase credentials to Playwright/Next.js webServer
