@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Wrench, Trash2 } from "lucide-react";
 import { getNights } from "@/lib/admin/reservations/listing";
 import type { OverviewItem, BlockingEventOverviewItem } from "@/lib/supabase";
@@ -12,7 +13,7 @@ interface MaintenanceRowProps {
     onDelete: (id: string) => void;
 }
 
-export default function MaintenanceRow({
+const MaintenanceRow = memo(function MaintenanceRow({
     item,
     isSelected,
     isSubmitting,
@@ -107,4 +108,6 @@ export default function MaintenanceRow({
             </td>
         </tr>
     );
-}
+});
+
+export default MaintenanceRow;
