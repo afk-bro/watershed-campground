@@ -165,6 +165,7 @@ export function useCalendarMode(): CalendarModeState {
       // Mode boundary crossed - load saved preference or use default
       const savedView = loadViewPreference(mode);
       const newView = savedView || DEFAULT_VIEW_BY_MODE[mode];
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setViewState(newView);
       setLastMode(mode);
     }
