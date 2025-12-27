@@ -91,7 +91,7 @@ export default function AdminLoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     data-testid="admin-login-password"
-                                    className="w-full px-4 py-3.5 md:py-3 pr-14 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
+                                    className="w-full px-4 py-3.5 md:py-3 pr-12 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
                                     placeholder="Enter your password"
                                 />
                                 <button

@@ -284,7 +284,7 @@ function ReservationForm() {
                                     id="isOffline"
                                     checked={formData.isOffline}
                                     onChange={(e) => setFormData(prev => ({ ...prev, isOffline: e.target.checked }))}
-                                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
+                                    className="w-5 h-5 rounded touch-manipulation"
                                 />
                                 <label htmlFor="isOffline" className="text-sm font-medium text-gray-700 cursor-pointer">Mark as Paid (Offline / Admin Booking)</label>
                             </div>
@@ -323,7 +323,7 @@ function ReservationForm() {
                                             id="forceConflict"
                                             checked={formData.forceConflict}
                                             onChange={(e) => setFormData(prev => ({ ...prev, forceConflict: e.target.checked }))}
-                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
+                                            className="w-5 h-5 rounded touch-manipulation"
                                         />
                                         <label htmlFor="forceConflict" className="text-sm text-gray-700 cursor-pointer">Force Overlap (Ignore Conflicts)</label>
                                     </div>
@@ -334,7 +334,7 @@ function ReservationForm() {
                                             id="overrideBlackout"
                                             checked={formData.overrideBlackout}
                                             onChange={(e) => setFormData(prev => ({ ...prev, overrideBlackout: e.target.checked }))}
-                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
+                                            className="w-5 h-5 rounded touch-manipulation"
                                         />
                                         <label htmlFor="overrideBlackout" className="text-sm text-gray-700 cursor-pointer">Ignore Blackout Dates</label>
                                     </div>
@@ -345,7 +345,7 @@ function ReservationForm() {
                                             id="sendGuestEmail"
                                             checked={formData.sendGuestEmail}
                                             onChange={(e) => setFormData(prev => ({ ...prev, sendGuestEmail: e.target.checked }))}
-                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
+                                            className="w-5 h-5 rounded touch-manipulation"
                                         />
                                         <label htmlFor="sendGuestEmail" className="text-sm text-gray-700 cursor-pointer">Send Confirmation Email</label>
                                     </div>
