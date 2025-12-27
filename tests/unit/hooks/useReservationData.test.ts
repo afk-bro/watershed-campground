@@ -57,7 +57,7 @@ describe('useReservationData', () => {
       status: 'confirmed' as const,
       created_at: '2024-12-02T00:00:00Z',
       archived_at: '2024-12-10T00:00:00Z',
-    },
+    } as any,
   ];
 
   beforeEach(() => {
