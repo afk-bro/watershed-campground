@@ -34,6 +34,7 @@ describe('useReservationFilters', () => {
       email: 'john@example.com',
       phone: '555-0100',
       campsites: { code: 'S1' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     {
       type: 'reservation' as const,
@@ -54,6 +55,7 @@ describe('useReservationFilters', () => {
       email: 'jane@example.com',
       phone: '555-0200',
       campsites: { code: 'S2' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     {
       type: 'reservation' as const,
@@ -74,6 +76,7 @@ describe('useReservationFilters', () => {
       email: 'bob@example.com',
       phone: '555-0300',
       campsites: { code: 'C1' },
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
     {
       type: 'maintenance' as const,

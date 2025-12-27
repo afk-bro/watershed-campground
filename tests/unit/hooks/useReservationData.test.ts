@@ -57,6 +57,7 @@ describe('useReservationData', () => {
       status: 'confirmed' as const,
       created_at: '2024-12-02T00:00:00Z',
       archived_at: '2024-12-10T00:00:00Z',
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } as any,
   ];
 
@@ -110,6 +111,7 @@ describe('useReservationData', () => {
 
     it('should handle null data gracefully', async () => {
       vi.mocked(adminAPI.getReservations).mockResolvedValue({
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: null as any,
       });
 
