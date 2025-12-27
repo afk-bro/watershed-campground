@@ -69,7 +69,7 @@ export default function CreationDialog({
             <div className="space-y-3">
               <button
                 onClick={onCreateReservation}
-                className="w-full flex items-center gap-4 p-4 rounded-lg border border-[var(--color-border-default)] hover:border-[var(--color-accent-gold)] hover:bg-[var(--color-surface-elevated)] transition-all group text-left"
+                className="w-full flex items-center gap-4 p-4 md:p-3.5 rounded-lg border border-[var(--color-border-default)] hover:border-[var(--color-accent-gold)] hover:bg-[var(--color-surface-elevated)] transition-all group text-left touch-manipulation min-h-[64px]"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--color-status-active)]/10 flex items-center justify-center text-[var(--color-status-active)] group-hover:scale-110 transition-transform">
                   <Calendar size={20} />
@@ -82,7 +82,7 @@ export default function CreationDialog({
 
               <button
                 onClick={() => setStep("BLACKOUT_DETAILS")}
-                className="w-full flex items-center gap-4 p-4 rounded-lg border border-[var(--color-border-default)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] transition-all group text-left"
+                className="w-full flex items-center gap-4 p-4 md:p-3.5 rounded-lg border border-[var(--color-border-default)] hover:border-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)] transition-all group text-left touch-manipulation min-h-[64px]"
               >
                 <div className="w-10 h-10 rounded-full bg-[var(--color-text-muted)]/10 flex items-center justify-center text-[var(--color-text-muted)] group-hover:scale-110 transition-transform">
                   <Ban size={20} />
@@ -96,7 +96,7 @@ export default function CreationDialog({
           ) : (
             <div className="space-y-4">
                <div>
-                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                   Reason (Optional)
                 </label>
                 <input
@@ -104,7 +104,7 @@ export default function CreationDialog({
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
                   placeholder="e.g. Maintenance, Private Use"
-                  className="w-full rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:outline-none"
+                  className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] px-4 py-3.5 md:py-3 text-base focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:outline-none"
                   autoFocus
                 />
               </div>
@@ -112,14 +112,14 @@ export default function CreationDialog({
               <div className="flex gap-2">
                 <button
                   onClick={() => setStep("SELECT")}
-                  className="flex-1 py-2 rounded-lg border border-[var(--color-border-default)] text-[var(--color-text-primary)] text-sm hover:bg-[var(--color-surface-elevated)]"
+                  className="flex-1 py-3.5 md:py-3 rounded-lg border border-[var(--color-border-default)] text-[var(--color-text-primary)] text-sm hover:bg-[var(--color-surface-elevated)] touch-manipulation min-h-[48px]"
                 >
                   Back
                 </button>
                 <button
                   onClick={handleCreateBlackout}
                   disabled={isSubmitting}
-                  className="flex-1 py-2 rounded-lg bg-[var(--color-text-primary)] text-[var(--color-surface-primary)] font-medium text-sm hover:opacity-90 disabled:opacity-50"
+                  className="flex-1 py-3.5 md:py-3 rounded-lg bg-[var(--color-text-primary)] text-[var(--color-surface-primary)] font-medium text-sm hover:opacity-90 disabled:opacity-50 touch-manipulation min-h-[48px]"
                 >
                   {isSubmitting ? "Creating..." : "Confirm Blackout"}
                 </button>

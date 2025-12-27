@@ -223,70 +223,70 @@ function ReservationForm() {
                     <Link href="/admin"><button className="text-[var(--color-text-muted)] hover:underline">Cancel</button></Link>
                  </div>
 
-                 <form onSubmit={handleSubmit} className="max-w-2xl admin-card p-8 space-y-6">
+                 <form onSubmit={handleSubmit} className="max-w-2xl admin-card p-6 md:p-8 space-y-6">
                     {/* Dates & Site */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="block text-sm font-medium text-[var(--color-text-primary)]">Check In</label>
-                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} />
+                            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Check In</label>
+                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)]">Check Out</label>
-                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} />
+                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Check Out</label>
+                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} />
                         </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-medium text-[var(--color-text-primary)]">Campsite</label>
-                        <select required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.campsiteId} onChange={e => setFormData({...formData, campsiteId: e.target.value})}>
+                        <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Campsite</label>
+                        <select required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.campsiteId} onChange={e => setFormData({...formData, campsiteId: e.target.value})}>
                             <option value="">Select a Site...</option>
                             {campsites.map(c => (
                                 <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
                             ))}
                         </select>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-1">Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first.</p>
+                        <p className="text-xs text-[var(--color-text-muted)] mt-2">Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first.</p>
                     </div>
 
                     {/* Guests */}
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)]">Adults</label>
-                            <input type="number" min="1" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.adults} onChange={e => setFormData({...formData, adults: parseInt(e.target.value)})} />
+                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Adults</label>
+                            <input type="number" min="1" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.adults} onChange={e => setFormData({...formData, adults: parseInt(e.target.value)})} />
                         </div>
                         <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)]">Children</label>
-                             <input type="number" min="0" className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.children} onChange={e => setFormData({...formData, children: parseInt(e.target.value)})} />
+                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Children</label>
+                             <input type="number" min="0" className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.children} onChange={e => setFormData({...formData, children: parseInt(e.target.value)})} />
                         </div>
                     </div>
 
                     {/* Contact */}
-                     <div className="space-y-4 border-t border-[var(--color-border-default)] pt-4">
+                     <div className="space-y-4 border-t border-[var(--color-border-default)] pt-6">
                         <h3 className="font-bold text-[var(--color-text-primary)]">Guest Details</h3>
-                        <div className="grid grid-cols-2 gap-4">
-                             <input type="text" placeholder="First Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
-                             <input type="text" placeholder="Last Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <input type="text" placeholder="First Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
+                             <input type="text" placeholder="Last Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
                         </div>
-                        <input type="email" placeholder="Email" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                        <input type="tel" placeholder="Phone" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                        <input type="text" placeholder="Address" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.address1} onChange={e => setFormData({...formData, address1: e.target.value})} />
+                        <input type="email" placeholder="Email" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                        <input type="tel" placeholder="Phone" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                        <input type="text" placeholder="Address" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.address1} onChange={e => setFormData({...formData, address1: e.target.value})} />
 
-                        <div className="grid grid-cols-2 gap-4">
-                             <input type="text" placeholder="City" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
-                             <input type="text" placeholder="Postal Code" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] p-2 rounded" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} />
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                             <input type="text" placeholder="City" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
+                             <input type="text" placeholder="Postal Code" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} />
                         </div>
                      </div>
 
                      {/* Payment Override */}
-                     <div className="bg-[var(--color-warning)]/10 p-4 rounded border border-[var(--color-warning)]/30">
-                            <div className="flex items-center space-x-2">
-                                <input 
+                     <div className="bg-[var(--color-warning)]/10 p-5 rounded-lg border border-[var(--color-warning)]/30">
+                            <div className="flex items-center space-x-3">
+                                <input
                                     type="checkbox"
-                                    id="isOffline" 
+                                    id="isOffline"
                                     checked={formData.isOffline}
                                     onChange={(e) => setFormData(prev => ({ ...prev, isOffline: e.target.checked }))}
-                                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                    className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
                                 />
-                                <label htmlFor="isOffline" className="text-sm font-medium text-gray-700">Mark as Paid (Offline / Admin Booking)</label>
+                                <label htmlFor="isOffline" className="text-sm font-medium text-gray-700 cursor-pointer">Mark as Paid (Offline / Admin Booking)</label>
                             </div>
 
                             {/* Admin Overrides Section */}
@@ -317,46 +317,46 @@ function ReservationForm() {
                                         </div>
                                     )}
                                     
-                                    <div className="flex items-center space-x-2">
-                                        <input 
+                                    <div className="flex items-center space-x-3">
+                                        <input
                                             type="checkbox"
-                                            id="forceConflict" 
+                                            id="forceConflict"
                                             checked={formData.forceConflict}
                                             onChange={(e) => setFormData(prev => ({ ...prev, forceConflict: e.target.checked }))}
-                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
                                         />
-                                        <label htmlFor="forceConflict" className="text-sm text-gray-700">Force Overlap (Ignore Conflicts)</label>
+                                        <label htmlFor="forceConflict" className="text-sm text-gray-700 cursor-pointer">Force Overlap (Ignore Conflicts)</label>
                                     </div>
 
-                                    <div className="flex items-center space-x-2">
-                                        <input 
+                                    <div className="flex items-center space-x-3">
+                                        <input
                                             type="checkbox"
-                                            id="overrideBlackout" 
+                                            id="overrideBlackout"
                                             checked={formData.overrideBlackout}
                                             onChange={(e) => setFormData(prev => ({ ...prev, overrideBlackout: e.target.checked }))}
-                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
                                         />
-                                        <label htmlFor="overrideBlackout" className="text-sm text-gray-700">Ignore Blackout Dates</label>
+                                        <label htmlFor="overrideBlackout" className="text-sm text-gray-700 cursor-pointer">Ignore Blackout Dates</label>
                                     </div>
 
-                                    <div className="flex items-center space-x-2">
-                                        <input 
+                                    <div className="flex items-center space-x-3">
+                                        <input
                                             type="checkbox"
-                                            id="sendGuestEmail" 
+                                            id="sendGuestEmail"
                                             checked={formData.sendGuestEmail}
                                             onChange={(e) => setFormData(prev => ({ ...prev, sendGuestEmail: e.target.checked }))}
-                                            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
+                                            className="w-5 h-5 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600 touch-manipulation"
                                         />
-                                        <label htmlFor="sendGuestEmail" className="text-sm text-gray-700">Send Confirmation Email</label>
+                                        <label htmlFor="sendGuestEmail" className="text-sm text-gray-700 cursor-pointer">Send Confirmation Email</label>
                                     </div>
 
                                     {(formData.forceConflict || formData.overrideBlackout) && (
                                         <div>
-                                            <label htmlFor="overrideReason" className="text-xs font-medium text-gray-700 block mb-1">Override Reason (Required)</label>
-                                            <input 
+                                            <label htmlFor="overrideReason" className="text-xs font-medium text-gray-700 block mb-2">Override Reason (Required)</label>
+                                            <input
                                                 type="text"
                                                 id="overrideReason"
-                                                className="w-full h-8 px-2 text-sm border border-[var(--color-border-default)] bg-[var(--color-surface-card)] rounded"
+                                                className="w-full px-4 py-3 md:py-2.5 text-sm border border-[var(--color-border-default)] bg-[var(--color-surface-card)] rounded-lg"
                                                 placeholder="e.g. Authorized by Manager"
                                                 value={formData.overrideReason}
                                                 onChange={(e) => setFormData(prev => ({ ...prev, overrideReason: e.target.value }))}
@@ -369,7 +369,7 @@ function ReservationForm() {
                          <p className="text-sm text-[var(--color-text-muted)] ml-6">By checking this, you bypass Stripe payment. The reservation will be confirmed immediately.</p>
                      </div>
 
-                     <button disabled={loading} type="submit" className="w-full bg-brand-forest text-white py-3 rounded font-bold hover:bg-opacity-90 transition-all">
+                     <button disabled={loading} type="submit" className="w-full bg-brand-forest text-white py-4 md:py-3 rounded-lg font-bold text-base hover:bg-opacity-90 transition-all touch-manipulation min-h-[48px]">
                          {loading ? "Creating..." : "Create Reservation"}
                      </button>
                  </form>

@@ -53,7 +53,7 @@ export default function ForgotPasswordPage() {
                             </p>
                             <a
                                 href="/admin/login"
-                                className="inline-block bg-brand-forest text-accent-beige py-3 px-6 rounded-lg font-medium hover:bg-opacity-90 transition-all"
+                                className="inline-block bg-brand-forest text-accent-beige py-4 md:py-3 px-6 rounded-lg font-medium text-base hover:bg-opacity-90 transition-all touch-manipulation min-h-[48px] flex items-center justify-center"
                             >
                                 Back to Login
                             </a>
@@ -84,7 +84,7 @@ export default function ForgotPasswordPage() {
                         <div>
                             <label
                                 htmlFor="email"
-                                className="block text-sm font-medium text-[var(--color-text-primary)] mb-2"
+                                className="block text-sm font-medium text-[var(--color-text-primary)] mb-3"
                             >
                                 Email Address
                             </label>
@@ -95,7 +95,7 @@ export default function ForgotPasswordPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 data-testid="forgot-password-email"
-                                className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
+                                className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
                                 placeholder="admin@example.com"
                                 disabled={loading}
                             />
@@ -105,7 +105,7 @@ export default function ForgotPasswordPage() {
                             type="submit"
                             disabled={loading}
                             data-testid="forgot-password-submit"
-                            className="w-full bg-brand-forest text-accent-beige py-3 px-6 rounded-lg font-medium hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-brand-forest text-accent-beige py-4 md:py-3 px-6 rounded-lg font-medium text-base hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[48px]"
                         >
                             {loading ? "Sending..." : "Send Reset Instructions"}
                         </button>
@@ -113,7 +113,7 @@ export default function ForgotPasswordPage() {
                         <div className="text-center">
                             <a
                                 href="/admin/login"
-                                className="text-sm text-[var(--color-text-muted)] hover:text-accent-gold transition-colors underline"
+                                className="inline-block py-2 px-4 text-sm text-[var(--color-text-muted)] hover:text-accent-gold transition-colors underline touch-manipulation"
                             >
                                 Back to Login
                             </a>
