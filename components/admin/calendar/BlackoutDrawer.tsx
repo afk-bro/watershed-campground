@@ -109,14 +109,14 @@ export default function BlackoutDrawer({
 
             {/* Reason Input */}
             <div>
-                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-1">
+                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                     Reason
                 </label>
                 <input
                     type="text"
                     value={reason}
                     onChange={(e) => setReason(e.target.value)}
-                    className="w-full rounded-md border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] px-3 py-2 text-sm focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:outline-none"
+                    className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] px-4 py-3.5 md:py-3 text-base focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:outline-none"
                     placeholder="Maintenance, Private Event, etc."
                 />
             </div>
@@ -126,7 +126,7 @@ export default function BlackoutDrawer({
                 <button
                     onClick={handleUpdate}
                     disabled={isSubmitting || reason === blackout.reason}
-                    className="w-full py-2.5 rounded-lg bg-[var(--color-text-primary)] text-[var(--color-surface-primary)] font-medium hover:opacity-90 disabled:opacity-50 transition-opacity"
+                    className="w-full py-4 md:py-3 rounded-lg bg-[var(--color-text-primary)] text-[var(--color-surface-primary)] font-medium text-base hover:opacity-90 disabled:opacity-50 transition-opacity touch-manipulation min-h-[48px]"
                 >
                     {isSubmitting ? "Saving..." : "Save Changes"}
                 </button>
@@ -134,7 +134,7 @@ export default function BlackoutDrawer({
                 {!confirmDelete ? (
                      <button
                         onClick={() => setConfirmDelete(true)}
-                        className="w-full py-2.5 rounded-lg border border-[var(--color-error)] text-[var(--color-error)] font-medium hover:bg-[var(--color-error)]/10 transition-colors flex items-center justify-center gap-2"
+                        className="w-full py-4 md:py-3 rounded-lg border border-[var(--color-error)] text-[var(--color-error)] font-medium text-base hover:bg-[var(--color-error)]/10 transition-colors flex items-center justify-center gap-2 touch-manipulation min-h-[48px]"
                     >
                         <Trash2 size={16} />
                         Delete Blackout
@@ -148,13 +148,13 @@ export default function BlackoutDrawer({
                         <div className="flex gap-2">
                             <button
                                 onClick={() => setConfirmDelete(false)}
-                                className="flex-1 py-1.5 rounded-md border border-[var(--color-error)]/30 text-[var(--color-text-primary)] text-sm hover:bg-[var(--color-surface-elevated)]"
+                                className="flex-1 py-3 md:py-2.5 rounded-md border border-[var(--color-error)]/30 text-[var(--color-text-primary)] text-sm hover:bg-[var(--color-surface-elevated)] touch-manipulation min-h-[44px]"
                             >
                                 Cancel
                             </button>
                             <button
                                 onClick={handleDelete}
-                                className="flex-1 py-1.5 rounded-md bg-[var(--color-error)] text-white text-sm hover:bg-[var(--color-error)]/90"
+                                className="flex-1 py-3 md:py-2.5 rounded-md bg-[var(--color-error)] text-white text-sm hover:bg-[var(--color-error)]/90 touch-manipulation min-h-[44px]"
                             >
                                 Confirm
                             </button>

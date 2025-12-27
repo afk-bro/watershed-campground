@@ -125,10 +125,10 @@ export default function CampsiteForm({
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-6 admin-card p-8">
+            <form onSubmit={handleSubmit} className="space-y-6 admin-card p-6 md:p-8">
                 {/* Name */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Name <span className="text-[var(--color-error)]">*</span>
                     </label>
                     <input
@@ -136,14 +136,14 @@ export default function CampsiteForm({
                         required
                         value={formData.name}
                         onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                        className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
+                        className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
                         placeholder="e.g., Riverfront Site 1"
                     />
                 </div>
 
                 {/* Code */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Code <span className="text-[var(--color-error)]">*</span>
                     </label>
                     <input
@@ -151,11 +151,11 @@ export default function CampsiteForm({
                         required
                         value={formData.code}
                         onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                        className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20 uppercase"
+                        className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20 uppercase"
                         placeholder="e.g., S1"
                         maxLength={10}
                     />
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
                         Short code for internal use (letters and numbers only)
                     </p>
                 </div>
@@ -230,14 +230,14 @@ export default function CampsiteForm({
 
                 {/* Type */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Type <span className="text-[var(--color-error)]">*</span>
                     </label>
                     <select
                         required
                         value={formData.type}
                         onChange={(e) => setFormData({ ...formData, type: e.target.value as CampsiteType })}
-                        className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
+                        className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
                     >
                         <option value="rv">RV</option>
                         <option value="tent">Tent</option>
@@ -247,7 +247,7 @@ export default function CampsiteForm({
 
                 {/* Max Guests */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Maximum Guests <span className="text-[var(--color-error)]">*</span>
                     </label>
                     <input
@@ -257,17 +257,17 @@ export default function CampsiteForm({
                         max="50"
                         value={formData.maxGuests}
                         onChange={(e) => setFormData({ ...formData, maxGuests: parseInt(e.target.value) })}
-                        className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
+                        className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
                     />
                 </div>
 
                 {/* Base Rate */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Base Nightly Rate <span className="text-[var(--color-error)]">*</span>
                     </label>
                     <div className="relative">
-                        <span className="absolute left-4 top-2 text-[var(--color-text-muted)]">$</span>
+                        <span className="absolute left-4 top-3.5 md:top-3 text-[var(--color-text-muted)]">$</span>
                         <input
                             type="number"
                             required
@@ -275,19 +275,19 @@ export default function CampsiteForm({
                             step="0.01"
                             value={formData.baseRate}
                             onChange={(e) => setFormData({ ...formData, baseRate: parseFloat(e.target.value) })}
-                            className="w-full pl-8 pr-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
+                            className="w-full pl-8 pr-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
                         />
                     </div>
                 </div>
 
                 {/* Active Status */}
                 <div>
-                    <label className="flex items-center gap-2 cursor-pointer">
+                    <label className="flex items-center gap-3 cursor-pointer py-2">
                         <input
                             type="checkbox"
                             checked={formData.isActive}
                             onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
-                            className="rounded"
+                            className="w-5 h-5 rounded touch-manipulation"
                         />
                         <span className="text-sm font-medium text-[var(--color-text-primary)]">
                             Active (available for reservations)
@@ -297,48 +297,48 @@ export default function CampsiteForm({
 
                 {/* Notes */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Notes (optional)
                     </label>
                     <textarea
                         value={formData.notes}
                         onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
                         rows={3}
-                        className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
+                        className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
                         placeholder="Internal notes about this campsite..."
                     />
                 </div>
 
                 {/* Sort Order */}
                 <div>
-                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-2">
+                    <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
                         Sort Order
                     </label>
                     <input
                         type="number"
                         value={formData.sortOrder}
                         onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) })}
-                        className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
+                        className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-brand-forest focus:ring-2 focus:ring-brand-forest/20"
                     />
-                    <p className="text-xs text-[var(--color-text-muted)] mt-1">
+                    <p className="text-xs text-[var(--color-text-muted)] mt-2">
                         Lower numbers appear first in lists
                     </p>
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center justify-between pt-4 border-t border-[var(--color-border-default)]">
-                    <div className="flex items-center gap-4">
+                <div className="flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4 pt-6 border-t border-[var(--color-border-default)]">
+                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-3 md:gap-4 w-full md:w-auto">
                         <button
                             type="submit"
                             disabled={loading || uploadingImage}
-                            className="bg-accent-gold text-brand-forest px-6 py-3 rounded-lg font-medium hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="bg-accent-gold text-brand-forest px-6 py-4 md:py-3 rounded-lg font-medium text-base hover:bg-opacity-90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[48px]"
                         >
                             {loading ? 'Saving...' : submitLabel}
                         </button>
                         <button
                             type="button"
                             onClick={onCancel}
-                            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] font-medium transition-colors"
+                            className="text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] font-medium transition-colors py-3 px-4 touch-manipulation min-h-[44px]"
                         >
                             Cancel
                         </button>

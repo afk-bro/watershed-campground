@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
 
                                 <div className="space-y-6">
                                     <div>
-                                        <label htmlFor="newPassword" className="block text-sm font-bold text-[var(--color-text-primary)] mb-2.5">
+                                        <label htmlFor="newPassword" className="block text-sm font-bold text-[var(--color-text-primary)] mb-3">
                                             New Password
                                         </label>
                                         <div className="relative">
@@ -75,13 +75,13 @@ export default function AdminSettingsPage() {
                                                 onChange={(e) => setNewPassword(e.target.value)}
                                                 required
                                                 minLength={8}
-                                                className="w-full px-4 py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-strong)] rounded-xl text-[var(--color-text-primary)] focus:border-accent-gold focus:ring-4 focus:ring-accent-gold/10 transition-all placeholder:text-[var(--color-text-muted)]/60"
+                                                className="w-full px-4 py-3.5 md:py-3 pr-14 bg-[var(--color-surface-card)] border border-[var(--color-border-strong)] rounded-xl text-[var(--color-text-primary)] text-base focus:border-accent-gold focus:ring-4 focus:ring-accent-gold/10 transition-all placeholder:text-[var(--color-text-muted)]/60"
                                                 placeholder="••••••••"
                                             />
                                             <button
                                                 type="button"
                                                 onClick={() => setShowPassword(!showPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[var(--color-text-muted)] hover:text-accent-gold transition-colors"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 text-[var(--color-text-muted)] hover:text-accent-gold transition-colors touch-manipulation"
                                             >
                                                 {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
@@ -93,7 +93,7 @@ export default function AdminSettingsPage() {
                                     </div>
 
                                     <div>
-                                        <label htmlFor="confirmPassword" className="block text-sm font-bold text-[var(--color-text-primary)] mb-2.5">
+                                        <label htmlFor="confirmPassword" className="block text-sm font-bold text-[var(--color-text-primary)] mb-3">
                                             Confirm New Password
                                         </label>
                                         <div className="relative">
@@ -104,9 +104,9 @@ export default function AdminSettingsPage() {
                                                 onChange={(e) => setConfirmPassword(e.target.value)}
                                                 required
                                                 minLength={8}
-                                                className={`w-full px-4 py-3 bg-[var(--color-surface-card)] border rounded-xl text-[var(--color-text-primary)] focus:ring-4 transition-all placeholder:text-[var(--color-text-muted)]/60 ${
-                                                    !isMatch 
-                                                        ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10' 
+                                                className={`w-full px-4 py-3.5 md:py-3 pr-14 bg-[var(--color-surface-card)] border rounded-xl text-[var(--color-text-primary)] text-base focus:ring-4 transition-all placeholder:text-[var(--color-text-muted)]/60 ${
+                                                    !isMatch
+                                                        ? 'border-red-500/50 focus:border-red-500 focus:ring-red-500/10'
                                                         : 'border-[var(--color-border-strong)] focus:border-accent-gold focus:ring-accent-gold/10'
                                                 }`}
                                                 placeholder="••••••••"
@@ -114,7 +114,7 @@ export default function AdminSettingsPage() {
                                             <button
                                                 type="button"
                                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                                className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 text-[var(--color-text-muted)] hover:text-accent-gold transition-colors"
+                                                className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 text-[var(--color-text-muted)] hover:text-accent-gold transition-colors touch-manipulation"
                                             >
                                                 {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                                             </button>
@@ -131,7 +131,7 @@ export default function AdminSettingsPage() {
                                         <button
                                             type="submit"
                                             disabled={loading || !isValid}
-                                            className="w-full bg-brand-forest text-accent-beige py-4 px-6 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-opacity-95 transform active:scale-[0.98] transition-all shadow-lg shadow-black/10 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed group relative overflow-hidden"
+                                            className="w-full bg-brand-forest text-accent-beige py-4 px-6 rounded-xl font-bold uppercase tracking-wider text-sm hover:bg-opacity-95 transform active:scale-[0.98] transition-all shadow-lg shadow-black/10 disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed group relative overflow-hidden touch-manipulation min-h-[48px]"
                                         >
                                             <span className="flex items-center justify-center gap-2">
                                                 {loading ? 'Updating...' : 'Update Password'}
