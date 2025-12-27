@@ -1,10 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import type { ReservationStatus } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
+import { adminAPI } from "@/lib/admin/api-client";
 import {
-  API_ENDPOINTS,
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
 } from "@/lib/admin/constants";
@@ -61,17 +60,7 @@ export function useBulkActions({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(API_ENDPOINTS.BULK_STATUS, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reservationIds: Array.from(selectedIds),
-          status: action,
-        }),
-      });
-
-      if (!res.ok) throw new Error(ERROR_MESSAGES.BULK_ACTION_FAILED);
-
+      await adminAPI.bulkUpdateStatus(Array.from(selectedIds), action);
       await onSuccess?.();
       showToast(`${selectedIds.size} reservations updated`, "success");
     } catch (error) {
@@ -88,15 +77,9 @@ export function useBulkActions({
 
     setIsSubmitting(true);
     try {
-      const res = await fetch(API_ENDPOINTS.BULK_ASSIGN, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservationIds: Array.from(selectedIds) }),
-      });
-
-      const data = await res.json();
+      const data = await adminAPI.bulkAssignRandom(Array.from(selectedIds));
       const successCount = (data.results || []).filter(
-        (r: any) => r.success
+        (r) => r.success
       ).length;
 
       await onSuccess?.();
@@ -118,20 +101,9 @@ export function useBulkActions({
 
     setIsSubmitting(true);
     try {
-      await fetch(API_ENDPOINTS.BULK_ARCHIVE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          reservationIds: Array.from(selectedIds),
-          action,
-        }),
-      });
-
+      await adminAPI.bulkArchive(Array.from(selectedIds), action);
       await onSuccess?.();
-      showToast(
-        `Items ${action}d`,
-        "success"
-      );
+      showToast(`Items ${action}d`, "success");
     } catch (error) {
       console.error(`[useBulkActions] Bulk ${action} failed:`, error);
       showToast(ERROR_MESSAGES.BULK_ARCHIVE_FAILED, "error");
@@ -146,12 +118,7 @@ export function useBulkActions({
 
     setIsSubmitting(true);
     try {
-      await fetch(API_ENDPOINTS.BULK_ARCHIVE, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ reservationIds: [reservationId], action: "archive" }),
-      });
-
+      await adminAPI.bulkArchive([reservationId], "archive");
       await onSuccess?.();
       showToast(SUCCESS_MESSAGES.RESERVATION_ARCHIVED, "success");
     } catch (error) {
@@ -168,10 +135,7 @@ export function useBulkActions({
 
     setIsSubmitting(true);
     try {
-      await fetch(API_ENDPOINTS.BLACKOUT_DETAIL(maintenanceId), {
-        method: "DELETE",
-      });
-
+      await adminAPI.deleteBlackoutDate(maintenanceId);
       await onSuccess?.();
       showToast(SUCCESS_MESSAGES.BLACKOUT_DELETED, "success");
     } catch (error) {

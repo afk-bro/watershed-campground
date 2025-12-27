@@ -2,7 +2,8 @@
 
 import { useState, useEffect, useCallback } from "react";
 import type { OverviewItem } from "@/lib/supabase";
-import { API_ENDPOINTS, ERROR_MESSAGES } from "@/lib/admin/constants";
+import { adminAPI } from "@/lib/admin/api-client";
+import { ERROR_MESSAGES } from "@/lib/admin/constants";
 
 interface UseReservationDataOptions {
   showArchived?: boolean;
@@ -45,19 +46,15 @@ export function useReservationData({
     setError(null);
 
     try {
-      const response = await fetch(API_ENDPOINTS.RESERVATIONS);
-
-      if (!response.ok) {
-        throw new Error(ERROR_MESSAGES.RESERVATION_FETCH_FAILED);
-      }
-
-      const { data } = await response.json();
+      const { data } = await adminAPI.getReservations();
 
       // Filter based on archived status
       const filtered = showArchived
         ? (data || []).filter(
             (item: OverviewItem) =>
-              item.type === "reservation" && (item as any).archived_at != null
+              item.type === "reservation" &&
+              "archived_at" in item &&
+              item.archived_at != null
           )
         : Array.isArray(data)
         ? data

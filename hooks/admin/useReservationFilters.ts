@@ -1,7 +1,11 @@
 "use client";
 
 import { useState, useMemo } from "react";
-import type { OverviewItem } from "@/lib/supabase";
+import type {
+  OverviewItem,
+  ReservationOverviewItem,
+  BlockingEventOverviewItem,
+} from "@/lib/supabase";
 import {
   sortItems,
   type SortMode,
@@ -75,23 +79,28 @@ export function useReservationFilters(
 
     return statusFilteredItems.filter((item) => {
       if (item.type === "reservation") {
-        const res = item as any;
-        const fullName = `${res.first_name || ""} ${res.last_name || ""}`.toLowerCase();
-        const email = (res.email || "").toLowerCase();
-        const phone = (res.phone || "").toLowerCase();
+        const res = item as ReservationOverviewItem & Record<string, unknown>;
+        const firstName = (res.first_name as string | undefined) || "";
+        const lastName = (res.last_name as string | undefined) || "";
+        const fullName = `${firstName} ${lastName}`.toLowerCase();
+        const email = ((res.email as string | undefined) || "").toLowerCase();
+        const phone = ((res.phone as string | undefined) || "").toLowerCase();
         const id = (res.id || "").toLowerCase();
-        const campsiteCode = (res.campsites?.code || "").toLowerCase();
+        const campsiteCode =
+          ((res.campsites as Record<string, unknown> | undefined)?.code as
+            | string
+            | undefined) || "";
 
         return (
           fullName.includes(q) ||
           email.includes(q) ||
           phone.includes(q) ||
           id.includes(q) ||
-          campsiteCode.includes(q)
+          campsiteCode.toLowerCase().includes(q)
         );
       } else {
         // Maintenance / Blackout items
-        const mt = item as any;
+        const mt = item as BlockingEventOverviewItem;
         const reason = (mt.reason || "").toLowerCase();
         const campsiteCode = (mt.campsite_code || "").toLowerCase();
         return reason.includes(q) || campsiteCode.includes(q);

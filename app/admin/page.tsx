@@ -25,7 +25,8 @@ import { useViewportModeContext } from "@/components/providers/ViewportModeProvi
 import { useReservationData } from "@/hooks/admin/useReservationData";
 import { useReservationFilters } from "@/hooks/admin/useReservationFilters";
 import { useBulkActions } from "@/hooks/admin/useBulkActions";
-import { API_ENDPOINTS, SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/lib/admin/constants";
+import { adminAPI } from "@/lib/admin/api-client";
+import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/lib/admin/constants";
 
 export default function AdminPage() {
     const { showToast } = useToast();
@@ -76,7 +77,7 @@ export default function AdminPage() {
         };
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [searchQuery]);
+    }, [searchQuery, setSearchQuery]);
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
         if (isSubmitting) return;
@@ -84,14 +85,7 @@ export default function AdminPage() {
 
         setIsSubmitting(true);
         try {
-            const response = await fetch(API_ENDPOINTS.RESERVATION_DETAIL(id), {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status })
-            });
-
-            if (!response.ok) throw new Error(ERROR_MESSAGES.RESERVATION_UPDATE_FAILED);
-
+            await adminAPI.updateReservationStatus(id, status);
             await refetch();
             showToast(`Reservation ${status.replace('_', ' ')}`, 'success');
         } catch (error) {
@@ -106,14 +100,7 @@ export default function AdminPage() {
         if (isSubmitting) return;
         setIsSubmitting(true);
         try {
-            const res = await fetch(API_ENDPOINTS.RESERVATION_ASSIGN(reservationId), {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ campsiteId }),
-            });
-
-            if (!res.ok) throw new Error(ERROR_MESSAGES.CAMPSITE_ASSIGN_FAILED);
-
+            await adminAPI.assignCampsite(reservationId, campsiteId);
             await refetch();
             showToast(SUCCESS_MESSAGES.CAMPSITE_ASSIGNED, 'success');
         } catch (error) {
