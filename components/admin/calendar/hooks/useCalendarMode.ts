@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useViewportModeContext } from '@/components/providers/ViewportModeProvider';
 import type { ViewportMode } from '@/lib/hooks/useViewportMode';
 
@@ -157,19 +157,19 @@ export function useCalendarMode(): CalendarModeState {
   });
 
   // Track the last mode to prevent unnecessary view resets
-  const [lastMode, setLastMode] = useState<CalendarMode>(mode);
+  const lastModeRef = useRef<CalendarMode>(mode);
 
   // When mode changes, update view if needed
   useEffect(() => {
-    if (mode !== lastMode) {
+    if (mode !== lastModeRef.current) {
       // Mode boundary crossed - load saved preference or use default
       const savedView = loadViewPreference(mode);
       const newView = savedView || DEFAULT_VIEW_BY_MODE[mode];
-      // eslint-disable-next-line react-hooks/set-state-in-effect
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- Syncing external state (localStorage) when mode changes
       setViewState(newView);
-      setLastMode(mode);
+      lastModeRef.current = mode;
     }
-  }, [mode, lastMode]);
+  }, [mode]);
 
   // Custom setView that persists preference
   const setView = (newView: CalendarView) => {

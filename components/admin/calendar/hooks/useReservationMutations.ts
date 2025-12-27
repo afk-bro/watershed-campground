@@ -10,6 +10,7 @@ import type { Reservation } from '@/lib/supabase';
 import type { CalendarData } from '@/lib/calendar/calendar-types';
 import { useToast } from '@/components/ui/Toast';
 import { calendarService } from '@/lib/calendar/calendar-service';
+import { handleAdminError } from '@/lib/admin/error-handler';
 
 interface UseReservationMutationsProps {
   onDataMutate?: (
@@ -69,8 +70,8 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
 
         setTimeout(() => window.location.reload(), 1500);
       } catch (error: unknown) {
-        console.error('Reschedule error:', error);
-        throw error;
+        const adminError = handleAdminError(error, 'useReservationMutations.rescheduleReservation');
+        throw adminError;
       }
       return;
     }
@@ -159,8 +160,8 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
         }
       );
     } catch (error: unknown) {
-      console.error('[RESCHEDULE ERROR]', error);
-      throw error;
+      const adminError = handleAdminError(error, 'useReservationMutations.rescheduleReservation.optimistic');
+      throw adminError;
     }
   }, [onDataMutate, showToast]);
 

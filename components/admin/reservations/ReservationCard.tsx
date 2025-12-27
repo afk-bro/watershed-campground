@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import { getPaymentStatus, getNights } from "@/lib/admin/reservations/listing";
 import RowActions from "@/components/admin/RowActions";
@@ -15,7 +16,7 @@ interface ReservationCardProps {
     setAssigningReservation: (reservation: Reservation) => void;
 }
 
-export default function ReservationCard({
+const ReservationCard = memo(function ReservationCard({
     reservation,
     isSelected,
     isSubmitting,
@@ -214,4 +215,6 @@ export default function ReservationCard({
             </div>
         </div>
     );
-}
+});
+
+export default ReservationCard;

@@ -40,17 +40,22 @@
   "devDependencies": {
     "@playwright/test": "^1.57.0",
     "@tailwindcss/postcss": "^4",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/node": "^20",
     "@types/react": "^19.2.7",
     "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^5.1.2",
     "autoprefixer": "^10.4.22",
     "chrome-launcher": "^1.2.1",
     "eslint": "^9",
     "eslint-config-next": "^16.0.9",
+    "jsdom": "^27.4.0",
     "lighthouse": "^13.0.1",
     "postcss": "^8.5.6",
     "supabase": "^2.67.1",
     "tailwindcss": "^4.1.17",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^4.0.16"
   }
 }
