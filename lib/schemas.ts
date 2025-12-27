@@ -66,6 +66,26 @@ export const campsiteFormSchema = z.object({
     imageUrl: z.string().optional(),
 });
 
+export const blackoutFormSchema = z.object({
+    start_date: z.string().min(1, "Start date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+    end_date: z.string().min(1, "End date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
+    campsite_id: z.string().nullable().optional(),
+    reason: z.string().optional(),
+});
+
+export const reservationUpdateSchema = z.object({
+    status: z.enum(['pending', 'confirmed', 'cancelled', 'checked_in', 'checked_out', 'no_show']).optional(),
+    campsite_id: z.string().nullable().optional(),
+    check_in: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    check_out: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+    firstName: z.string().optional(),
+    lastName: z.string().optional(),
+    email: emailWithSecurityValidation.optional(),
+    phone: z.string().optional(),
+});
+
 export type ContactFormData = z.infer<typeof contactFormSchema>;
 export type ReservationFormData = z.infer<typeof reservationFormSchema>;
 export type CampsiteFormData = z.infer<typeof campsiteFormSchema>;
+export type BlackoutFormData = z.infer<typeof blackoutFormSchema>;
+export type ReservationUpdateData = z.infer<typeof reservationUpdateSchema>;

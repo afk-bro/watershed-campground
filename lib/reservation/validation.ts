@@ -27,10 +27,15 @@ export const reservationFormSchema = z.object({
     comments: z.string().optional(),
     addons: z.array(z.object({
         id: z.string(),
-        quantity: z.number().min(1),
-        price: z.number()
+        quantity: z.number().optional().default(1),
+        price: z.number().optional(),
     })).optional().default([]),
-    campsiteId: z.string().optional()
+    campsiteId: z.string().optional(),
+    isOffline: z.boolean().optional(),
+    forceConflict: z.boolean().optional(),
+    overrideBlackout: z.boolean().optional(),
+    sendGuestEmail: z.boolean().optional(),
+    overrideReason: z.string().optional()
 }).refine((data) => new Date(data.checkOut) > new Date(data.checkIn), {
     message: "Check-out date must be after check-in date",
     path: ["checkOut"],
@@ -100,17 +105,17 @@ export const databaseReservationSchema = z.object({
     archived_at: z.string().nullable().optional(),
     archived_by: z.string().uuid().nullable().optional(),
 
-        // Opaque metadata stored as JSONB (flexible but guided)
-        metadata: z
-            .union([
-                z.record(z.string(), z.unknown()),
-                z.array(z.unknown()),
-                z.string(),
-                z.number(),
-                z.boolean(),
-                z.null(),
-            ])
-            .optional(),
+    // Opaque metadata stored as JSONB (flexible but guided)
+    metadata: z
+        .union([
+            z.record(z.string(), z.unknown()),
+            z.array(z.unknown()),
+            z.string(),
+            z.number(),
+            z.boolean(),
+            z.null(),
+        ])
+        .optional(),
 }).passthrough(); // Allow extra DB columns to avoid breaking when schema evolves
 
 export type DatabaseReservation = z.infer<typeof databaseReservationSchema>;

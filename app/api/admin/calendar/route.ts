@@ -1,10 +1,19 @@
-
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startOfMonth, endOfMonth, parseISO, format } from 'date-fns';
+import { requireAdminWithOrg } from '@/lib/admin-auth';
 
+/**
+ * GET /api/admin/calendar
+ * 
+ * Fetches calendar data (reservations, campsites, blackout dates) for a specific month.
+ * All data is scoped to the user's organization.
+ */
 export async function GET(request: Request) {
     try {
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
+        if (!authorized) return authResponse!;
+
         const { searchParams } = new URL(request.url);
         const dateParam = searchParams.get('month'); // YYYY-MM
 
@@ -14,34 +23,34 @@ export async function GET(request: Request) {
         const startDate = format(startOfMonth(targetDate), 'yyyy-MM-dd');
         const endDate = format(endOfMonth(targetDate), 'yyyy-MM-dd');
 
-        // Fetch reservations that overlap with the month
-        // We want reservations where (start <= month_end) AND (end >= month_start)
+        // Fetch reservations that overlap with the month (org-scoped)
         const { data: reservations, error: resError } = await supabaseAdmin
             .from('reservations')
             .select('*, campsites(id, name, code, type)')
+            .eq('organization_id', organizationId!)
             .lte('check_in', endDate)
-            .gte('check_out', startDate)
-            .neq('status', 'cancelled');
+            .gte('check_out', startDate);
 
         if (resError) {
             throw resError;
         }
 
-        // Fetch all campsites to build the rows
+        // Fetch all campsites (org-scoped)
         const { data: campsites, error: campError } = await supabaseAdmin
             .from('campsites')
             .select('*')
-            .eq('is_active', true)
+            .eq('organization_id', organizationId!)
             .order('sort_order', { ascending: true });
 
         if (campError) {
             throw campError;
         }
 
-        // Fetch blackout dates
+        // Fetch blackout dates (org-scoped)
         const { data: blackouts, error: bErr } = await supabaseAdmin
             .from('blackout_dates')
             .select('*')
+            .eq('organization_id', organizationId!)
             .lte('start_date', endDate)
             .gte('end_date', startDate);
 
@@ -53,7 +62,8 @@ export async function GET(request: Request) {
             blackoutDates: blackouts || [],
             meta: {
                 startDate,
-                endDate
+                endDate,
+                organizationId
             }
         });
 

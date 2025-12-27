@@ -9,6 +9,10 @@ import { addDays, format } from 'date-fns';
  * NOTE: This test verifies the webhook handler logic without actual Stripe signatures
  * Full webhook testing with signature verification requires Stripe CLI or mock signatures
  */
+
+// Default organization ID for tests
+const DEFAULT_ORG_ID = '00000000-0000-0000-0000-000000000001';
+
 test.describe('Stripe Webhook Integration', () => {
     test.describe('Payment Intent Succeeded Workflow', () => {
         let testReservationId: string;
@@ -22,6 +26,7 @@ test.describe('Stripe Webhook Integration', () => {
             const { data } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: DEFAULT_ORG_ID,
                     first_name: 'Webhook',
                     last_name: 'Test',
                     email: 'webhook.test@example.com',
@@ -160,6 +165,7 @@ test.describe('Stripe Webhook Integration', () => {
             const { data, error } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: DEFAULT_ORG_ID,
                     first_name: 'Email',
                     last_name: 'Tracking',
                     email: 'email.tracking@test.com',
@@ -227,6 +233,7 @@ test.describe('Stripe Webhook Integration', () => {
             const { data, error } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: DEFAULT_ORG_ID,
                     first_name: 'Status',
                     last_name: 'Transition',
                     email: 'status.transition@test.com',

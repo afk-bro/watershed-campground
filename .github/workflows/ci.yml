@@ -36,6 +36,33 @@ jobs:
       - name: Run TypeScript type check
         run: npm run type-check
 
+      - name: Verify tenant boundary invariants
+        run: |
+          echo "🔍 Verifying multi-tenant safety..."
+
+          # Check 1: All admin routes use requireAdminWithOrg
+          node scripts/check-admin-routes.js
+
+          # Check 2: Verify deprecated upload-image is guarded
+          if grep -q "migrationGate" app/api/admin/upload-image/route.ts; then
+            echo "✅ upload-image is migration-gated"
+          else
+            echo "❌ FAIL: upload-image missing migrationGate!"
+            echo "This endpoint is not multi-tenant safe and MUST be gated."
+            exit 1
+          fi
+
+          # Check 3: Ensure old availability system is deleted
+          if [ -f "lib/availability.ts" ]; then
+            echo "❌ FAIL: lib/availability.ts still exists!"
+            echo "This file is deprecated. Use lib/availability/engine.ts instead."
+            exit 1
+          else
+            echo "✅ Deprecated availability.ts is deleted"
+          fi
+
+          echo "✅ All tenant boundary checks passed"
+
   # Job 2: E2E Tests with Playwright
   e2e-tests:
     name: E2E Tests (Playwright)
@@ -91,16 +118,17 @@ jobs:
 
       - name: Create test environment file
         run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env.local
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.local
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ env.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.local
-          echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.local
-          echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.local
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ env.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
+          echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
+          echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
+          echo "ADMIN_EMAILS=admin@test.com" >> .env.test
 
-      - name: Verify .env.local file
+      - name: Verify .env.test file
         run: |
-          echo "Contents of .env.local (with secrets masked):"
-          cat .env.local | sed 's/=.*/=***MASKED***/'
+          echo "Contents of .env.test (with secrets masked):"
+          cat .env.test | sed 's/=.*/=***MASKED***/'
 
       - name: Assert required env vars are present
         run: |

@@ -9,9 +9,11 @@ import { differenceInCalendarDays } from 'date-fns';
  * @param checkOut - Check-out date
  * @returns Total cost in dollars (number)
  */
+import { toLocalMidnight } from "./date";
+
 export function calculateTotal(baseRate: number, checkIn: Date | string, checkOut: Date | string): number {
-    const start = new Date(checkIn);
-    const end = new Date(checkOut);
+    const start = typeof checkIn === 'string' ? toLocalMidnight(checkIn) : checkIn;
+    const end = typeof checkOut === 'string' ? toLocalMidnight(checkOut) : checkOut;
 
     // differenceInCalendarDays returns the number of ful days
     const nights = differenceInCalendarDays(end, start);

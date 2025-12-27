@@ -66,6 +66,19 @@ export type Reservation = {
     public_edit_token_hash?: string;
     campsite_id?: string;
     locked?: boolean;
+    metadata?: {
+        admin_overrides?: {
+            override_reason?: string;
+            force_conflict?: boolean;
+            override_blackout?: boolean;
+            is_offline?: boolean;
+            entry_source?: string;
+        };
+        audit_version?: number;
+        source?: string;
+        created_by?: string;
+        [key: string]: unknown;
+    } | null;
     archived_at?: string | null;
     archived_by?: string | null;
     // Joined fields

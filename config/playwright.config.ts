@@ -65,15 +65,18 @@ export default defineConfig({
         },
 
         // ============================================
-        // All Tests (Default)
+        // Shared Tests (Integration, Security, Unit)
         // ============================================
-        // Runs all tests with appropriate auth state
+        // Tests that don't fit admin/guest categories
         {
-            name: 'chromium',
-            testMatch: /tests\/.*\.spec\.ts/,
+            name: 'shared',
+            testMatch: [
+                /tests\/integration\/.*\.spec\.ts/,
+                /tests\/security\/.*\.spec\.ts/,
+                /tests\/unit\/.*\.spec\.ts/,
+            ],
             use: {
                 ...devices['Desktop Chrome'],
-                // Admin tests will override this in their describe blocks
                 storageState: 'tests/.auth/admin.json',
             },
             dependencies: ['setup'],
@@ -87,9 +90,13 @@ export default defineConfig({
         timeout: 120000,
         stdout: 'pipe',
         stderr: 'pipe',
-        env: Object.fromEntries(
-            // Pass all loaded env vars from .env.local to the webServer, filtering out undefined
-            Object.entries(process.env).filter(([, v]) => v !== undefined)
-        ) as Record<string, string>,
+        env: {
+            ...Object.fromEntries(
+                // Pass all loaded env vars from .env.local to the webServer, filtering out undefined
+                Object.entries(process.env).filter(([, v]) => v !== undefined)
+            ),
+            // Fast failsafe timeout for tests (500ms instead of 10s in production)
+            NEXT_PUBLIC_STUCK_SAVING_TIMEOUT_MS: '500',
+        } as Record<string, string>,
     },
 });

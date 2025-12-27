@@ -1,46 +1,28 @@
 import { NextResponse } from "next/server";
-import { createServerClient } from '@supabase/ssr';
-import { cookies } from 'next/headers';
 import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { OverviewItem, ReservationOverviewItem, BlockingEventOverviewItem } from "@/lib/supabase";
+import type { OverviewItem } from "@/lib/supabase";
+import { requireAdminWithOrg } from "@/lib/admin-auth";
 
+/**
+ * GET /api/admin/reservations
+ * 
+ * Fetches all reservations and blackout dates for the organization.
+ * Used by the admin dashboard to display the reservations list.
+ */
 export async function GET() {
     try {
-        // Server-side authentication check
-        const cookieStore = await cookies();
-        const supabase = createServerClient(
-            process.env.NEXT_PUBLIC_SUPABASE_URL!,
-            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-            {
-                cookies: {
-                    getAll() {
-                        return cookieStore.getAll();
-                    },
-                    setAll(cookiesToSet) {
-                        cookiesToSet.forEach(({ name, value, options }) => {
-                            cookieStore.set(name, value, options);
-                        });
-                    },
-                },
-            }
-        );
+        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
+        if (!authorized) return authResponse!;
 
-        const { data: { user }, error: authError } = await supabase.auth.getUser();
-        
-        if (authError || !user) {
-            return NextResponse.json(
-                { error: "Unauthorized: Authentication required" },
-                { status: 401 }
-            );
-        }
-
-        // Fetch reservations
+        // Fetch reservations with payment data (org-scoped)
         const { data: reservations, error: reservationsError } = await supabaseAdmin
             .from('reservations')
             .select(`
                 *,
-                campsite:campsites(code, name, type)
+                campsite:campsites(code, name, type),
+                payment_transactions(amount, status, type, created_at)
             `)
+            .eq('organization_id', organizationId!)
             .is('archived_at', null);
 
         if (reservationsError) {
@@ -51,13 +33,14 @@ export async function GET() {
             );
         }
 
-        // Fetch blackout dates
+        // Fetch blackout dates (org-scoped)
         const { data: blackoutDates, error: blackoutError } = await supabaseAdmin
             .from('blackout_dates')
             .select(`
                 *,
                 campsite:campsites(code, name, type)
-            `);
+            `)
+            .eq('organization_id', organizationId!);
 
         if (blackoutError) {
             console.error("Error fetching blackout dates:", blackoutError);
@@ -67,47 +50,36 @@ export async function GET() {
             );
         }
 
-        // Add type discriminator to reservations (keep all fields intact)
+        // Add type discriminator to reservations
         const reservationItems = (reservations || []).map(res => ({
             ...res,
             type: 'reservation' as const,
-            campsites: res.campsite ? {
-                code: res.campsite.code,
-                name: res.campsite.name,
-                type: res.campsite.type
-            } : undefined
         }));
 
-        // Add type discriminator to blackout dates (keep all fields intact)
-        const blockingItems = (blackoutDates || []).map(bd => ({
-            ...bd,
-            type: 'maintenance' as const, // We'll use 'maintenance' as the default type
-            campsite_code: bd.campsite?.code,
-            campsite_name: bd.campsite?.name,
-            campsite_type: bd.campsite?.type
-        }));
-
-        // Combine and sort by start date (check_in for reservations, start_date for blocking)
-        const items = [...reservationItems, ...blockingItems].sort((a: unknown, b: unknown) => {
-            const aItem = a as { type: 'reservation' | 'blocking', check_in?: string, start_date?: string };
-            const bItem = b as { type: 'reservation' | 'blocking', check_in?: string, start_date?: string };
-            const dateA = aItem.type === 'reservation' ? aItem.check_in : aItem.start_date;
-            const dateB = bItem.type === 'reservation' ? bItem.check_in : bItem.start_date;
-
-            // Sort by date descending (newest first)
-            const dateComparison = new Date(dateB!).getTime() - new Date(dateA!).getTime();
-
-            // If dates are equal, sort by type (reservations before blocking events)
-            if (dateComparison === 0) {
-                return aItem.type === 'reservation' ? -1 : 1;
-            }
-
-            return dateComparison;
+        // Add type discriminator to blackout dates
+        const blackoutItems = (blackoutDates || []).map(bd => {
+            const itemType: 'blackout' | 'maintenance' = 'blackout' in bd ? 'blackout' : 'maintenance';
+            return {
+                ...bd,
+                type: itemType,
+                campsite_code: bd.campsite?.code,
+            };
         });
 
-        return NextResponse.json({ data: items });
+        const allItems: OverviewItem[] = [...reservationItems, ...blackoutItems];
+
+        return NextResponse.json({
+            data: allItems,
+            meta: {
+                organizationId,
+                total: allItems.length,
+                reservations: reservationItems.length,
+                blackouts: blackoutItems.length
+            }
+        });
+
     } catch (error) {
-        console.error("Error in GET /api/admin/reservations:", error);
+        console.error("Error in reservations endpoint:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

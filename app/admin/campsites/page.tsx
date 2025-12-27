@@ -2,10 +2,11 @@
 
 import { useEffect, useState, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Edit2, Power, PowerOff, Trash2, Camera, X } from "lucide-react";
+import { Edit2, Power, PowerOff, Trash2, Camera, X, Plus, Info, CheckSquare, Square } from "lucide-react";
 import type { Campsite, CampsiteType } from "@/lib/supabase";
 import Container from "@/components/Container";
 import { useToast } from "@/components/ui/Toast";
+import ConfirmDialog from "@/components/admin/ConfirmDialog";
 
 export default function CampsitesPage() {
     const [campsites, setCampsites] = useState<Campsite[]>([]);
@@ -14,6 +15,22 @@ export default function CampsitesPage() {
     const [filter, setFilter] = useState<CampsiteType | 'all' | 'active' | 'inactive'>('active');
     const [isDeleting, setIsDeleting] = useState<string | null>(null);
     const [uploadingId, setUploadingId] = useState<string | null>(null);
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+    const [confirmConfig, setConfirmConfig] = useState<{
+        isOpen: boolean;
+        title: string;
+        message: string;
+        confirmLabel: string;
+        variant: 'danger' | 'warning' | 'info';
+        onConfirm: () => void;
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        confirmLabel: '',
+        variant: 'info',
+        onConfirm: () => {}
+    });
     const fileInputRef = useRef<HTMLInputElement>(null);
     const { showToast } = useToast();
 
@@ -42,8 +59,33 @@ export default function CampsitesPage() {
         void fetchCampsites();
     }, [fetchCampsites]);
 
+    function requestToggleActive(id: string, code: string, currentStatus: boolean) {
+        setConfirmConfig({
+            isOpen: true,
+            title: currentStatus ? 'Pause Campsite?' : 'Start Campsite?',
+            message: currentStatus 
+                ? `Temporarily stop taking reservations for ${code}? Existing bookings will remain valid, but no new ones can be made.`
+                : `Make ${code} available for new bookings immediately?`,
+            confirmLabel: currentStatus ? 'Pause Site' : 'Start Site',
+            variant: 'warning',
+            onConfirm: () => toggleActive(id, currentStatus)
+        });
+    }
+
+    function requestDelete(id: string, code: string) {
+        setConfirmConfig({
+            isOpen: true,
+            title: 'Delete Permanently?',
+            message: `You are about to permanently delete campsite ${code}. This removes all associated history and cannot be recovered. Are you absolutely sure?`,
+            confirmLabel: 'Delete Site',
+            variant: 'danger',
+            onConfirm: () => handleDelete(id, code)
+        });
+    }
+
     async function toggleActive(id: string, currentStatus: boolean) {
         const action = currentStatus ? 'deactivate' : 'activate';
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         
         try {
             const response = await fetch(`/api/admin/campsites/${id}`, {
@@ -70,10 +112,7 @@ export default function CampsitesPage() {
     }
 
     async function handleDelete(id: string, code: string) {
-        if (!confirm(`Are you sure you want to PERMANENTLY delete campsite ${code}? This cannot be undone.`)) {
-            return;
-        }
-
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         try {
             setIsDeleting(id);
             const response = await fetch(`/api/admin/campsites/${id}`, {
@@ -94,6 +133,21 @@ export default function CampsitesPage() {
             setIsDeleting(null);
         }
     }
+
+    const toggleSelection = (id: string) => {
+        const next = new Set(selectedIds);
+        if (next.has(id)) next.delete(id);
+        else next.add(id);
+        setSelectedIds(next);
+    };
+
+    const toggleAllSelection = () => {
+        if (selectedIds.size === filteredCampsites.length) {
+            setSelectedIds(new Set());
+        } else {
+            setSelectedIds(new Set(filteredCampsites.map(c => c.id)));
+        }
+    };
 
     async function handleImageUpload(e: React.ChangeEvent<HTMLInputElement>) {
         const file = e.target.files?.[0];
@@ -136,9 +190,19 @@ export default function CampsitesPage() {
         }
     }
 
-    async function handleRemoveImage(id: string) {
-        if (!confirm('Remove this image?')) return;
+    function requestRemoveImage(id: string) {
+        setConfirmConfig({
+            isOpen: true,
+            title: 'Remove Image?',
+            message: 'Are you sure you want to remove this image from the campsite gallery?',
+            confirmLabel: 'Remove Image',
+            variant: 'danger',
+            onConfirm: () => handleRemoveImage(id)
+        });
+    }
 
+    async function handleRemoveImage(id: string) {
+        setConfirmConfig(prev => ({ ...prev, isOpen: false }));
         try {
             setLoading(true);
             const response = await fetch(`/api/admin/campsites/${id}`, {
@@ -266,6 +330,33 @@ export default function CampsitesPage() {
                         <span className="font-medium">Admin View:</span> All status visible
                     </label>
                 </div>
+
+                {/* Bulk Actions Bar */}
+                {campsites.length > 10 && selectedIds.size > 0 && (
+                    <div className="mb-4 p-3 bg-[var(--color-surface-elevated)] border border-[var(--color-accent-gold)]/30 rounded-lg flex items-center justify-between animate-in slide-in-from-top-2 duration-200">
+                        <div className="flex items-center gap-4">
+                            <span className="text-sm font-bold text-[var(--color-accent-gold)] uppercase tracking-wider">
+                                {selectedIds.size} Selected
+                            </span>
+                            <div className="h-4 w-px bg-[var(--color-border-strong)]"></div>
+                            <div className="flex gap-2">
+                                <button className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-[var(--color-surface-card)] text-[var(--color-text-primary)] border border-[var(--color-border-default)] rounded hover:bg-[var(--color-surface-hover)]">
+                                    Pause Selected
+                                </button>
+                                <button className="px-3 py-1 text-xs font-bold uppercase tracking-wider bg-red-500/10 text-red-500 border border-red-500/20 rounded hover:bg-red-500/20">
+                                    Delete Selected
+                                </button>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setSelectedIds(new Set())}
+                            className="text-xs text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                        >
+                            Clear Selection
+                        </button>
+                    </div>
+                )}
+
                 <input 
                     type="file" 
                     ref={fileInputRef} 
@@ -280,28 +371,35 @@ export default function CampsitesPage() {
                         <table className="w-full">
                             <thead className="bg-[var(--color-surface-elevated)] border-b border-[var(--color-border-default)]">
                                 <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    {campsites.length > 10 && (
+                                        <th className="px-4 py-3 text-left w-10">
+                                            <button onClick={toggleAllSelection} className="text-[var(--color-text-muted)] hover:text-[var(--color-accent-gold)]">
+                                                {selectedIds.size === filteredCampsites.length ? <CheckSquare size={16} /> : <Square size={16} />}
+                                            </button>
+                                        </th>
+                                    )}
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70 w-16">
                                         Image
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70 w-24">
                                         Code
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70">
                                         Name
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70 w-28">
                                         Type
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70 w-28">
                                         Max Guests
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70 w-28">
                                         Base Rate
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-left text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70 w-32">
                                         Status
                                     </th>
-                                    <th className="px-4 py-3 text-left text-xs font-semibold text-[var(--color-text-secondary)] uppercase">
+                                    <th className="px-4 py-3 text-center text-[10px] font-bold text-[var(--color-text-muted)] uppercase tracking-wider opacity-70">
                                         Controls
                                     </th>
                                 </tr>
@@ -309,24 +407,52 @@ export default function CampsitesPage() {
                             <tbody className="divide-y divide-[var(--color-border-subtle)]">
                                 {filteredCampsites.length === 0 ? (
                                     <tr>
-                                        <td colSpan={8} className="px-4 py-8 text-center text-[var(--color-text-muted)]">
-                                            No campsites found
+                                        <td colSpan={campsites.length > 10 ? 9 : 8} className="px-4 py-20 text-center">
+                                            <div className="flex flex-col items-center gap-4 max-w-sm mx-auto">
+                                                <div className="w-16 h-16 bg-[var(--color-surface-elevated)] rounded-full flex items-center justify-center border-2 border-dashed border-[var(--color-border-strong)]">
+                                                    <Info className="text-[var(--color-text-muted)]" size={32} />
+                                                </div>
+                                                <div>
+                                                    <h3 className="text-xl font-heading font-bold text-[var(--color-text-primary)] mb-1">
+                                                        No campsites yet
+                                                    </h3>
+                                                    <p className="text-sm text-[var(--color-text-muted)]">
+                                                        Start by adding your first site to the system. You can always pause or edit details later.
+                                                    </p>
+                                                </div>
+                                                <Link
+                                                    href="/admin/campsites/new"
+                                                    className="mt-2 flex items-center gap-2 bg-[var(--color-accent-gold)] text-[var(--color-brand-forest)] px-6 py-2.5 rounded-lg font-bold uppercase tracking-wider text-xs hover:bg-opacity-90 transition-all shadow-md group"
+                                                >
+                                                    <Plus size={16} className="group-hover:rotate-90 transition-transform" />
+                                                    Add First Campsite
+                                                </Link>
+                                            </div>
                                         </td>
                                     </tr>
                                 ) : (
                                     filteredCampsites.map((campsite) => (
                                         <tr 
                                             key={campsite.id} 
-                                            className="hover:bg-[var(--color-surface-elevated)] hover:shadow-sm transition-all duration-150 group cursor-pointer border-l-2 border-transparent hover:border-l-[var(--color-accent-gold)]"
+                                            className={`hover:bg-[var(--color-surface-elevated)] hover:shadow-sm transition-all duration-150 group cursor-pointer border-l-2 hover:border-l-[var(--color-accent-gold)] ${
+                                                selectedIds.has(campsite.id) ? 'bg-[var(--color-surface-elevated)] border-l-[var(--color-accent-gold)]' : 'border-transparent'
+                                            }`}
                                         >
-                                            <td className="px-4 py-3">
+                                            {campsites.length > 10 && (
+                                                <td className="px-4 py-3" onClick={(e) => { e.stopPropagation(); toggleSelection(campsite.id); }}>
+                                                    <button className={`${selectedIds.has(campsite.id) ? 'text-[var(--color-accent-gold)]' : 'text-[var(--color-text-muted)] opacity-0 group-hover:opacity-100'} transition-all`}>
+                                                        {selectedIds.has(campsite.id) ? <CheckSquare size={16} /> : <Square size={16} />}
+                                                    </button>
+                                                </td>
+                                            )}
+                                            <td className="px-4 py-3" onClick={() => (window.location.href = `/admin/campsites/${campsite.id}/edit`)}>
                                                 <div className="relative w-12 h-12 group/thumb">
                                                     {campsite.image_url ? (
                                                         <>
                                                             <img
                                                                 src={campsite.image_url}
                                                                 alt={campsite.name}
-                                                                className="w-full h-full object-cover rounded-lg ring-2 ring-transparent group-hover/thumb:ring-[var(--color-accent-gold)]/40 transition-all cursor-pointer"
+                                                                className="w-full h-full object-cover rounded-lg ring-2 ring-transparent group-hover/thumb:ring-[var(--color-accent-gold)] transition-all cursor-pointer shadow-sm shadow-black/20"
                                                                 onClick={() => {
                                                                     setUploadingId(campsite.id);
                                                                     fileInputRef.current?.click();
@@ -335,9 +461,9 @@ export default function CampsitesPage() {
                                                             <button 
                                                                 onClick={(e) => {
                                                                     e.stopPropagation();
-                                                                    handleRemoveImage(campsite.id);
+                                                                    requestRemoveImage(campsite.id);
                                                                 }}
-                                                                className="absolute -top-1 -right-1 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover/thumb:opacity-100 transition-opacity hover:bg-red-600 shadow-sm"
+                                                                className="absolute -top-1.5 -right-1.5 p-1 bg-red-500 text-white rounded-full opacity-0 group-hover/thumb:opacity-100 transition-opacity hover:bg-red-600 shadow-md z-10"
                                                                 title="Remove image"
                                                             >
                                                                 <X className="w-3 h-3" />
@@ -345,14 +471,17 @@ export default function CampsitesPage() {
                                                         </>
                                                     ) : (
                                                         <div 
-                                                            className="w-full h-full bg-[var(--color-surface-elevated)] rounded-lg flex items-center justify-center ring-2 ring-transparent group-hover/thumb:ring-[var(--color-accent-gold)]/40 transition-all cursor-pointer hover:bg-[var(--color-surface-hover)]"
+                                                            className="w-full h-full bg-[var(--color-surface-elevated)] rounded-lg flex items-center justify-center ring-2 ring-transparent group-hover/thumb:ring-[var(--color-accent-gold)] transition-all cursor-pointer hover:bg-[var(--color-surface-hover)] border border-[var(--color-border-subtle)]"
                                                             onClick={() => {
                                                                 setUploadingId(campsite.id);
                                                                 fileInputRef.current?.click();
                                                             }}
                                                             title="Upload image"
                                                         >
-                                                            <Camera className="w-5 h-5 text-[var(--color-text-muted)]" />
+                                                            <div className="flex flex-col items-center gap-0.5 opacity-60 group-hover/thumb:opacity-100">
+                                                                <Camera className="w-4 h-4 text-[var(--color-text-muted)]" />
+                                                                <span className="text-[8px] font-bold uppercase tracking-tighter text-[var(--color-text-muted)]">Add</span>
+                                                            </div>
                                                         </div>
                                                     )}
                                                 </div>
@@ -366,7 +495,7 @@ export default function CampsitesPage() {
                                                 {campsite.name}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium capitalize bg-[var(--color-surface-elevated)] text-[var(--color-text-primary)]">
+                                                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-[var(--color-surface-card)] text-[var(--color-text-secondary)] border border-[var(--color-border-strong)] shadow-sm">
                                                     {campsite.type}
                                                 </span>
                                             </td>
@@ -378,60 +507,63 @@ export default function CampsitesPage() {
                                             </td>
                                             <td className="px-4 py-3">
                                                 {campsite.is_active ? (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-emerald-600 text-white shadow-sm shadow-emerald-900/20">
+                                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="3" d="M5 13l4 4L19 7" />
                                                         </svg>
                                                         Active
                                                     </span>
                                                 ) : (
-                                                    <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-medium bg-slate-500/10 text-slate-600 border border-slate-500/20">
-                                                        <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                                                            <path fillRule="evenodd" d="M13.477 14.89A6 6 0 015.11 6.524l8.367 8.368zm1.414-1.414L6.524 5.11a6 6 0 018.367 8.367zM18 10a8 8 0 11-16 0 8 8 0 0116 0z" clipRule="evenodd" />
-                                                        </svg>
+                                                    <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border border-[var(--color-border-strong)] text-[var(--color-text-muted)]">
+                                                        <PowerOff className="w-3 h-3" />
                                                         Inactive
                                                     </span>
                                                 )}
                                             </td>
                                             <td className="px-4 py-3">
-                                                <div className="flex items-center gap-2">
+                                                <div className="flex items-center justify-center gap-1.5">
                                                     <Link
                                                         href={`/admin/campsites/${campsite.id}/edit`}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[var(--color-text-primary)] bg-[var(--color-surface-card)] hover:bg-[var(--color-accent-gold)] hover:text-[var(--color-brand-forest)] border border-[var(--color-border-default)] hover:border-[var(--color-accent-gold)] rounded-lg transition-all duration-150"
+                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-[var(--color-brand-forest)] bg-[var(--color-accent-gold)] hover:bg-[var(--color-accent-gold-dark)] rounded-lg transition-all duration-150 shadow-sm"
                                                         title="Edit campsite"
                                                     >
-                                                        <Edit2 className="w-4 h-4" />
+                                                        <Edit2 className="w-3.5 h-3.5" />
                                                         <span className="hidden sm:inline">Edit</span>
                                                     </Link>
                                                     <button
-                                                        onClick={() => toggleActive(campsite.id, campsite.is_active)}
-                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium border rounded-lg transition-all duration-150 ${
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            requestToggleActive(campsite.id, campsite.code, campsite.is_active);
+                                                        }}
+                                                        className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold uppercase tracking-wider border rounded-lg transition-all duration-150 shadow-sm ${
                                                             campsite.is_active
-                                                                ? 'text-orange-600 bg-orange-50 border-orange-200 hover:bg-orange-100 hover:border-orange-300'
-                                                                : 'text-emerald-600 bg-emerald-50 border-emerald-200 hover:bg-emerald-100 hover:border-emerald-300'
+                                                                ? 'text-orange-600 border-orange-200 bg-orange-50/50 hover:bg-orange-100'
+                                                                : 'text-emerald-600 border-emerald-200 bg-emerald-50/50 hover:bg-emerald-100'
                                                         }`}
-                                                        title={campsite.is_active ? 'Deactivate campsite' : 'Activate campsite'}
+                                                        title={campsite.is_active ? 'Pause campsite' : 'Start campsite'}
                                                     >
                                                         {campsite.is_active ? (
                                                             <>
-                                                                <PowerOff className="w-4 h-4" />
-                                                                <span className="hidden sm:inline">Deactivate</span>
+                                                                <PowerOff className="w-3.5 h-3.5" />
+                                                                <span className="hidden lg:inline">Pause</span>
                                                             </>
                                                         ) : (
                                                             <>
-                                                                <Power className="w-4 h-4" />
-                                                                <span className="hidden sm:inline">Activate</span>
+                                                                <Power className="w-3.5 h-3.5" />
+                                                                <span className="hidden lg:inline">Start</span>
                                                             </>
                                                         )}
                                                     </button>
                                                     <button
-                                                        onClick={() => handleDelete(campsite.id, campsite.code)}
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            requestDelete(campsite.id, campsite.code);
+                                                        }}
                                                         disabled={isDeleting === campsite.id}
-                                                        className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-red-600 bg-red-50 border border-red-200 hover:bg-red-100 hover:border-red-300 rounded-lg transition-all duration-150 disabled:opacity-50"
+                                                        className="group/delete p-2 text-red-500/60 hover:text-red-600 hover:bg-red-100 rounded-lg transition-all duration-150 disabled:opacity-50"
                                                         title="Delete campsite permanently"
                                                     >
                                                         <Trash2 className="w-4 h-4" />
-                                                        <span className="hidden sm:inline">Delete</span>
                                                     </button>
                                                 </div>
                                             </td>
@@ -442,6 +574,17 @@ export default function CampsitesPage() {
                         </table>
                     </div>
                 </div>
+
+                <ConfirmDialog
+                    isOpen={confirmConfig.isOpen}
+                    onClose={() => setConfirmConfig(prev => ({ ...prev, isOpen: false }))}
+                    onConfirm={confirmConfig.onConfirm}
+                    title={confirmConfig.title}
+                    message={confirmConfig.message}
+                    confirmLabel={confirmConfig.confirmLabel}
+                    variant={confirmConfig.variant}
+                    isSubmitting={isDeleting !== null}
+                />
             </Container>
         </div>
     );

@@ -8,8 +8,7 @@ import ReservationBlock from "./ReservationBlock";
 import BlackoutBlock from "./BlackoutBlock";
 import GhostPreview from "./GhostPreview";
 import { GhostState } from "@/lib/calendar/calendar-types";
-import { type DragResizeItem, type ResizeState } from "./hooks/useDragResize";
-import { type SelectionRange } from "./hooks/useCalendarSelection";
+import { ResizeSide } from "./BaseCalendarBlock";
 
 interface CalendarRowProps {
   // Data
@@ -24,24 +23,24 @@ interface CalendarRowProps {
 
   // Interaction State
   isCreating: boolean;
-  selection: SelectionRange | null;
+  selectionCampsiteId?: string | null;
+  selectionStart?: string | null;
+  selectionEnd?: string | null;
+  
   isDragging: boolean;
-  dragPreview: unknown; // Using unknown for DragPreview to avoid circular deps or complex imports, can define proper type if needed
-  draggedItem: DragResizeItem | null;
-  resizeState: ResizeState | null;
+  dragPreview: { campsiteId: string; startDate: string } | null;
+  draggedItemId?: string | null;
+  resizeStateItemId?: string | null;
   showAvailability: boolean;
   validationError: string | null;
 
   // Handlers
-  onDragOver: (resourceId: string, dateStr: string) => void;
-  onDrop: (e: React.DragEvent) => void;
-  onCellMouseDown: (resourceId: string, dateStr: string) => void;
-  onCellMouseEnter: (resourceId: string, dateStr: string) => void;
+  onCellPointerDown: (e: React.PointerEvent, resourceId: string, dateStr: string) => void;
+  onCellPointerEnter: (resourceId: string, dateStr: string) => void;
   onReservationClick: (res: Reservation) => void;
   onBlackoutClick: (blackout: BlackoutDate) => void;
-  onDragStart: (e: React.DragEvent, item: DragResizeItem) => void;
-  onDragEnd: () => void;
-  onResizeStart: (item: DragResizeItem, side: "left" | "right") => void;
+  onDragStart: (e: React.PointerEvent, item: any) => void;
+  onResizeStart: (item: any, side: ResizeSide) => void;
   getGhost: (resourceId: string) => GhostState | null;
 }
 
@@ -55,25 +54,24 @@ function CalendarRow({
   monthEnd,
   totalDays,
   isCreating,
-  selection,
+  selectionCampsiteId,
+  selectionStart,
+  selectionEnd,
   isDragging,
   dragPreview,
-  draggedItem,
-  resizeState,
+  draggedItemId,
+  resizeStateItemId,
   showAvailability,
   validationError,
-  onDragOver,
-  onDrop,
-  onCellMouseDown,
-  onCellMouseEnter,
+  onCellPointerDown,
+  onCellPointerEnter,
   onReservationClick,
   onBlackoutClick,
   onDragStart,
-  onDragEnd,
   onResizeStart,
   getGhost,
 }: CalendarRowProps) {
-  const resourceId = rowType === "unassigned" ? "UNASSIGNED" : campsite!.id;
+  const resourceId = rowType === "unassigned" ? "UNASSIGNED" : (campsite?.id || "UNKNOWN");
   const isInactive = rowType === "campsite" && !campsite?.is_active;
 
   // Styling
@@ -94,7 +92,10 @@ function CalendarRow({
   const borderClass = isInactive ? "border-[var(--color-error)]/30" : "border-[var(--color-border-subtle)]";
   
   return (
-    <div className={`flex border-b ${borderClass} ${rowHoverClass} ${rowBgClass} transition-surface group relative`}>
+    <div 
+       data-campsite-id={resourceId}
+       className={`flex border-b ${borderClass} ${rowHoverClass} ${rowBgClass} transition-surface group relative`}
+    >
       {/* Sticky Column */}
       <div className={`sticky left-0 w-32 sm:w-48 lg:w-64 ${stickyBgClass} transition-surface border-r border-[var(--color-border-default)] p-2 lg:p-3 flex items-center justify-between shadow-[4px_0_8px_-4px_rgba(0,0,0,0.1)] z-20 ${isInactive ? 'border-r-[var(--color-error)]/30' : ''}`}>
         <div className="min-w-0 flex-1">
@@ -126,20 +127,12 @@ function CalendarRow({
       <div className="flex relative">
         {days.map((day) => {
           const dayStr = format(day, "yyyy-MM-dd");
-          // Check if day is occupied
-          // For Unassigned: always false (availability doesn't apply)
-          // For Campsite: check reservation overlap
           const isOccupied = rowType === "campsite" && reservations.some(res =>
              dayStr >= res.check_in && dayStr < res.check_out
           );
 
-          const isInSelection = isCreating && selection?.campsiteId === resourceId && dayStr >= selection.start && dayStr <= selection.end;
-          const hasDragPreview = (p: unknown): p is { campsiteId: string; startDate: string } => {
-            if (!p || typeof p !== 'object') return false;
-            const o = p as Record<string, unknown>;
-            return typeof o.campsiteId === 'string' && typeof o.startDate === 'string';
-          };
-          const isDragHovered = isDragging && hasDragPreview(dragPreview) && dragPreview.campsiteId === resourceId && dragPreview.startDate === dayStr;
+          const isInSelection = !!(isCreating && selectionCampsiteId === resourceId && selectionStart && selectionEnd && dayStr >= selectionStart && dayStr <= selectionEnd);
+          const isDragHovered = isDragging && dragPreview?.campsiteId === resourceId && dragPreview?.startDate === dayStr;
 
           return (
             <CalendarCell
@@ -148,20 +141,14 @@ function CalendarRow({
               resourceId={resourceId}
               isWeekend={isWeekend(day)}
               isToday={isToday(day)}
-              // Unassigned rows shouldn't appear occupied in "Show Availability" mode 
-              // because they aren't real capacity, but let's stick to existing logic:
-              // existing logic: unassigned row pass isOccupied=false always
               isOccupied={isOccupied || false}
               isInSelection={isInSelection}
               isDragHovered={isDragHovered}
               showAvailability={showAvailability}
               validationError={validationError}
-              // Unassigned row passed custom baseBackgroundClass
               baseBackgroundClass={rowType === "unassigned" ? "bg-[var(--color-status-pending-bg)]/50" : ""}
-              onDragOver={onDragOver}
-              onDrop={onDrop}
-              onMouseDown={onCellMouseDown}
-              onMouseEnter={onCellMouseEnter}
+              onPointerDown={onCellPointerDown}
+              onPointerEnter={onCellPointerEnter}
             />
           );
         })}
@@ -175,14 +162,14 @@ function CalendarRow({
             monthEnd={monthEnd}
             onSelect={onReservationClick}
             onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
             onResizeStart={onResizeStart}
-            isDragging={draggedItem?.id === res.id}
-            isResizing={resizeState?.item.id === res.id}
+            isDragging={draggedItemId === res.id}
+            isResizing={resizeStateItemId === res.id}
+            isGlobalDragging={isDragging}
           />
         ))}
 
-        {/* Render Blackouts (only for campsites usually, but type allows for unassigned technically) */}
+        {/* Render Blackouts */}
         {blackoutDates.map((blackout) => (
           <BlackoutBlock
             key={blackout.id}
@@ -191,10 +178,10 @@ function CalendarRow({
             monthEnd={monthEnd}
             onSelect={onBlackoutClick}
             onDragStart={onDragStart}
-            onDragEnd={onDragEnd}
             onResizeStart={onResizeStart}
-            isDragging={draggedItem?.id === blackout.id}
-            isResizing={resizeState?.item.id === blackout.id}
+            isDragging={draggedItemId === blackout.id}
+            isResizing={resizeStateItemId === blackout.id}
+            isGlobalDragging={isDragging}
           />
         ))}
 

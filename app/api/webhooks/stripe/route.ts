@@ -3,6 +3,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { handleStripeWebhook } from "@/lib/stripe-webhook-handler";
 
+export const runtime = "nodejs";
+
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
 function getStripeClient() {

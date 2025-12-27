@@ -6,6 +6,7 @@ import { createClient } from "@/lib/supabase/client";
 import { useEffect, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { ToastProvider } from "@/components/ui/Toast";
+import { ViewportModeProvider } from "@/components/providers/ViewportModeProvider";
 
 export default function AdminLayout({
     children,
@@ -56,72 +57,74 @@ export default function AdminLayout({
     }
 
     return (
-        <ToastProvider>
-            <div className="min-h-screen bg-[var(--color-surface-elevated)]">
-                {!isAuthPage && (
-                    <div className="bg-brand-forest border-b border-[var(--color-border-strong)]">
-                        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                            <div className="flex items-center justify-between h-16">
-                                <div className="flex items-center gap-4">
-                                    <Link
-                                        href="/"
-                                        className="text-accent-beige/60 hover:text-accent-beige text-xs transition-colors flex items-center gap-1"
-                                        title="View public site"
-                                    >
-                                        ← Site
-                                    </Link>
-                                    <div className="h-6 w-px bg-accent-beige/20"></div>
-                                    <h1 className="text-xl font-heading font-bold text-accent-gold">
-                                        Admin Panel
-                                    </h1>
-                                    <span className="text-sm text-accent-beige/60">
-                                        {user?.email}
-                                    </span>
-                                </div>
-                                <div className="flex items-center gap-3">
-                                    <a
-                                        href="/admin"
-                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
-                                    >
-                                        Reservations
-                                    </a>
-                                    <a
-                                        href="/admin/calendar"
-                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
-                                    >
-                                        Calendar
-                                    </a>
-                                    <a
-                                        href="/admin/campsites"
-                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
-                                    >
-                                        Campsites
-                                    </a>
-                                    <a
-                                        href="/admin/settings"
-                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
-                                    >
-                                        Settings
-                                    </a>
-                                    <a
-                                        href="/admin/help"
-                                        className="text-accent-beige hover:text-accent-gold transition-colors text-sm flex items-center gap-1"
-                                    >
-                                        Help
-                                    </a>
-                                    <button
-                                        onClick={handleLogout}
-                                        className="bg-accent-gold text-brand-forest px-4 py-2 rounded-lg text-sm font-medium hover:bg-opacity-90 transition-colors"
-                                    >
-                                        Logout
-                                    </button>
+        <ViewportModeProvider>
+            <ToastProvider>
+                <div className="min-h-screen bg-[var(--color-surface-elevated)]">
+                    {!isAuthPage && (
+                        <div className="bg-brand-forest border-b border-[var(--color-border-strong)]">
+                            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                                <div className="flex items-center justify-between h-16">
+                                    <div className="flex items-center gap-4">
+                                        <Link
+                                            href="/"
+                                            className="text-accent-beige/60 hover:text-accent-beige text-xs transition-colors flex items-center gap-1"
+                                            title="View public site"
+                                        >
+                                            ← Site
+                                        </Link>
+                                        <div className="h-6 w-px bg-accent-beige/20"></div>
+                                        <h1 className="text-xl font-heading font-bold text-accent-gold">
+                                            Admin Panel
+                                        </h1>
+                                        <span className="text-sm text-accent-beige/60">
+                                            {user?.email}
+                                        </span>
+                                    </div>
+                                    <div className="flex items-center gap-3">
+                                        <a
+                                            href="/admin"
+                                            className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
+                                        >
+                                            Reservations
+                                        </a>
+                                        <a
+                                            href="/admin/calendar"
+                                            className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
+                                        >
+                                            Calendar
+                                        </a>
+                                        <a
+                                            href="/admin/campsites"
+                                            className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
+                                        >
+                                            Campsites
+                                        </a>
+                                        <a
+                                            href="/admin/settings"
+                                            className="text-accent-beige hover:text-accent-gold transition-colors text-sm"
+                                        >
+                                            Settings
+                                        </a>
+                                        <a
+                                            href="/admin/help"
+                                            className="text-accent-beige hover:text-accent-gold transition-colors text-sm flex items-center gap-1"
+                                        >
+                                            Help
+                                        </a>
+                                        <button
+                                            onClick={handleLogout}
+                                            className="bg-accent-gold text-brand-forest px-4 py-2 rounded-lg text-sm font-medium hover:bg-opacity-90 transition-colors"
+                                        >
+                                            Logout
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                )}
-                {children}
-            </div>
-        </ToastProvider>
+                    )}
+                    {children}
+                </div>
+            </ToastProvider>
+        </ViewportModeProvider>
     );
 }

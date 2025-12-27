@@ -60,7 +60,7 @@ export default function AdminLoginPage() {
                         <div>
                             <label
                                 htmlFor="email"
-                                className="block text-sm font-medium text-[var(--color-text-primary)] mb-2"
+                                className="block text-sm font-medium text-[var(--color-text-primary)] mb-3"
                             >
                                 Email
                             </label>
@@ -71,7 +71,7 @@ export default function AdminLoginPage() {
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
                                 data-testid="admin-login-email"
-                                className="w-full px-4 py-2 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
+                                className="w-full px-4 py-3.5 md:py-3 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
                                 placeholder="admin@example.com"
                             />
                         </div>
@@ -79,7 +79,7 @@ export default function AdminLoginPage() {
                         <div>
                             <label
                                 htmlFor="password"
-                                className="block text-sm font-medium text-[var(--color-text-primary)] mb-2"
+                                className="block text-sm font-medium text-[var(--color-text-primary)] mb-3"
                             >
                                 Password
                             </label>
@@ -91,13 +91,13 @@ export default function AdminLoginPage() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
                                     data-testid="admin-login-password"
-                                    className="w-full px-4 py-2 pr-12 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
+                                    className="w-full px-4 py-3.5 md:py-3 pr-12 bg-[var(--color-surface-card)] border border-[var(--color-border-default)] rounded-lg text-[var(--color-text-primary)] text-base focus:border-accent-gold focus:ring-2 focus:ring-accent-gold/20"
                                     placeholder="Enter your password"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors"
+                                    className="absolute right-2 top-1/2 -translate-y-1/2 p-2.5 text-[var(--color-text-muted)] hover:text-[var(--color-text-primary)] transition-colors touch-manipulation"
                                     aria-label={showPassword ? "Hide password" : "Show password"}
                                 >
                                     {showPassword ? (
@@ -113,7 +113,7 @@ export default function AdminLoginPage() {
                             type="submit"
                             disabled={loading}
                             data-testid="admin-login-submit"
-                            className="w-full bg-brand-forest text-accent-beige py-3 px-6 rounded-lg font-medium hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="w-full bg-brand-forest text-accent-beige py-4 md:py-3 px-6 rounded-lg font-medium text-base hover:bg-opacity-90 transition-all disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation min-h-[48px]"
                         >
                             {loading ? "Signing in..." : "Sign In"}
                         </button>
@@ -121,7 +121,7 @@ export default function AdminLoginPage() {
                         <div className="text-center">
                             <a
                                 href="/admin/forgot-password"
-                                className="text-sm text-[var(--color-text-muted)] hover:text-accent-gold transition-colors underline"
+                                className="inline-block py-2 px-4 text-sm text-[var(--color-text-muted)] hover:text-accent-gold transition-colors underline touch-manipulation"
                             >
                                 Forgot Password?
                             </a>

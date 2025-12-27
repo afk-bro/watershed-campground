@@ -26,7 +26,8 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
     const fetchAvailability = useCallback(async () => {
         setLoading(true);
         try {
-            const res = await fetch(`/api/availability/calendar?month=${format(currentMonth, 'yyyy-MM')}`);
+            const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+            const res = await fetch(`/api/availability/calendar?month=${format(currentMonth, 'yyyy-MM')}&org=${orgSlug}`);
             if (res.ok) {
                 const data = await res.json();
                 setAvailability(data);

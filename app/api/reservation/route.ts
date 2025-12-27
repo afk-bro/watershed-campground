@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import Stripe from "stripe";
-import { checkAvailability } from "@/lib/availability";
+import { checkAvailability } from "@/lib/availability/engine";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { reservationFormSchema } from "@/lib/reservation/validation";
 import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
+import { requireAdmin } from "@/lib/admin-auth";
+import { getBaseUrl } from "@/lib/url-utils";
+import { checkRateLimit, rateLimiters, getClientIp, createIpIdentifier, getRateLimitHeaders } from "@/lib/rate-limit-upstash";
+import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
@@ -21,18 +25,31 @@ function getStripeClient() {
 
 export async function POST(request: Request) {
     try {
-        // Validate NEXT_PUBLIC_BASE_URL in production
-        let baseUrl = process.env.NEXT_PUBLIC_BASE_URL;
-        if (!baseUrl) {
-            if (process.env.NODE_ENV === 'production') {
-                console.error("ERROR: NEXT_PUBLIC_BASE_URL environment variable must be set in production.");
-                return NextResponse.json(
-                    { error: "Server misconfiguration: NEXT_PUBLIC_BASE_URL is required in production." },
-                    { status: 500 }
-                );
-            }
-            baseUrl = 'http://localhost:3000';
+        // 0. Rate Limiting
+        const ip = getClientIp(request);
+        const rlResult = await checkRateLimit(
+            createIpIdentifier(ip, 'reservation_create'),
+            rateLimiters.reservationCreate
+        );
+
+        if (!rlResult.success) {
+            console.warn(`[RateLimit] Blocked reservation attempt from ${ip}`);
+            return NextResponse.json(
+                { error: "Too many reservation attempts. Please try again later." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rlResult)
+                }
+            );
         }
+
+        // 0.5. Org Resolution (CRITICAL - before any queries)
+        const organizationId = await resolvePublicOrganizationId(request);
+        if (!organizationId) {
+            return NextResponse.json({ error: "Not found" }, { status: 404 });
+        }
+
+        const baseUrl = getBaseUrl();
         const manageUrl = `${baseUrl}/manage-reservation`;
 
         const body = await request.json();
@@ -47,6 +64,19 @@ export async function POST(request: Request) {
             );
         }
         const formData = result.data;
+
+        // Security: Admin-only override flags - REJECT for non-admins
+        const hasAdminOverrides = formData.forceConflict || formData.overrideBlackout || formData.isOffline || formData.overrideReason;
+        if (hasAdminOverrides) {
+            const { authorized } = await requireAdmin();
+            if (!authorized) {
+                // Explicit rejection: public users cannot use override flags
+                return NextResponse.json(
+                    { error: "Unauthorized: admin-only parameters detected" },
+                    { status: 403 }
+                );
+            }
+        }
 
         // 2. Retrieve Payment Intent & Campsite
         let paymentIntent: Stripe.PaymentIntent | null = null;
@@ -64,17 +94,34 @@ export async function POST(request: Request) {
             recommendedSiteId = paymentIntent.metadata.campsiteId;
         } else {
             // Check availability for non-prepaid bookings
-            const availabilityResult = await checkAvailability({
-                checkIn: formData.checkIn,
-                checkOut: formData.checkOut,
-                guestCount: formData.adults + formData.children,
-                campsiteId: formData.campsiteId
-            });
+            // Admin overrides handled at route layer (already guarded above)
+            if (formData.forceConflict || formData.overrideBlackout) {
+                // Admin is forcing availability - skip engine check
+                if (!formData.campsiteId) {
+                    return NextResponse.json(
+                        { error: "Campsite ID required when using admin overrides" },
+                        { status: 400 }
+                    );
+                }
+                recommendedSiteId = formData.campsiteId;
+            } else {
+                // Normal availability check using new engine (org-scoped)
+                const availabilityResult = await checkAvailability({
+                    checkIn: formData.checkIn,
+                    checkOut: formData.checkOut,
+                    guestCount: formData.adults + formData.children,
+                    campsiteId: formData.campsiteId,
+                    organizationId
+                });
 
-            if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
-                return NextResponse.json({ error: "Dates no longer available." }, { status: 400 });
+                if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
+                    return NextResponse.json(
+                        { error: availabilityResult.message || "Dates no longer available." },
+                        { status: 400 }
+                    );
+                }
+                recommendedSiteId = availabilityResult.recommendedSiteId;
             }
-            recommendedSiteId = availabilityResult.recommendedSiteId;
         }
 
         // 3. Calculate Totals
@@ -154,10 +201,15 @@ export async function POST(request: Request) {
             } else {
                 paymentContext.balanceDue = Math.max(0, totalAmount - paymentContext.amountPaid);
             }
-        } else if (paymentMethod === 'in-person') {
-            paymentContext.paymentStatus = 'pay_on_arrival';
-            paymentContext.paymentType = 'cash';
-            paymentContext.balanceDue = totalAmount;
+        } else if (paymentMethod === 'in-person' || formData.isOffline) {
+            paymentContext.paymentStatus = formData.isOffline ? 'paid' : 'pay_on_arrival';
+            paymentContext.paymentType = 'cash'; // Defaulting to cash/external for manual bookings
+            if (formData.isOffline) {
+                paymentContext.amountPaid = totalAmount;
+                paymentContext.balanceDue = 0;
+            } else {
+                paymentContext.balanceDue = totalAmount;
+            }
         } else {
             return NextResponse.json({ error: "Payment method required" }, { status: 400 });
         }
@@ -182,8 +234,10 @@ export async function POST(request: Request) {
         const magicLinkUrl = `${manageUrl}?rid=${encodeURIComponent(reservation.id)}&t=${encodeURIComponent(rawToken)}`;
 
         // 6. Send Emails (Async, don't block response)
-        // Only sending critical emails here. Stripe webhooks handle the rest usually, but keeping pay-in-person logic.
-        if (paymentMethod === 'in-person') {
+        // Only sending critical emails here. Stripe webhooks handle the rest usually, but keeping pay-in-person/offline logic.
+        const shouldSendEmail = (paymentMethod === 'in-person') || (formData.isOffline && formData.sendGuestEmail);
+
+        if (shouldSendEmail) {
             const resend = new Resend(process.env.RESEND_API_KEY);
             const name = `${formData.firstName} ${formData.lastName}`;
 

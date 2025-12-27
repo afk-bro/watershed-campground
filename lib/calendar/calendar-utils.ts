@@ -166,3 +166,26 @@ export function calculateDragOffset(
   const offsetDays = differenceInDays(parseISO(clickedDate), parseISO(blockStartDate));
   return Math.max(0, offsetDays); // Ensure non-negative
 }
+
+/**
+ * Find the campsite ID of the calendar row under the pointer.
+ * Uses elementsFromPoint to penetrate through overlays.
+ *
+ * @param clientX - Mouse/pointer X coordinate
+ * @param clientY - Mouse/pointer Y coordinate
+ * @returns Campsite ID string or null if no campsite row found
+ */
+export function getCampsiteFromPointer(clientX: number, clientY: number): string | null {
+  const elements = document.elementsFromPoint(clientX, clientY);
+  
+  // Look for campsite row
+  const row = elements.find(el => el.hasAttribute('data-campsite-id'));
+  if (row) {
+    return row.getAttribute('data-campsite-id');
+  }
+
+  // Also check for individual cells which might have resourceId (less reliable if overlays exist but good backup)
+  // But strictly we should rely on the row or properly tagged elements
+  
+  return null;
+}
