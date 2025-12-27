@@ -3,6 +3,7 @@ import { BlackoutDate } from "@/lib/supabase";
 import { useToast } from "@/components/ui/Toast";
 import type { CalendarData } from "@/lib/calendar/calendar-types";
 import { calendarService } from "@/lib/calendar/calendar-service";
+import { handleAdminError } from "@/lib/admin/error-handler";
 
 interface UseBlackoutManagerProps {
     onDataMutate?: (
@@ -107,11 +108,11 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
                 showToast('Blackout dates added', 'success');
                 setTimeout(() => window.location.reload(), 500);
-            } catch (error: any) {
-                if (error.name === 'AbortError') return;
-                console.error(error);
+            } catch (error: unknown) {
+                const adminError = handleAdminError(error, 'useBlackoutManager.createBlackout');
+                if (adminError.code === 'ABORT_ERROR') return;
                 showToast('Failed to create blackout', 'error');
-                throw error;
+                throw adminError;
             }
             return;
         }
@@ -167,11 +168,11 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
             );
 
             showToast('Blackout dates added', 'success');
-        } catch (error: any) {
-            if (error.name === 'AbortError') return;
-            console.error('[CREATE BLACKOUT ERROR]', error);
-            showToast(error.message || 'Failed to create blackout', 'error');
-            throw error;
+        } catch (error: unknown) {
+            const adminError = handleAdminError(error, 'useBlackoutManager.createBlackout.optimistic');
+            if (adminError.code === 'ABORT_ERROR') return;
+            showToast(adminError.userMessage, 'error');
+            throw adminError;
         }
     }, [onDataMutate, showToast]);
 
