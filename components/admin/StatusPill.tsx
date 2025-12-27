@@ -10,32 +10,32 @@ export default function StatusPill({ status }: Props) {
         pending: {
             label: 'Pending',
             icon: Clock,
-            classes: 'bg-[var(--color-status-pending-bg)] text-[var(--color-status-pending)] border-[var(--color-status-pending)]'
+            classes: 'bg-[var(--color-status-pending-bg)] text-[var(--color-status-pending)] border-[var(--color-status-pending-border)]'
         },
         confirmed: {
             label: 'Confirmed',
             icon: CheckCircle2,
-            classes: 'bg-[var(--color-status-confirmed-bg)] text-[var(--color-status-confirmed)] border-[var(--color-status-confirmed)]'
+            classes: 'bg-[var(--color-status-confirmed-bg)] text-[var(--color-status-confirmed)] border-[var(--color-status-confirmed-border)]'
         },
         cancelled: {
             label: 'Cancelled',
             icon: XCircle,
-            classes: 'bg-[var(--color-status-cancelled-bg)] text-[var(--color-status-cancelled)] border-[var(--color-status-cancelled)]'
+            classes: 'bg-[var(--color-status-cancelled-bg)] text-[var(--color-status-cancelled)] border-[var(--color-status-cancelled-border)]'
         },
         checked_in: {
             label: 'Checked In',
             icon: LogIn,
-            classes: 'bg-[var(--color-status-active-bg)] text-[var(--color-status-active)] border-[var(--color-status-active)]'
+            classes: 'bg-[var(--color-status-active-bg)] text-[var(--color-status-active)] border-[var(--color-status-active-border)]'
         },
         checked_out: {
             label: 'Checked Out',
             icon: LogOut,
-            classes: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border-[var(--color-status-neutral)]'
+            classes: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border-[var(--color-status-neutral-border)]'
         },
         no_show: {
             label: 'No Show',
             icon: HelpCircle,
-            classes: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border-[var(--color-status-neutral)]'
+            classes: 'bg-[var(--color-status-neutral-bg)] text-[var(--color-status-neutral)] border-[var(--color-status-neutral-border)]'
         },
     };
 

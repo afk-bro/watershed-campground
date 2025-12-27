@@ -67,18 +67,23 @@
   /* Admin Status Colors (harmonized with brand) */
   --color-status-pending: #c8a75a;
   --color-status-pending-bg: rgba(200, 167, 90, 0.1);
+  --color-status-pending-border: rgba(200, 167, 90, 0.25);
 
   --color-status-confirmed: #7fb069;
   --color-status-confirmed-bg: rgba(127, 176, 105, 0.1);
+  --color-status-confirmed-border: rgba(127, 176, 105, 0.25);
 
   --color-status-cancelled: #c97064;
   --color-status-cancelled-bg: rgba(201, 112, 100, 0.1);
+  --color-status-cancelled-border: rgba(201, 112, 100, 0.25);
 
   --color-status-active: #5ca3b8;
   --color-status-active-bg: rgba(92, 163, 184, 0.1);
+  --color-status-active-border: rgba(92, 163, 184, 0.25);
 
   --color-status-neutral: #8a9ba8;
   --color-status-neutral-bg: rgba(138, 155, 168, 0.1);
+  --color-status-neutral-border: rgba(138, 155, 168, 0.25);
 
   /* Error & Warning Colors */
   --color-error: #c97064;
