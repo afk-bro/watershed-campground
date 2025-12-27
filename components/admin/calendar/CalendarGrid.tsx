@@ -24,6 +24,7 @@ import { useCalendarPanning } from "./hooks/useCalendarPanning";
 import { useSyncedScroll } from "./hooks/useSyncedScroll";
 import { useStuckSavingFailsafe } from "./hooks/useStuckSavingFailsafe";
 import { useReservationMutations } from "./hooks/useReservationMutations";
+import { useCalendarFilters } from "./hooks/useCalendarFilters";
 import SyncedScrollbar from "./SyncedScrollbar";
 import BlackoutDrawer from "./BlackoutDrawer";
 import NoCampsitesCTA from "./NoCampsitesCTA";
@@ -127,10 +128,18 @@ export default function CalendarGrid({
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [confirmDialogError, setConfirmDialogError] = useState<string | null>(null);
 
-  // Filter State
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string | 'ALL'>("ALL");
-  const [hideBlackouts, setHideBlackouts] = useState(false);
+  // Filter State & Logic
+  const {
+    searchQuery,
+    setSearchQuery,
+    typeFilter,
+    setTypeFilter,
+    hideBlackouts,
+    setHideBlackouts,
+    filteredCampsites,
+    filteredReservations,
+    visibleBlackoutDates
+  } = useCalendarFilters({ campsites, reservations, blackoutDates });
 
   // Mutation Hooks
   const {
@@ -173,35 +182,6 @@ export default function CalendarGrid({
   const monthEnd = endOfMonth(date);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
   const totalDays = differenceInDays(monthEnd, monthStart) + 1;
-
-  // Filtered Data
-  const filteredCampsites = useMemo(() => {
-    if (typeFilter === 'ALL') return campsites;
-    return campsites.filter(c => c.type === typeFilter);
-  }, [campsites, typeFilter]);
-
-  const filteredReservations = useMemo(() => {
-    let result = reservations;
-
-    // Filter by Search Query
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(r => 
-        r.first_name.toLowerCase().includes(query) ||
-        r.last_name.toLowerCase().includes(query) ||
-        (r.id && r.id.toLowerCase().includes(query)) ||
-        (r.email && r.email.toLowerCase().includes(query))
-      );
-    }
-
-    return result;
-  }, [reservations, searchQuery]);
-
-  // Determine which blackouts to show
-  const visibleBlackoutDates = useMemo(() => {
-      if (hideBlackouts) return [];
-      return blackoutDates;
-  }, [blackoutDates, hideBlackouts]);
 
   // Pre-calculate maps for stable references during drag operations
   const campsiteReservationsMap = useMemo(() => {
