@@ -10,12 +10,17 @@ import { test, expect } from '@playwright/test';
  * - Mobile form ergonomics
  */
 
+// Touch target size constants (in pixels)
+const TOUCH_TARGET_MIN_IOS = 44;        // iOS Human Interface Guidelines
+const TOUCH_TARGET_MIN_MATERIAL = 48;   // Material Design Guidelines
+const TOUCH_TARGET_MIN_ACCEPTABLE = 40; // Acceptable minimum for testing
+
 test.describe('Mobile Features - Reservation Cards', () => {
   test.beforeEach(async ({ page }) => {
     await page.setViewportSize({ width: 390, height: 844 });
     await page.goto('/admin');
     await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible();
-    await page.waitForTimeout(300);
+    await page.waitForLoadState('networkidle');
   });
 
   test('displays reservation cards instead of table', async ({ page }) => {
@@ -172,7 +177,7 @@ test.describe('Mobile Features - Navigation', () => {
 
     // Switch to desktop
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.waitForTimeout(500); // Allow for layout shift
+    await page.waitForLoadState('networkidle');
 
     nav = page.locator('nav').first();
     navBox = await nav.boundingBox();
@@ -227,7 +232,7 @@ test.describe('Mobile Features - Navigation', () => {
     }
 
     // Each nav item should meet minimum tap target size
-    expect(firstBox?.height).toBeGreaterThanOrEqual(40);
+    expect(firstBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_ACCEPTABLE);
   });
 });
 
@@ -246,9 +251,9 @@ test.describe('Mobile Features - Form Ergonomics', () => {
     const passwordBox = await passwordInput.boundingBox();
     const buttonBox = await submitButton.boundingBox();
 
-    expect(emailBox?.height).toBeGreaterThanOrEqual(44); // iOS minimum
-    expect(passwordBox?.height).toBeGreaterThanOrEqual(44);
-    expect(buttonBox?.height).toBeGreaterThanOrEqual(44);
+    expect(emailBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_IOS);
+    expect(passwordBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_IOS);
+    expect(buttonBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_IOS);
 
     // Check inputs are full width or nearly full width
     const viewportWidth = 390;
@@ -302,8 +307,8 @@ test.describe('Mobile Features - Form Ergonomics', () => {
     const submitButton = page.getByRole('button', { name: /sign in|log in/i });
     await submitButton.click();
 
-    // Wait for potential error messages
-    await page.waitForTimeout(1000);
+    // Wait for validation to trigger
+    await page.waitForLoadState('domcontentloaded');
 
     // HTML5 validation should trigger or custom error messages
     const emailInput = page.getByTestId('admin-login-email');
@@ -323,21 +328,21 @@ test.describe('Mobile Features - Layout Breakpoint Transitions', () => {
 
     // Test slightly below breakpoint (mobile)
     await page.setViewportSize({ width: 767, height: 1024 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     const tableBefore = page.locator('table');
     await expect(tableBefore).not.toBeVisible();
 
     // Test at breakpoint (desktop)
     await page.setViewportSize({ width: 768, height: 1024 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     const tableAt = page.locator('table');
     await expect(tableAt).toBeVisible();
 
     // Test above breakpoint (desktop)
     await page.setViewportSize({ width: 769, height: 1024 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     const tableAfter = page.locator('table');
     await expect(tableAfter).toBeVisible();
@@ -349,7 +354,7 @@ test.describe('Mobile Features - Layout Breakpoint Transitions', () => {
 
     // Start mobile
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Select a reservation on mobile
     const mobileCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
@@ -359,7 +364,7 @@ test.describe('Mobile Features - Layout Breakpoint Transitions', () => {
 
     // Resize to desktop
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Verify table is now visible
     const table = page.locator('table');
@@ -388,7 +393,7 @@ test.describe('Mobile Features - Touch Interactions', () => {
     await firstCard.tap();
 
     // Should respond (open details or similar)
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('domcontentloaded');
 
     // Verify some interaction occurred (e.g., modal opened)
     const modals = page.locator('[role="dialog"], .modal, .drawer');
@@ -446,7 +451,7 @@ test.describe('Mobile Features - Performance', () => {
 
     // Start desktop
     await page.setViewportSize({ width: 1280, height: 720 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Get initial heading position
     const heading = page.getByRole('heading', { name: 'Reservations' });
@@ -454,7 +459,7 @@ test.describe('Mobile Features - Performance', () => {
 
     // Switch to mobile
     await page.setViewportSize({ width: 390, height: 844 });
-    await page.waitForTimeout(500);
+    await page.waitForLoadState('networkidle');
 
     // Heading should still be visible
     await expect(heading).toBeVisible();

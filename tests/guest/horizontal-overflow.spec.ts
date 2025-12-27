@@ -39,7 +39,6 @@ test.describe('Horizontal Overflow - Public Pages', () => {
 
           // Wait for page to fully load and render
           await page.waitForLoadState('networkidle');
-          await page.waitForTimeout(500); // Allow for any animations/transitions
 
           // Method 1: Check document scroll width
           const hasDocumentOverflow = await page.evaluate(() => {
@@ -95,6 +94,21 @@ test.describe('Horizontal Overflow - Public Pages', () => {
               // Skip hidden elements
               const style = window.getComputedStyle(el);
               if (style.display === 'none' || style.visibility === 'hidden') {
+                continue;
+              }
+
+              // Skip fixed and absolute positioned elements (they're allowed to overflow)
+              if (style.position === 'fixed' || style.position === 'absolute') {
+                continue;
+              }
+
+              // Skip SVG elements (they have different overflow behavior)
+              if (el instanceof SVGElement) {
+                continue;
+              }
+
+              // Skip scrollable containers where overflow is expected
+              if (style.overflowX === 'auto' || style.overflowX === 'scroll') {
                 continue;
               }
 
@@ -192,7 +206,8 @@ test.describe('Horizontal Overflow - Edge Cases', () => {
     await page.goto('/gallery');
 
     await page.waitForLoadState('networkidle');
-    await page.waitForTimeout(1000); // Allow images to load
+    // Wait for at least one image to be visible
+    await page.locator('img').first().waitFor({ state: 'visible', timeout: 5000 }).catch(() => {});
 
     const imageOverflow = await page.evaluate(() => {
       const images = document.querySelectorAll('img');

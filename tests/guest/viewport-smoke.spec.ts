@@ -15,6 +15,11 @@ import { test, expect } from '@playwright/test';
  * - Layout doesn't break
  */
 
+// Touch target size constants (in pixels)
+const TOUCH_TARGET_MIN_IOS = 44;        // iOS Human Interface Guidelines
+const TOUCH_TARGET_MIN_MATERIAL = 48;   // Material Design Guidelines
+const TOUCH_TARGET_MIN_ACCEPTABLE = 40; // Acceptable minimum for testing
+
 const VIEWPORTS = {
   mobile: [
     { name: 'iPhone SE', width: 375, height: 667 },
@@ -31,10 +36,10 @@ const VIEWPORTS = {
 };
 
 const PUBLIC_PAGES = [
-  { path: '/', heading: 'Welcome to Watershed Campground' },
-  { path: '/rates', heading: 'Rates & Policies' },
+  { path: '/', heading: 'Lakeside Camping' },
+  { path: '/rates', heading: 'Rates' },
   { path: '/gallery', heading: 'Gallery' },
-  { path: '/contact', heading: 'Contact Us' },
+  { path: '/contact', heading: 'Say Hello' },
 ];
 
 test.describe('Viewport Smoke Tests - Public Pages', () => {
@@ -151,14 +156,14 @@ test.describe('Form Ergonomics Tests', () => {
     const emailBox = await emailInput.boundingBox();
     const passwordBox = await passwordInput.boundingBox();
 
-    expect(emailBox?.height).toBeGreaterThanOrEqual(40); // Allow slight variance
-    expect(passwordBox?.height).toBeGreaterThanOrEqual(40);
+    expect(emailBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_ACCEPTABLE);
+    expect(passwordBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_ACCEPTABLE);
 
     // Submit button should be large enough
     const submitButton = page.getByRole('button', { name: /sign in|log in/i });
     const buttonBox = await submitButton.boundingBox();
 
-    expect(buttonBox?.height).toBeGreaterThanOrEqual(40);
+    expect(buttonBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_ACCEPTABLE);
   });
 
   test('tablet and desktop maintain consistent form sizing', async ({ page }) => {
@@ -177,7 +182,7 @@ test.describe('Form Ergonomics Tests', () => {
       const emailBox = await emailInput.boundingBox();
 
       // Forms should still be comfortably sized
-      expect(emailBox?.height).toBeGreaterThanOrEqual(40);
+      expect(emailBox?.height).toBeGreaterThanOrEqual(TOUCH_TARGET_MIN_ACCEPTABLE);
     }
   });
 });
@@ -188,7 +193,7 @@ test.describe('Text Readability Tests', () => {
     await page.goto('/');
 
     // Main heading should be visible and reasonably sized
-    const heading = page.getByRole('heading', { name: /watershed campground/i }).first();
+    const heading = page.getByRole('heading', { name: /lakeside camping/i }).first();
     await expect(heading).toBeVisible();
 
     // Check computed font size is reasonable for mobile (at least 24px for h1)
