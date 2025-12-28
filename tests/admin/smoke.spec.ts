@@ -37,7 +37,8 @@ test.describe('Admin Smoke Tests', () => {
 
         test('/admin/calendar loads', async ({ page }) => {
             await page.goto('/admin/calendar', { waitUntil: 'networkidle' });
-            await expect(page).toHaveURL('/admin/calendar');
+            // Calendar adds query params (month, year) - accept them
+            await expect(page).toHaveURL(/\/admin\/calendar/);
             // Calendar should render - check for the Calendar link in the nav
             await expect(page.getByRole('link', { name: 'Calendar' })).toBeVisible({ timeout: 10000 });
         });
