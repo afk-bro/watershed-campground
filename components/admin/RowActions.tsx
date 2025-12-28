@@ -119,4 +119,6 @@ const RowActions = memo(function RowActions({ reservation, updateStatus, onArchi
     return null;
 });
 
+RowActions.displayName = 'RowActions';
+
 export default RowActions;

@@ -50,4 +50,6 @@ const StatusPill = memo(function StatusPill({ status }: Props) {
     );
 });
 
+StatusPill.displayName = 'StatusPill';
+
 export default StatusPill;

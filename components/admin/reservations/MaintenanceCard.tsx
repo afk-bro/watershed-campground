@@ -112,4 +112,6 @@ const MaintenanceCard = memo(function MaintenanceCard({
     );
 });
 
+MaintenanceCard.displayName = 'MaintenanceCard';
+
 export default MaintenanceCard;
