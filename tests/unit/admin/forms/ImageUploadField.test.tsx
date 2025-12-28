@@ -10,7 +10,7 @@ vi.mock('@/components/admin/hooks/useImageUpload', () => ({
 import { useImageUpload } from '@/components/admin/hooks/useImageUpload';
 
 describe('ImageUploadField', () => {
-  const mockUseImageUpload = useImageUpload as any;
+  const mockUseImageUpload = useImageUpload as ReturnType<typeof vi.fn>;
 
   beforeEach(() => {
     vi.clearAllMocks();

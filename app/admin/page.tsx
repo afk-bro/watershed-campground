@@ -25,12 +25,14 @@ import { useViewportModeContext } from "@/components/providers/ViewportModeProvi
 import { useReservationData } from "@/hooks/admin/useReservationData";
 import { useReservationFilters } from "@/hooks/admin/useReservationFilters";
 import { useBulkActions } from "@/hooks/admin/useBulkActions";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { adminAPI } from "@/lib/admin/api-client";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/lib/admin/constants";
 
 export default function AdminPage() {
     const { showToast } = useToast();
     const { isPhone } = useViewportModeContext();
+    const { showConfirm, ConfirmDialogComponent: statusConfirmDialog } = useConfirmDialog();
 
     // UI state
     const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
@@ -81,7 +83,16 @@ export default function AdminPage() {
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
         if (isSubmitting) return;
-        if (status === 'cancelled' && !confirm('Are you sure?')) return;
+
+        if (status === 'cancelled') {
+            const confirmed = await showConfirm({
+                title: "Cancel Reservation",
+                message: "Are you sure you want to cancel this reservation?",
+                confirmLabel: "Cancel Reservation",
+                variant: "danger"
+            });
+            if (!confirmed) return;
+        }
 
         setIsSubmitting(true);
         try {
@@ -294,6 +305,8 @@ export default function AdminPage() {
                 onRestore={() => bulkActions.handleBulkArchive('restore', selectedIds)}
                 onClearSelection={() => setSelectedIds(new Set())}
             />
+            {bulkActions.ConfirmDialogComponent}
+            {statusConfirmDialog}
         </div>
     );
 }
