@@ -11,6 +11,12 @@
     "strict": true,
     "noEmit": true,
     "esModuleInterop": true,
+    /* Additional Strict Checks (Gradual Rollout) */
+    /* These checks catch potential runtime errors and improve code quality.
+       Current status: ~90 errors to be fixed incrementally.
+       New code must satisfy these checks. Legacy code will be updated gradually. */
+    "noImplicitReturns": true,           // All code paths must return a value
+    "noFallthroughCasesInSwitch": true,  // Prevent accidental switch fallthrough
     "module": "esnext",
     "moduleResolution": "bundler",
     "resolveJsonModule": true,

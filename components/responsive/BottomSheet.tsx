@@ -73,6 +73,7 @@ export function BottomSheet({
         document.body.style.overflow = '';
       };
     }
+    return undefined;
   }, [isOpen]);
 
   // Close on escape key

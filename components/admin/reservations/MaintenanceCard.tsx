@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import { Wrench, Trash2 } from "lucide-react";
 import { getNights } from "@/lib/admin/reservations/listing";
 import type { BlockingEventOverviewItem } from "@/lib/supabase";
@@ -12,7 +13,7 @@ interface MaintenanceCardProps {
     onDelete: (id: string) => void;
 }
 
-export default function MaintenanceCard({
+const MaintenanceCard = memo(function MaintenanceCard({
     item,
     isSelected,
     isSubmitting,
@@ -109,4 +110,8 @@ export default function MaintenanceCard({
             </div>
         </div>
     );
-}
+});
+
+MaintenanceCard.displayName = 'MaintenanceCard';
+
+export default MaintenanceCard;

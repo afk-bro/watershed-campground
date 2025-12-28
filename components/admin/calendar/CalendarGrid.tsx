@@ -437,6 +437,7 @@ export default function CalendarGrid({
         stopAutoScroll(); // Stop any active scrolling
       };
     }
+    return undefined;
   }, [isCreating, handleCreationPointerMove, stopAutoScroll]);
 
   const handleCreateBlackout = async (reason: string) => {
