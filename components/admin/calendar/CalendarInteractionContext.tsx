@@ -1,3 +1,20 @@
+/**
+ * IMPORT BOUNDARY ENFORCEMENT
+ *
+ * This context file must ONLY import from:
+ * ✅ React core (react)
+ * ✅ Type-only imports (import type) from lib/* for data shapes
+ * ✅ Local component types (./*)
+ * ✅ Date utilities (date-fns) if needed
+ *
+ * ❌ NEVER import from:
+ * ❌ lib/api/* or service layers (no API clients)
+ * ❌ supabase/* runtime code (types only via import type)
+ * ❌ Data fetching hooks or mutation utilities
+ *
+ * This ensures the context remains purely for UI coordination,
+ * not data management.
+ */
 import { createContext, useContext, ReactNode } from 'react';
 import type { Reservation, BlackoutDate } from '@/lib/supabase';
 import type { GhostState } from '@/lib/calendar/calendar-types';
@@ -31,6 +48,34 @@ import type { ResizeSide } from './BaseCalendarBlock';
  * - Single source of truth for interaction state
  * - Testable, focused responsibility
  * - Easier to add new interactions without changing signatures
+ *
+ * PERFORMANCE OPTIMIZATION (if needed):
+ *
+ * Current implementation uses a single memoized context value with
+ * stable handlers (useCallback). This should be sufficient for most cases.
+ *
+ * If React DevTools Profiler shows excessive re-renders of rows when
+ * state updates (e.g., isDragging changes), consider splitting into:
+ *
+ * 1. CalendarInteractionStateContext
+ *    - Ephemeral state: isDragging, isCreating, dragPreview, etc.
+ *    - Consumed by components that need to react to state changes
+ *
+ * 2. CalendarInteractionActionsContext
+ *    - Event handlers: onCellPointerDown, onDragStart, etc.
+ *    - Consumed by components that only trigger actions
+ *    - Never changes (handlers are stable)
+ *
+ * This prevents components that only use actions from re-rendering when
+ * state changes. However, DO NOT implement this preemptively - only if
+ * profiling shows a real performance issue.
+ *
+ * To profile:
+ * 1. Open React DevTools Profiler
+ * 2. Start recording
+ * 3. Perform drag/selection interactions
+ * 4. Look for CalendarRow re-renders when only state changed
+ * 5. If <10% of rows re-render unnecessarily, current approach is fine
  */
 
 export interface CalendarInteractionContextValue {
