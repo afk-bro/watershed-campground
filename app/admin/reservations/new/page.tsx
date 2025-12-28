@@ -284,16 +284,65 @@ function ReservationForm() {
                      <div className="space-y-4 border-t border-[var(--color-border-default)] pt-6">
                         <h3 className="font-bold text-[var(--color-text-primary)]">Guest Details</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <input type="text" placeholder="First Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
-                             <input type="text" placeholder="Last Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
+                            <FormField
+                                label="First Name"
+                                name="firstName"
+                                type="text"
+                                required
+                                value={formData.firstName}
+                                onChange={(value) => setFormData({...formData, firstName: value as string})}
+                            />
+                            <FormField
+                                label="Last Name"
+                                name="lastName"
+                                type="text"
+                                required
+                                value={formData.lastName}
+                                onChange={(value) => setFormData({...formData, lastName: value as string})}
+                            />
                         </div>
-                        <input type="email" placeholder="Email" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                        <input type="tel" placeholder="Phone" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                        <input type="text" placeholder="Address" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.address1} onChange={e => setFormData({...formData, address1: e.target.value})} />
+                        <FormField
+                            label="Email"
+                            name="email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(value) => setFormData({...formData, email: value as string})}
+                        />
+                        <FormField
+                            label="Phone"
+                            name="phone"
+                            type="tel"
+                            required
+                            value={formData.phone}
+                            onChange={(value) => setFormData({...formData, phone: value as string})}
+                        />
+                        <FormField
+                            label="Address"
+                            name="address1"
+                            type="text"
+                            required
+                            value={formData.address1}
+                            onChange={(value) => setFormData({...formData, address1: value as string})}
+                        />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <input type="text" placeholder="City" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
-                             <input type="text" placeholder="Postal Code" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} />
+                            <FormField
+                                label="City"
+                                name="city"
+                                type="text"
+                                required
+                                value={formData.city}
+                                onChange={(value) => setFormData({...formData, city: value as string})}
+                            />
+                            <FormField
+                                label="Postal Code"
+                                name="postalCode"
+                                type="text"
+                                required
+                                value={formData.postalCode}
+                                onChange={(value) => setFormData({...formData, postalCode: value as string})}
+                            />
                         </div>
                      </div>
 
