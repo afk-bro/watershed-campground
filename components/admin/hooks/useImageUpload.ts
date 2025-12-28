@@ -134,7 +134,7 @@ export function useImageUpload(options: UseImageUploadOptions = {}): UseImageUpl
 
       // Validate file size
       if (!validateFileSize(file)) {
-        const maxSizeMB = (maxSizeBytes / (1024 * 1024)).toFixed(0);
+        const maxSizeMB = Math.ceil(maxSizeBytes / (1024 * 1024));
         setError(`Image must be less than ${maxSizeMB}MB`);
         setImageFile(null);
         setImagePreview(null);

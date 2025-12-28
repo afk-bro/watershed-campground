@@ -21,8 +21,8 @@ interface CampsiteFormProps {
     initialData?: Partial<CampsiteFormData>;
     onSubmit: (data: CampsiteFormData) => Promise<void>;
     onCancel: () => void;
-    submitLabel?: string;
-    loading?: boolean;
+    submitLabel: string;
+    loading: boolean;
     secondaryAction?: React.ReactNode;
 }
 
@@ -30,8 +30,8 @@ export default function CampsiteForm({
     initialData,
     onSubmit,
     onCancel,
-    submitLabel = 'Save',
-    loading = false,
+    submitLabel,
+    loading,
     secondaryAction,
 }: CampsiteFormProps) {
     const [error, setError] = useState<string | null>(null);
@@ -40,7 +40,7 @@ export default function CampsiteForm({
         code: initialData?.code || '',
         type: initialData?.type || 'rv',
         maxGuests: initialData?.maxGuests || 4,
-        baseRate: initialData?.baseRate || 0,
+        baseRate: initialData?.baseRate ?? 45,
         isActive: initialData?.isActive ?? true,
         notes: initialData?.notes || '',
         sortOrder: initialData?.sortOrder || 0,

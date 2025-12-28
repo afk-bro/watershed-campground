@@ -118,6 +118,8 @@ export function FormField({
   // Handle input change events
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     if (type === 'number') {
+      // Note: Empty string is converted to 0 for simplicity. For optional numeric fields
+      // where null/undefined is needed, use a controlled text input with custom validation.
       onChange(e.target.value === '' ? 0 : Number(e.target.value));
     } else {
       onChange(e.target.value);

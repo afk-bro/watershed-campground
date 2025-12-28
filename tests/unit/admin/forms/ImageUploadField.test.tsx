@@ -222,7 +222,7 @@ describe('ImageUploadField', () => {
       });
 
       const onImageUrlChange = vi.fn();
-      const { rerender } = render(
+      render(
         <ImageUploadField onImageUrlChange={onImageUrlChange} />
       );
 
