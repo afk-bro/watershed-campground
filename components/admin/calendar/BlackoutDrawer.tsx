@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { X, Trash2, Calendar, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { BlackoutDate, Campsite } from "@/lib/supabase";
+import { FormField } from "@/components/admin/shared/forms/FormField";
 
 interface BlackoutDrawerProps {
   blackout: BlackoutDate | null;
@@ -108,18 +109,17 @@ export default function BlackoutDrawer({
             </div>
 
             {/* Reason Input */}
-            <div>
-                <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">
-                    Reason
-                </label>
-                <input
-                    type="text"
-                    value={reason}
-                    onChange={(e) => setReason(e.target.value)}
-                    className="w-full rounded-lg border border-[var(--color-border-default)] bg-[var(--color-surface-primary)] px-4 py-3.5 md:py-3 text-base focus:ring-2 focus:ring-[var(--color-accent-gold)] focus:outline-none"
-                    placeholder="Maintenance, Private Event, etc."
-                />
-            </div>
+            <FormField
+                label="Reason"
+                name="reason"
+                type="textarea"
+                value={reason}
+                onChange={(value) => setReason(value as string)}
+                placeholder="Maintenance, Private Event, etc."
+                rows={3}
+                maxLength={200}
+                hint="Brief explanation for the blackout period (optional)"
+            />
 
             {/* Actions */}
             <div className="pt-6 border-t border-[var(--color-border-subtle)] space-y-3">
