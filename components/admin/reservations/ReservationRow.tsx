@@ -167,4 +167,6 @@ const ReservationRow = memo(function ReservationRow({
     );
 });
 
+ReservationRow.displayName = 'ReservationRow';
+
 export default ReservationRow;

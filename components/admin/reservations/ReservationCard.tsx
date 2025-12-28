@@ -217,4 +217,6 @@ const ReservationCard = memo(function ReservationCard({
     );
 });
 
+ReservationCard.displayName = 'ReservationCard';
+
 export default ReservationCard;

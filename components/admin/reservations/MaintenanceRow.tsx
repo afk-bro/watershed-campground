@@ -110,4 +110,6 @@ const MaintenanceRow = memo(function MaintenanceRow({
     );
 });
 
+MaintenanceRow.displayName = 'MaintenanceRow';
+
 export default MaintenanceRow;

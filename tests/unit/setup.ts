@@ -4,7 +4,7 @@
  * Configures test environment and provides utilities for testing hooks
  */
 
-import { expect, afterEach } from 'vitest';
+import { afterEach } from 'vitest';
 import { cleanup } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 
