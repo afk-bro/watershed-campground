@@ -76,11 +76,16 @@ export function ImageUploadField({
           onImageUrlChange(url);
         })
         .catch((err) => {
+          // Note: Error is logged and already set by the hook for user display.
+          // For production error tracking (e.g., Sentry), add service call here or
+          // consider adding an optional onError callback prop for flexible handling.
           console.error('Image upload failed:', err);
-          // Error is already set by the hook
         });
     }
-  }, [imageFile, uploadingImage, uploadImage, onImageUrlChange]);
+    // Note: uploadImage is intentionally excluded from dependencies to avoid infinite loop.
+    // The function is stable from useCallback and the critical dependencies (imageFile, uploadingImage) are tracked.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [imageFile, uploadingImage, onImageUrlChange]);
 
   // Handle remove button click
   const handleRemove = () => {
@@ -138,7 +143,7 @@ export function ImageUploadField({
                 Click to upload or drag and drop
               </p>
               <p className="text-xs text-[var(--color-text-muted)]">
-                PNG, JPG, WebP (max {(maxSizeBytes / (1024 * 1024)).toFixed(0)}MB)
+                PNG, JPG, WebP (max {Math.ceil(maxSizeBytes / (1024 * 1024))}MB)
               </p>
             </div>
             <input

@@ -259,9 +259,123 @@ describe('useImageUpload', () => {
       }).rejects.toThrow('No image selected for upload');
     });
 
-    // Note: Advanced async timing tests (upload failure state, uploading progress tracking)
-    // are omitted as they're difficult to test reliably in a unit test environment.
-    // These scenarios are better covered by integration/E2E tests.
+    it('handles upload failure and sets error state', async () => {
+      const errorMessage = 'Upload failed: Server error';
+      mockFetch.mockResolvedValueOnce({
+        ok: false,
+        json: async () => ({ error: errorMessage }),
+      });
+
+      const { result } = renderHook(() => useImageUpload());
+
+      // First, select an image
+      const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
+      const event = {
+        target: { files: [imageFile] },
+      } as any;
+
+      await act(async () => {
+        await result.current.handleImageChange(event);
+      });
+
+      await waitFor(() => {
+        expect(result.current.imageFile).toBe(imageFile);
+      });
+
+      // Attempt upload (should fail)
+      await expect(async () => {
+        await act(async () => {
+          await result.current.uploadImage();
+        });
+      }).rejects.toThrow(errorMessage);
+
+      // Verify error state is set
+      expect(result.current.error).toBe(errorMessage);
+      expect(result.current.uploadingImage).toBe(false);
+      expect(result.current.imageFile).toBe(imageFile); // File should remain
+    });
+
+    it('tracks uploading progress state during upload', async () => {
+      const mockUrl = 'https://example.com/uploaded-image.jpg';
+      
+      // Create a promise that we control
+      let resolveUpload!: (value: { ok: boolean; json: () => Promise<{ url: string }> }) => void;
+      const uploadPromise = new Promise((resolve) => {
+        resolveUpload = resolve;
+      });
+
+      mockFetch.mockReturnValueOnce(uploadPromise);
+
+      const { result } = renderHook(() => useImageUpload());
+
+      // First, select an image
+      const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
+      const event = {
+        target: { files: [imageFile] },
+      } as any;
+
+      await act(async () => {
+        await result.current.handleImageChange(event);
+      });
+
+      await waitFor(() => {
+        expect(result.current.imageFile).toBe(imageFile);
+      });
+
+      // Start upload (don't await yet)
+      const uploadPromiseResult = act(async () => {
+        return result.current.uploadImage();
+      });
+
+      // Check that uploading state is true
+      await waitFor(() => {
+        expect(result.current.uploadingImage).toBe(true);
+      });
+
+      // Now resolve the upload
+      await act(async () => {
+        resolveUpload({
+          ok: true,
+          json: async () => ({ url: mockUrl }),
+        });
+        await uploadPromiseResult;
+      });
+
+      // Verify uploading state is back to false
+      expect(result.current.uploadingImage).toBe(false);
+      expect(result.current.imagePreview).toBe(mockUrl);
+    });
+
+    it('handles network errors during upload', async () => {
+      mockFetch.mockRejectedValueOnce(new Error('Network error'));
+
+      const { result } = renderHook(() => useImageUpload());
+
+      // First, select an image
+      const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
+      const event = {
+        target: { files: [imageFile] },
+      } as any;
+
+      await act(async () => {
+        await result.current.handleImageChange(event);
+      });
+
+      await waitFor(() => {
+        expect(result.current.imageFile).toBe(imageFile);
+      });
+
+      // Attempt upload (should fail)
+      await expect(async () => {
+        await act(async () => {
+          await result.current.uploadImage();
+        });
+      }).rejects.toThrow('Network error');
+
+      // Verify error state is set
+      expect(result.current.error).toBe('Network error');
+      expect(result.current.uploadingImage).toBe(false);
+    });
   });
 
   describe('Error Handling', () => {
