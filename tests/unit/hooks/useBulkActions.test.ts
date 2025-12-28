@@ -31,9 +31,15 @@ vi.mock('@/components/ui/Toast', () => ({
   }),
 }));
 
-// Mock window.confirm
-const mockConfirm = vi.fn();
-global.confirm = mockConfirm;
+// Mock useConfirmDialog hook
+const mockShowConfirm = vi.fn();
+const mockConfirmDialogComponent = { type: 'div', props: {}, key: null };
+vi.mock('@/hooks/useConfirmDialog', () => ({
+  useConfirmDialog: () => ({
+    showConfirm: mockShowConfirm,
+    ConfirmDialogComponent: mockConfirmDialogComponent,
+  }),
+}));
 
 import { adminAPI } from '@/lib/admin/api-client';
 
@@ -42,7 +48,7 @@ describe('useBulkActions', () => {
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mockConfirm.mockReturnValue(true); // Default to confirming
+    mockShowConfirm.mockResolvedValue(true); // Default to confirming
   });
 
   describe('initialization', () => {
@@ -85,7 +91,7 @@ describe('useBulkActions', () => {
     });
 
     it('should show confirmation dialog before proceeding', async () => {
-      mockConfirm.mockReturnValue(false); // User cancels
+      mockShowConfirm.mockResolvedValue(false); // User cancels
 
       const { result } = renderHook(() => useBulkActions());
       const selectedIds = new Set(['res-1']);
@@ -94,7 +100,12 @@ describe('useBulkActions', () => {
         await result.current.handleBulkAction('cancel', selectedIds);
       });
 
-      expect(mockConfirm).toHaveBeenCalledWith('Process 1 reservations?');
+      expect(mockShowConfirm).toHaveBeenCalledWith({
+        title: 'Process Reservations',
+        message: 'Process 1 reservations?',
+        confirmLabel: 'Process',
+        variant: 'info'
+      });
       expect(adminAPI.bulkUpdateStatus).not.toHaveBeenCalled();
     });
 
@@ -157,7 +168,7 @@ describe('useBulkActions', () => {
     });
 
     it('should show confirmation dialog', async () => {
-      mockConfirm.mockReturnValue(false);
+      mockShowConfirm.mockResolvedValue(false);
 
       const { result } = renderHook(() => useBulkActions());
       const selectedIds = new Set(['res-1', 'res-2']);
@@ -166,7 +177,12 @@ describe('useBulkActions', () => {
         await result.current.handleBulkAssignRandom(selectedIds);
       });
 
-      expect(mockConfirm).toHaveBeenCalledWith('Auto-assign 2 reservations?');
+      expect(mockShowConfirm).toHaveBeenCalledWith({
+        title: 'Auto-Assign Campsites',
+        message: 'Auto-assign 2 reservations to available campsites?',
+        confirmLabel: 'Auto-Assign',
+        variant: 'info'
+      });
       expect(adminAPI.bulkAssignRandom).not.toHaveBeenCalled();
     });
   });
@@ -204,7 +220,7 @@ describe('useBulkActions', () => {
     });
 
     it('should show confirmation with action in message', async () => {
-      mockConfirm.mockReturnValue(false);
+      mockShowConfirm.mockResolvedValue(false);
 
       const { result } = renderHook(() => useBulkActions());
       const selectedIds = new Set(['res-1', 'res-2']);
@@ -213,7 +229,12 @@ describe('useBulkActions', () => {
         await result.current.handleBulkArchive('archive', selectedIds);
       });
 
-      expect(mockConfirm).toHaveBeenCalledWith('archive 2 items?');
+      expect(mockShowConfirm).toHaveBeenCalledWith({
+        title: 'Archive Items',
+        message: 'Archive 2 items?',
+        confirmLabel: 'Archive',
+        variant: 'warning'
+      });
       expect(adminAPI.bulkArchive).not.toHaveBeenCalled();
     });
   });
@@ -235,7 +256,7 @@ describe('useBulkActions', () => {
     });
 
     it('should show confirmation dialog', async () => {
-      mockConfirm.mockReturnValue(false);
+      mockShowConfirm.mockResolvedValue(false);
 
       const { result } = renderHook(() => useBulkActions());
 
@@ -243,7 +264,12 @@ describe('useBulkActions', () => {
         await result.current.handleArchive('res-1');
       });
 
-      expect(mockConfirm).toHaveBeenCalledWith('Archive this reservation?');
+      expect(mockShowConfirm).toHaveBeenCalledWith({
+        title: 'Archive Reservation',
+        message: 'Archive this reservation?',
+        confirmLabel: 'Archive',
+        variant: 'warning'
+      });
       expect(adminAPI.bulkArchive).not.toHaveBeenCalled();
     });
   });
@@ -265,7 +291,7 @@ describe('useBulkActions', () => {
     });
 
     it('should show confirmation dialog', async () => {
-      mockConfirm.mockReturnValue(false);
+      mockShowConfirm.mockResolvedValue(false);
 
       const { result } = renderHook(() => useBulkActions());
 
@@ -273,7 +299,12 @@ describe('useBulkActions', () => {
         await result.current.handleDeleteMaintenance('main-1');
       });
 
-      expect(mockConfirm).toHaveBeenCalledWith('Delete maintenance block?');
+      expect(mockShowConfirm).toHaveBeenCalledWith({
+        title: 'Delete Maintenance Block',
+        message: 'Are you sure you want to delete this maintenance block? This action cannot be undone.',
+        confirmLabel: 'Delete',
+        variant: 'danger'
+      });
       expect(adminAPI.deleteBlackoutDate).not.toHaveBeenCalled();
     });
   });

@@ -112,7 +112,7 @@ describe('useImageUpload', () => {
         await result.current.handleImageChange(event);
       });
 
-      expect(result.current.error).toBe('Image must be less than 0MB');
+      expect(result.current.error).toBe('Image must be less than 1MB');
       expect(result.current.imageFile).toBeNull();
       expect(result.current.imagePreview).toBeNull();
     });
