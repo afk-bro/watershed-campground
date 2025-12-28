@@ -158,6 +158,7 @@ export function FormField({
             onChange={handleChange}
             disabled={disabled}
             rows={rows}
+            maxLength={maxLength}
             placeholder={placeholder}
             className={baseInputClassName}
           />

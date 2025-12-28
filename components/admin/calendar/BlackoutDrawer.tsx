@@ -114,9 +114,10 @@ export default function BlackoutDrawer({
                 name="reason"
                 type="textarea"
                 value={reason}
-                onChange={(value) => setReason(String(value).slice(0, 200))}
+                onChange={(value) => setReason(value as string)}
                 placeholder="Maintenance, Private Event, etc."
                 rows={3}
+                maxLength={200}
                 hint="Brief explanation for the blackout period (optional)"
             />
 
