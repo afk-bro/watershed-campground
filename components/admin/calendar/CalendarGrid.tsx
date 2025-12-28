@@ -25,6 +25,8 @@ import { useReservationMutations } from "./hooks/useReservationMutations";
 import { useCalendarFilters } from "./hooks/useCalendarFilters";
 import { useCreationWorkflow } from "./hooks/useCreationWorkflow";
 import { useRescheduleWorkflow } from "./hooks/useRescheduleWorkflow";
+import { useTodayIndicator } from "./hooks/useTodayIndicator";
+import { useContentWidth } from "./hooks/useContentWidth";
 import SyncedScrollbar from "./SyncedScrollbar";
 import BlackoutDrawer from "./BlackoutDrawer";
 import NoCampsitesCTA from "./NoCampsitesCTA";
@@ -62,17 +64,6 @@ export default function CalendarGrid({
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
-  const [todayX, setTodayX] = useState<number | null>(null);
-  const headerTodayRef = useRef<HTMLDivElement>(null);
-
-  // Sync today position
-  useEffect(() => {
-    if (headerTodayRef.current) {
-      setTodayX(headerTodayRef.current.offsetLeft);
-    } else {
-      setTodayX(null);
-    }
-  }, [date, campsites.length]); // Re-calc when month or campsite list changes
 
   // Dev-only invariant checks (catches cache reconciliation bugs)
   useEffect(() => {
@@ -227,14 +218,10 @@ export default function CalendarGrid({
   // Synced Top Scrollbar
   const { slaveRef } = useSyncedScroll(scrollContainerRef);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [contentWidth, setContentWidth] = useState(0);
 
-  // Measure content width for synced scrollbar
-  useEffect(() => {
-    if (contentRef.current) {
-      setContentWidth(contentRef.current.scrollWidth);
-    }
-  }, [days.length, campsites.length, reservations.length]);
+  // Utility hooks
+  const { todayX, headerTodayRef } = useTodayIndicator(date, campsites.length);
+  const contentWidth = useContentWidth(contentRef, [days.length, campsites.length, reservations.length]);
 
 
   // Handle blackout move request from drag/resize hook
