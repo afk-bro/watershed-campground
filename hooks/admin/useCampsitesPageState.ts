@@ -130,7 +130,7 @@ export function useCampsitesPageState() {
       }
 
       setCampsites((prev) => prev.filter((c) => c.id !== id));
-      showToast("Campsite deleted permanently", "success");
+      showToast(`Campsite ${code} deleted permanently`, "success");
     } catch (err) {
       console.error("Error deleting campsite:", err);
       showToast(

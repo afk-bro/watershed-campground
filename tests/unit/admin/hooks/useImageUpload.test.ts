@@ -2,24 +2,27 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useImageUpload } from '@/components/admin/hooks/useImageUpload';
 
+// Type for mock change events
+type MockChangeEvent = { target: { files: File[] } };
+
 // Mock FileReader
 class MockFileReader {
   result: string | ArrayBuffer | null = null;
-  onloadend: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
-  onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => any) | null = null;
+  onloadend: ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null = null;
+  onerror: ((this: FileReader, ev: ProgressEvent<FileReader>) => void) | null = null;
 
   readAsDataURL(blob: Blob) {
     // Simulate async file reading
     setTimeout(() => {
       this.result = `data:image/png;base64,mockBase64Data`;
       if (this.onloadend) {
-        this.onloadend.call(this as any, {} as any);
+        this.onloadend.call(this as unknown as FileReader, {} as ProgressEvent<FileReader>);
       }
     }, 0);
   }
 }
 
-global.FileReader = MockFileReader as any;
+global.FileReader = MockFileReader as unknown as typeof FileReader;
 
 // Mock fetch
 const mockFetch = vi.fn();
@@ -64,7 +67,7 @@ describe('useImageUpload', () => {
       const textFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       const event = {
         target: { files: [textFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -81,7 +84,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -105,7 +108,7 @@ describe('useImageUpload', () => {
       const largeFile = new File([largeContent], 'large.png', { type: 'image/png' });
       const event = {
         target: { files: [largeFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -125,7 +128,7 @@ describe('useImageUpload', () => {
       const smallFile = new File(['small'], 'small.png', { type: 'image/png' });
       const event = {
         target: { files: [smallFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -145,7 +148,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.jpg', { type: 'image/jpeg' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -161,7 +164,7 @@ describe('useImageUpload', () => {
 
       const event = {
         target: { files: [] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -181,7 +184,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -217,7 +220,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -272,7 +275,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -312,7 +315,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -355,7 +358,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -385,7 +388,7 @@ describe('useImageUpload', () => {
       const textFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       const event = {
         target: { files: [textFile] },
-      } as any;
+      } as MockChangeEvent;
 
       await act(async () => {
         await result.current.handleImageChange(event);
