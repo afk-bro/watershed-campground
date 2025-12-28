@@ -32,9 +32,8 @@ export interface UseCreationWorkflowReturn {
   creationStart: { date: string; campsiteId: string } | null;
   creationEnd: { date: string; campsiteId: string } | null;
 
-  // Dialog State
+  // Dialog State (derived from selection)
   showCreationDialog: boolean;
-  setShowCreationDialog: (show: boolean) => void;
 
   // Handlers
   handleCellPointerDown: (e: React.PointerEvent, campsiteId: string, dateStr: string) => void;
@@ -69,7 +68,6 @@ export function useCreationWorkflow({
   createBlackout
 }: UseCreationWorkflowParams): UseCreationWorkflowReturn {
   const { showToast } = useToast();
-  const [showCreationDialog, setShowCreationDialog] = useState(false);
 
   // Validation: check if a cell is available for blackout creation
   const isValidSelectionCell = useCallback((campsiteId: string, dateStr: string) => {
@@ -105,12 +103,8 @@ export function useCreationWorkflow({
     handleCellPointerUpBase();
   }, [handleCellPointerUpBase]);
 
-  // Show creation dialog when selection is finalized
-  useEffect(() => {
-    if (!isCreating && selection && creationStart && creationEnd) {
-      setShowCreationDialog(true);
-    }
-  }, [isCreating, selection, creationStart, creationEnd]);
+  // Derive dialog state: show when selection is finalized (not creating and has selection)
+  const showCreationDialog = !isCreating && !!selection && !!creationStart && !!creationEnd;
 
   // Ref to track if we're currently creating (prevents stale closures)
   const isCreatingRef = useRef(isCreating);
@@ -166,9 +160,8 @@ export function useCreationWorkflow({
     creationStart,
     creationEnd,
 
-    // Dialog State
+    // Dialog State (derived)
     showCreationDialog,
-    setShowCreationDialog,
 
     // Handlers
     handleCellPointerDown,

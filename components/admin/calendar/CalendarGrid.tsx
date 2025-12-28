@@ -25,6 +25,7 @@ import { useStuckSavingFailsafe } from "./hooks/useStuckSavingFailsafe";
 import { useReservationMutations } from "./hooks/useReservationMutations";
 import { useCalendarFilters } from "./hooks/useCalendarFilters";
 import { useCreationWorkflow } from "./hooks/useCreationWorkflow";
+import { useRescheduleWorkflow } from "./hooks/useRescheduleWorkflow";
 import SyncedScrollbar from "./SyncedScrollbar";
 import BlackoutDrawer from "./BlackoutDrawer";
 import NoCampsitesCTA from "./NoCampsitesCTA";
@@ -61,7 +62,6 @@ export default function CalendarGrid({
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [showAvailability, setShowAvailability] = useState(false);
-  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   const [todayX, setTodayX] = useState<number | null>(null);
   const headerTodayRef = useRef<HTMLDivElement>(null);
 
@@ -118,15 +118,6 @@ export default function CalendarGrid({
     }
   }, [reservations, blackoutDates]);
 
-  const [pendingMove, setPendingMove] = useState<{
-    reservation: Reservation;
-    newCampsiteId: string;
-    newStartDate: string;
-    newEndDate: string;
-  } | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [confirmDialogError, setConfirmDialogError] = useState<string | null>(null);
-
   // Filter State & Logic
   const {
     searchQuery,
@@ -152,6 +143,18 @@ export default function CalendarGrid({
   } = useBlackoutManager({ onDataMutate });
 
   const { rescheduleReservation } = useReservationMutations({ onDataMutate });
+
+  // Reschedule Workflow (confirmation dialog and submission)
+  const {
+    pendingMove,
+    showConfirmDialog,
+    isSubmitting,
+    confirmDialogError,
+    handleMoveRequested,
+    handleConfirmReschedule,
+    handleCancelReschedule,
+    getDialogProps
+  } = useRescheduleWorkflow({ campsites, rescheduleReservation });
 
   // Stuck Saving Failsafe - auto-revalidate if items stuck saving for >10s
   const lastRevalidateRef = useRef(0);
@@ -246,22 +249,6 @@ export default function CalendarGrid({
   }, []);
 
 
-  // Handle move request from drag/resize hook
-  const handleMoveRequested = useCallback((
-    reservation: Reservation,
-    newCampsiteId: string,
-    newStartDate: string,
-    newEndDate: string
-  ) => {
-    setPendingMove({
-      reservation,
-      newCampsiteId,
-      newStartDate,
-      newEndDate,
-    });
-    setShowConfirmDialog(true);
-  }, []);
-
   // Handle blackout move request from drag/resize hook
   const handleBlackoutMoveRequested = useCallback(async (
     blackout: BlackoutDate,
@@ -310,7 +297,6 @@ export default function CalendarGrid({
     creationStart,
     creationEnd,
     showCreationDialog,
-    setShowCreationDialog,
     handleCellPointerDown,
     handleCellPointerEnter,
     handleCellPointerUp,
@@ -349,33 +335,6 @@ export default function CalendarGrid({
     onDateChange(new Date());
   };
 
-  const handleConfirmReschedule = async () => {
-    if (!pendingMove) return;
-
-    setIsSubmitting(true);
-    setConfirmDialogError(null);
-
-    try {
-      await rescheduleReservation({
-        reservation: pendingMove.reservation,
-        newCampsiteId: pendingMove.newCampsiteId,
-        newStartDate: pendingMove.newStartDate,
-        newEndDate: pendingMove.newEndDate,
-      });
-
-      // Close dialog on success
-      setShowConfirmDialog(false);
-      setPendingMove(null);
-      setConfirmDialogError(null);
-    } catch (error: unknown) {
-      // Show error in dialog, keep it open for retry
-      const adminError = handleAdminError(error, 'CalendarGrid.confirmReschedule');
-      setConfirmDialogError(adminError.userMessage);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <div className="flex flex-col admin-card relative select-none overflow-x-hidden">
       <InstructionalOverlay />
@@ -386,10 +345,7 @@ export default function CalendarGrid({
           {selection && showCreationDialog && (
             <CreationDialog
               isOpen={showCreationDialog}
-              onClose={() => {
-                setShowCreationDialog(false);
-                clearSelection();
-              }}
+              onClose={clearSelection}
               startDate={selection.start}
               endDate={selection.end}
               campsiteId={selection.campsiteId}
@@ -549,26 +505,9 @@ export default function CalendarGrid({
       <RescheduleConfirmDialog
         isOpen={showConfirmDialog}
         reservation={pendingMove?.reservation || null}
-        oldCampsiteName={
-          pendingMove?.reservation.campsite_id
-            ? campsites.find(c => c.id === pendingMove.reservation.campsite_id)?.name || 'Unassigned'
-            : 'Unassigned'
-        }
-        newCampsiteName={
-          pendingMove?.newCampsiteId === 'UNASSIGNED'
-            ? 'Unassigned'
-            : campsites.find(c => c.id === pendingMove?.newCampsiteId)?.name || 'Unassigned'
-        }
-        oldStartDate={pendingMove?.reservation.check_in || ''}
-        oldEndDate={pendingMove?.reservation.check_out || ''}
-        newStartDate={pendingMove?.newStartDate || ''}
-        newEndDate={pendingMove?.newEndDate || ''}
+        {...getDialogProps()}
         onConfirm={handleConfirmReschedule}
-        onCancel={() => {
-          setShowConfirmDialog(false);
-          setPendingMove(null);
-          setConfirmDialogError(null);
-        }}
+        onCancel={handleCancelReschedule}
         isSubmitting={isSubmitting}
         validationError={confirmDialogError}
       />
