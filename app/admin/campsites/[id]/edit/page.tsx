@@ -6,11 +6,13 @@ import Container from "@/components/Container";
 import CampsiteForm from "@/components/admin/CampsiteForm";
 import type { CampsiteFormData } from "@/components/admin/CampsiteForm";
 import type { Campsite } from "@/lib/supabase";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 export default function EditCampsitePage() {
     const router = useRouter();
     const params = useParams();
     const id = params?.id as string;
+    const { showConfirm, ConfirmDialogComponent } = useConfirmDialog();
 
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
@@ -67,9 +69,14 @@ export default function EditCampsitePage() {
     }
 
     async function handleDeactivate() {
-        if (!confirm('Are you sure you want to deactivate this campsite? It will no longer be available for new reservations.')) {
-            return;
-        }
+        const confirmed = await showConfirm({
+            title: "Deactivate Campsite",
+            message: "Are you sure you want to deactivate this campsite? It will no longer be available for new reservations.",
+            confirmLabel: "Deactivate",
+            variant: "warning"
+        });
+
+        if (!confirmed) return;
 
         try {
             const response = await fetch(`/api/admin/campsites/${id}`, {
@@ -156,6 +163,7 @@ export default function EditCampsitePage() {
                     />
                 </div>
             </Container>
+            {ConfirmDialogComponent}
         </div>
     );
 }

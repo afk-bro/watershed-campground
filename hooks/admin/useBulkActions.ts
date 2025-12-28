@@ -1,12 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import type React from "react";
 import { useToast } from "@/components/ui/Toast";
 import { adminAPI } from "@/lib/admin/api-client";
 import {
   ERROR_MESSAGES,
   SUCCESS_MESSAGES,
 } from "@/lib/admin/constants";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 
 interface UseBulkActionsOptions {
   onSuccess?: () => void | Promise<void>;
@@ -25,6 +27,7 @@ interface UseBulkActionsReturn {
   ) => Promise<void>;
   handleArchive: (reservationId: string) => Promise<void>;
   handleDeleteMaintenance: (maintenanceId: string) => Promise<void>;
+  ConfirmDialogComponent: React.ReactElement;
 }
 
 /**
@@ -50,13 +53,21 @@ export function useBulkActions({
 }: UseBulkActionsOptions = {}): UseBulkActionsReturn {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { showToast } = useToast();
+  const { showConfirm, ConfirmDialogComponent } = useConfirmDialog();
 
   const handleBulkAction = async (
     action: "check_in" | "check_out" | "cancel",
     selectedIds: Set<string>
   ) => {
     if (isSubmitting) return;
-    if (!confirm(`Process ${selectedIds.size} reservations?`)) return;
+
+    const confirmed = await showConfirm({
+      title: "Process Reservations",
+      message: `Process ${selectedIds.size} reservations?`,
+      confirmLabel: "Process",
+      variant: "info"
+    });
+    if (!confirmed) return;
 
     setIsSubmitting(true);
     try {
@@ -73,7 +84,14 @@ export function useBulkActions({
 
   const handleBulkAssignRandom = async (selectedIds: Set<string>) => {
     if (isSubmitting) return;
-    if (!confirm(`Auto-assign ${selectedIds.size} reservations?`)) return;
+
+    const confirmed = await showConfirm({
+      title: "Auto-Assign Campsites",
+      message: `Auto-assign ${selectedIds.size} reservations to available campsites?`,
+      confirmLabel: "Auto-Assign",
+      variant: "info"
+    });
+    if (!confirmed) return;
 
     setIsSubmitting(true);
     try {
@@ -97,7 +115,14 @@ export function useBulkActions({
     selectedIds: Set<string>
   ) => {
     if (isSubmitting) return;
-    if (!confirm(`${action} ${selectedIds.size} items?`)) return;
+
+    const confirmed = await showConfirm({
+      title: action === "archive" ? "Archive Items" : "Restore Items",
+      message: `${action === "archive" ? "Archive" : "Restore"} ${selectedIds.size} items?`,
+      confirmLabel: action === "archive" ? "Archive" : "Restore",
+      variant: action === "archive" ? "warning" : "info"
+    });
+    if (!confirmed) return;
 
     setIsSubmitting(true);
     try {
@@ -114,7 +139,14 @@ export function useBulkActions({
 
   const handleArchive = async (reservationId: string) => {
     if (isSubmitting) return;
-    if (!confirm("Archive this reservation?")) return;
+
+    const confirmed = await showConfirm({
+      title: "Archive Reservation",
+      message: "Archive this reservation?",
+      confirmLabel: "Archive",
+      variant: "warning"
+    });
+    if (!confirmed) return;
 
     setIsSubmitting(true);
     try {
@@ -131,7 +163,14 @@ export function useBulkActions({
 
   const handleDeleteMaintenance = async (maintenanceId: string) => {
     if (isSubmitting) return;
-    if (!confirm("Delete maintenance block?")) return;
+
+    const confirmed = await showConfirm({
+      title: "Delete Maintenance Block",
+      message: "Are you sure you want to delete this maintenance block? This action cannot be undone.",
+      confirmLabel: "Delete",
+      variant: "danger"
+    });
+    if (!confirmed) return;
 
     setIsSubmitting(true);
     try {
@@ -153,5 +192,6 @@ export function useBulkActions({
     handleBulkArchive,
     handleArchive,
     handleDeleteMaintenance,
+    ConfirmDialogComponent,
   };
 }
