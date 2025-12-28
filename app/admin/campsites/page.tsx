@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import Link from "next/link";
 import { Edit2, Power, PowerOff, Trash2, Camera, X, Plus, Info, CheckSquare, Square } from "lucide-react";
 import type { Campsite, CampsiteType } from "@/lib/supabase";
@@ -223,21 +223,28 @@ export default function CampsitesPage() {
         }
     }
 
-    const filteredCampsites = filter === 'all'
-        ? campsites
-        : filter === 'active'
-            ? campsites.filter(c => c.is_active)
-            : filter === 'inactive'
-                ? campsites.filter(c => !c.is_active)
-                : campsites.filter(c => c.type === filter);
+    const filteredCampsites = useMemo(() => {
+        return filter === 'all'
+            ? campsites
+            : filter === 'active'
+                ? campsites.filter(c => c.is_active)
+                : filter === 'inactive'
+                    ? campsites.filter(c => !c.is_active)
+                    : campsites.filter(c => c.type === filter);
+    }, [campsites, filter]);
 
-    const typeCounts = campsites.reduce((acc, c) => {
-        acc[c.type] = (acc[c.type] || 0) + 1;
-        return acc;
-    }, {} as Record<CampsiteType, number>);
+    const { typeCounts, activeCampsites, inactiveCampsites } = useMemo(() => {
+        const counts = campsites.reduce((acc, c) => {
+            acc[c.type] = (acc[c.type] || 0) + 1;
+            return acc;
+        }, {} as Record<CampsiteType, number>);
 
-    const activeCampsites = campsites.filter(c => c.is_active).length;
-    const inactiveCampsites = campsites.filter(c => !c.is_active).length;
+        return {
+            typeCounts: counts,
+            activeCampsites: campsites.filter(c => c.is_active).length,
+            inactiveCampsites: campsites.filter(c => !c.is_active).length
+        };
+    }, [campsites]);
 
     if (loading) {
         return (
