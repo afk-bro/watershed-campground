@@ -17,6 +17,9 @@ export interface CampsiteFormData {
     imageUrl: string;
 }
 
+// Default values for new campsites
+const DEFAULT_BASE_RATE = 45;
+
 interface CampsiteFormProps {
     initialData?: Partial<CampsiteFormData>;
     onSubmit: (data: CampsiteFormData) => Promise<void>;
@@ -40,7 +43,7 @@ export default function CampsiteForm({
         code: initialData?.code || '',
         type: initialData?.type || 'rv',
         maxGuests: initialData?.maxGuests || 4,
-        baseRate: initialData?.baseRate ?? 45,
+        baseRate: initialData?.baseRate ?? DEFAULT_BASE_RATE,
         isActive: initialData?.isActive ?? true,
         notes: initialData?.notes || '',
         sortOrder: initialData?.sortOrder || 0,
