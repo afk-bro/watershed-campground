@@ -7,6 +7,7 @@ import Container from "@/components/Container";
 import Link from "next/link";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import { toLocalMidnight, getLocalToday } from "@/lib/date";
+import { FormField } from "@/components/admin/shared/forms/FormField";
 
 type Addon = {
     id: string;
@@ -226,37 +227,57 @@ function ReservationForm() {
                  <form onSubmit={handleSubmit} className="max-w-2xl admin-card p-6 md:p-8 space-y-6">
                     {/* Dates & Site */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Check In</label>
-                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} />
-                        </div>
-                        <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Check Out</label>
-                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} />
-                        </div>
+                        <FormField
+                            label="Check In"
+                            name="checkIn"
+                            type="date"
+                            required
+                            value={formData.checkIn}
+                            onChange={(value) => setFormData({...formData, checkIn: value as string})}
+                        />
+                        <FormField
+                            label="Check Out"
+                            name="checkOut"
+                            type="date"
+                            required
+                            value={formData.checkOut}
+                            onChange={(value) => setFormData({...formData, checkOut: value as string})}
+                        />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Campsite</label>
-                        <select required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.campsiteId} onChange={e => setFormData({...formData, campsiteId: e.target.value})}>
-                            <option value="">Select a Site...</option>
-                            {campsites.map(c => (
-                                <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-2">Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first.</p>
-                    </div>
+                    <FormField
+                        label="Campsite"
+                        name="campsiteId"
+                        type="select"
+                        required
+                        value={formData.campsiteId}
+                        onChange={(value) => setFormData({...formData, campsiteId: value as string})}
+                        options={[
+                            { value: '', label: 'Select a Site...' },
+                            ...campsites.map(c => ({ value: c.id, label: `${c.name} (${c.type})` }))
+                        ]}
+                        hint="Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first."
+                    />
 
                     {/* Guests */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Adults</label>
-                            <input type="number" min="1" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.adults} onChange={e => setFormData({...formData, adults: parseInt(e.target.value)})} />
-                        </div>
-                        <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Children</label>
-                             <input type="number" min="0" className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.children} onChange={e => setFormData({...formData, children: parseInt(e.target.value)})} />
-                        </div>
+                        <FormField
+                            label="Adults"
+                            name="adults"
+                            type="number"
+                            required
+                            min={1}
+                            value={formData.adults}
+                            onChange={(value) => setFormData({...formData, adults: Number(value)})}
+                        />
+                        <FormField
+                            label="Children"
+                            name="children"
+                            type="number"
+                            min={0}
+                            value={formData.children}
+                            onChange={(value) => setFormData({...formData, children: Number(value)})}
+                        />
                     </div>
 
                     {/* Contact */}

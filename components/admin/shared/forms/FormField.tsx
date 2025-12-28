@@ -19,7 +19,7 @@ export interface FormFieldProps {
   /** Field name attribute */
   name: string;
   /** Input type (default: text) */
-  type?: 'text' | 'number' | 'select' | 'textarea';
+  type?: 'text' | 'number' | 'select' | 'textarea' | 'date' | 'email' | 'tel';
   /** Whether field is required */
   required?: boolean;
   /** Current field value */
@@ -188,11 +188,28 @@ export function FormField({
           </div>
         );
 
+      case 'date':
+        return (
+          <input
+            type="date"
+            id={name}
+            name={name}
+            required={required}
+            value={value}
+            onChange={handleChange}
+            disabled={disabled}
+            placeholder={placeholder}
+            className={baseInputClassName}
+          />
+        );
+
+      case 'email':
+      case 'tel':
       case 'text':
       default:
         return (
           <input
-            type="text"
+            type={type === 'email' ? 'email' : type === 'tel' ? 'tel' : 'text'}
             id={name}
             name={name}
             required={required}
