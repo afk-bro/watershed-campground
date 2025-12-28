@@ -7,6 +7,7 @@ import type { Campsite, CampsiteType } from "@/lib/supabase";
 import Container from "@/components/Container";
 import { useToast } from "@/components/ui/Toast";
 import ConfirmDialog from "@/components/admin/ConfirmDialog";
+import CampsitesToolbar from "@/components/admin/campsites/CampsitesToolbar";
 
 export default function CampsitesPage() {
     const [campsites, setCampsites] = useState<Campsite[]>([]);
@@ -286,57 +287,14 @@ export default function CampsitesPage() {
                     </Link>
                 </div>
 
-                {/* Filter Buttons */}
-                <div className="mb-6 flex flex-wrap gap-2 items-center">
-                    <button
-                        onClick={() => setFilter('all')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
-                            filter === 'all'
-                                ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
-                        }`}
-                    >
-                        All ({campsites.length})
-                    </button>
-                    <button
-                        onClick={() => setFilter('active')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
-                            filter === 'active'
-                                ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
-                        }`}
-                    >
-                        Active ({activeCampsites})
-                    </button>
-                    <button
-                        onClick={() => setFilter('inactive')}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface ${
-                            filter === 'inactive'
-                                ? 'bg-brand-forest text-accent-beige'
-                                : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
-                        }`}
-                    >
-                        Inactive ({inactiveCampsites})
-                    </button>
-                    <div className="h-6 w-px bg-[var(--color-border-strong)] mx-2"></div>
-                    {(['rv', 'tent', 'cabin'] as CampsiteType[]).map(type => (
-                        <button
-                            key={type}
-                            onClick={() => setFilter(type)}
-                            className={`px-4 py-2 rounded-lg text-sm font-medium transition-surface capitalize ${
-                                filter === type
-                                    ? 'bg-brand-forest text-accent-beige'
-                                    : 'bg-[var(--color-surface-card)] text-[var(--color-text-primary)] hover:bg-[var(--color-surface-elevated)]'
-                            }`}
-                        >
-                            {type} ({typeCounts[type] || 0})
-                        </button>
-                    ))}
-                    <div className="h-6 w-px bg-[var(--color-border-strong)] mx-2"></div>
-                    <label className="flex items-center gap-2 text-sm text-[var(--color-text-primary)] opacity-60">
-                        <span className="font-medium">Admin View:</span> All status visible
-                    </label>
-                </div>
+                <CampsitesToolbar
+                    filter={filter}
+                    onFilterChange={setFilter}
+                    totalCount={campsites.length}
+                    activeCampsites={activeCampsites}
+                    inactiveCampsites={inactiveCampsites}
+                    typeCounts={typeCounts}
+                />
 
                 {/* Bulk Actions Bar */}
                 {campsites.length > 10 && selectedIds.size > 0 && (
