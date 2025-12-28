@@ -34,6 +34,7 @@ import CalendarMonthHeader from "./CalendarMonthHeader";
 import CalendarDaysHeader from "./CalendarDaysHeader";
 import CalendarRow from "./CalendarRow";
 import FloatingCalendarRail from "./FloatingCalendarRail";
+import { CalendarInteractionProvider } from "./CalendarInteractionContext";
 import { UI_CONSTANTS } from "@/lib/admin/constants";
 
 
@@ -388,76 +389,61 @@ export default function CalendarGrid({
           )}
 
           {/* Rows Group */}
-      <div className="flex flex-col select-none">
-        {/* Unassigned Row */}
-        <CalendarRow
-          rowType="unassigned"
-          reservations={unassignedReservations}
-          blackoutDates={campsiteBlackoutMap['GLOBAL'] || []}
-          days={days}
-          monthStart={monthStart}
-          monthEnd={monthEnd}
-          totalDays={totalDays}
-          isCreating={isCreating}
-          selectionCampsiteId={selection?.campsiteId}
-          selectionStart={selection?.start}
-          selectionEnd={selection?.end}
-          isDragging={isDragging}
-          dragPreview={dragPreview}
-          draggedItemId={draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null}
-          resizeStateItemId={resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null}
-          showAvailability={showAvailability}
-          validationError={validationError}
-          onCellPointerDown={handleCellPointerDown}
-          onCellPointerEnter={handleCellPointerEnter}
-          onReservationClick={handleReservationClick}
-          onBlackoutClick={handleBlackoutClick}
-          onDragStart={handleDragPointerDown}
-          onResizeStart={handleResizeStart}
-          getGhost={getGhost}
-        />
+      <CalendarInteractionProvider
+        value={{
+          // Calendar config
+          days,
+          monthStart,
+          monthEnd,
+          totalDays,
+          // Creation state
+          isCreating,
+          selectionCampsiteId: selection?.campsiteId,
+          selectionStart: selection?.start,
+          selectionEnd: selection?.end,
+          // Drag & drop state
+          isDragging,
+          dragPreview,
+          draggedItemId: draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null,
+          resizeStateItemId: resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null,
+          // UI state
+          showAvailability,
+          validationError,
+          // Handlers
+          onCellPointerDown: handleCellPointerDown,
+          onCellPointerEnter: handleCellPointerEnter,
+          onReservationClick: handleReservationClick,
+          onBlackoutClick: handleBlackoutClick,
+          onDragStart: handleDragPointerDown,
+          onResizeStart: handleResizeStart,
+          getGhost,
+        }}
+      >
+        <div className="flex flex-col select-none">
+          {/* Unassigned Row */}
+          <CalendarRow
+            rowType="unassigned"
+            reservations={unassignedReservations}
+            blackoutDates={campsiteBlackoutMap['GLOBAL'] || []}
+          />
 
-        {/* Campsite Rows */}
-        {filteredCampsites.map((campsite) => {
-          // Pre-filtering in the loop is slightly inefficient but memoization is handled by the component.
-          // However, .filter() returns a new array every time.
-          // To fix this, we'd ideally pre-calculate a Map.
-          const campsiteReservations = campsiteReservationsMap[campsite.id] || [];
-          const campsiteBlackouts = campsiteBlackoutMap[campsite.id] || campsiteBlackoutMap['GLOBAL'] || [];
-          // Actually, let's just use the combined one from the map if we want perfect stability.
+          {/* Campsite Rows */}
+          {filteredCampsites.map((campsite) => {
+            const campsiteReservations = campsiteReservationsMap[campsite.id] || [];
+            const campsiteBlackouts = campsiteBlackoutMap[campsite.id] || campsiteBlackoutMap['GLOBAL'] || [];
 
-          return (
-            <CalendarRow
-              key={campsite.id}
-              rowType="campsite"
-              campsite={campsite}
-              reservations={campsiteReservations}
-              blackoutDates={campsiteBlackouts}
-              days={days}
-              monthStart={monthStart}
-              monthEnd={monthEnd}
-              totalDays={totalDays}
-              isCreating={isCreating}
-              selectionCampsiteId={selection?.campsiteId}
-              selectionStart={selection?.start}
-              selectionEnd={selection?.end}
-              isDragging={isDragging}
-              dragPreview={dragPreview}
-              draggedItemId={draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null}
-              resizeStateItemId={resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null}
-              showAvailability={showAvailability}
-              validationError={validationError}
-              onCellPointerDown={handleCellPointerDown}
-              onCellPointerEnter={handleCellPointerEnter}
-              onReservationClick={handleReservationClick}
-              onBlackoutClick={handleBlackoutClick}
-              onDragStart={handleDragPointerDown}
-              onResizeStart={handleResizeStart}
-              getGhost={getGhost}
-            />
-          );
-        })}
-      </div>
+            return (
+              <CalendarRow
+                key={campsite.id}
+                rowType="campsite"
+                campsite={campsite}
+                reservations={campsiteReservations}
+                blackoutDates={campsiteBlackouts}
+              />
+            );
+          })}
+        </div>
+      </CalendarInteractionProvider>
         </div>
       </div>
     </div>

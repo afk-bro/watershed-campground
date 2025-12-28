@@ -7,41 +7,14 @@ import CalendarCell from "./CalendarCell";
 import ReservationBlock from "./ReservationBlock";
 import BlackoutBlock from "./BlackoutBlock";
 import GhostPreview from "./GhostPreview";
-import { GhostState } from "@/lib/calendar/calendar-types";
-import { ResizeSide } from "./BaseCalendarBlock";
+import { useCalendarInteraction } from "./CalendarInteractionContext";
 
 interface CalendarRowProps {
-  // Data
+  // Row-specific data only (21 props eliminated via context)
   rowType: "unassigned" | "campsite";
   campsite?: Campsite; // Required if rowType is 'campsite'
   reservations: Reservation[]; // Already filtered for this row
   blackoutDates: BlackoutDate[]; // Already filtered for this row
-  days: Date[];
-  monthStart: Date;
-  monthEnd: Date;
-  totalDays: number;
-
-  // Interaction State
-  isCreating: boolean;
-  selectionCampsiteId?: string | null;
-  selectionStart?: string | null;
-  selectionEnd?: string | null;
-  
-  isDragging: boolean;
-  dragPreview: { campsiteId: string; startDate: string } | null;
-  draggedItemId?: string | null;
-  resizeStateItemId?: string | null;
-  showAvailability: boolean;
-  validationError: string | null;
-
-  // Handlers
-  onCellPointerDown: (e: React.PointerEvent, resourceId: string, dateStr: string) => void;
-  onCellPointerEnter: (resourceId: string, dateStr: string) => void;
-  onReservationClick: (res: Reservation) => void;
-  onBlackoutClick: (blackout: BlackoutDate) => void;
-  onDragStart: (e: React.PointerEvent, item: any) => void;
-  onResizeStart: (item: any, side: ResizeSide) => void;
-  getGhost: (resourceId: string) => GhostState | null;
 }
 
 function CalendarRow({
@@ -49,28 +22,31 @@ function CalendarRow({
   campsite,
   reservations,
   blackoutDates,
-  days,
-  monthStart,
-  monthEnd,
-  totalDays,
-  isCreating,
-  selectionCampsiteId,
-  selectionStart,
-  selectionEnd,
-  isDragging,
-  dragPreview,
-  draggedItemId,
-  resizeStateItemId,
-  showAvailability,
-  validationError,
-  onCellPointerDown,
-  onCellPointerEnter,
-  onReservationClick,
-  onBlackoutClick,
-  onDragStart,
-  onResizeStart,
-  getGhost,
 }: CalendarRowProps) {
+  // Get all shared state and handlers from context
+  const {
+    days,
+    monthStart,
+    monthEnd,
+    totalDays,
+    isCreating,
+    selectionCampsiteId,
+    selectionStart,
+    selectionEnd,
+    isDragging,
+    dragPreview,
+    draggedItemId,
+    resizeStateItemId,
+    showAvailability,
+    validationError,
+    onCellPointerDown,
+    onCellPointerEnter,
+    onReservationClick,
+    onBlackoutClick,
+    onDragStart,
+    onResizeStart,
+    getGhost,
+  } = useCalendarInteraction();
   const resourceId = rowType === "unassigned" ? "UNASSIGNED" : (campsite?.id || "UNKNOWN");
   const isInactive = rowType === "campsite" && !campsite?.is_active;
 
