@@ -32,6 +32,19 @@ const eslintConfig = defineConfig([
       "@typescript-eslint/no-unused-vars": "off",
     }
   },
+  // Prevent native confirm() in admin - use ConfirmDialog instead
+  {
+    files: ["app/admin/**/*.{ts,tsx}", "hooks/admin/**/*.{ts,tsx}"],
+    rules: {
+      "no-restricted-globals": [
+        "error",
+        {
+          name: "confirm",
+          message: "Use useConfirmDialog() hook instead of native confirm() for accessible, styled confirmations."
+        }
+      ]
+    }
+  },
   // Component files and hooks: relax explicit-any rule for UI code (less critical than business logic)
   {
     files: ["app/**/*.tsx", "components/**/*.{ts,tsx}", "app/api/admin/**/*.ts"],
