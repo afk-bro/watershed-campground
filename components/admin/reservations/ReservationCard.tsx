@@ -3,6 +3,7 @@
 import { memo } from "react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import { getPaymentStatus, getNights } from "@/lib/admin/reservations/listing";
+import { getPaymentStatusConfig } from "@/lib/payments/config";
 import RowActions from "@/components/admin/RowActions";
 
 interface ReservationCardProps {
@@ -51,15 +52,7 @@ const ReservationCard = memo(function ReservationCard({
         ...reservation,
         metadata: reservation.metadata || undefined
     });
-    const paymentConfig = {
-        paid: { icon: '✓', label: 'Paid in full', color: 'text-green-600/60 dark:text-green-400/60' },
-        deposit_paid: { icon: '💳', label: 'Deposit paid', color: 'text-blue-600/60 dark:text-blue-400/60' },
-        payment_due: { icon: '⏳', label: 'Payment due', color: 'text-amber-600/80 dark:text-amber-400/80' },
-        overdue: { icon: '⚠️', label: 'Payment overdue', color: 'text-red-600/80 dark:text-red-400/80' },
-        failed: { icon: '✕', label: 'Payment failed', color: 'text-red-600/80 dark:text-red-400/80' },
-        refunded: { icon: '↩', label: 'Refunded', color: 'text-gray-600/60 dark:text-gray-400/60' }
-    };
-    const config = paymentConfig[paymentStatus];
+    const config = getPaymentStatusConfig(paymentStatus);
 
     return (
         <div className={cardClass} data-testid={`reservation-card-${reservation.id}`}>
