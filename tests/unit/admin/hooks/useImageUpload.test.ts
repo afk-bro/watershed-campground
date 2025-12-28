@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useImageUpload } from '@/components/admin/hooks/useImageUpload';
-
-// Type for mock change events
-type MockChangeEvent = { target: { files: File[] } };
+import type { ChangeEvent } from 'react';
 
 // Mock FileReader
 class MockFileReader {
@@ -67,7 +65,7 @@ describe('useImageUpload', () => {
       const textFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       const event = {
         target: { files: [textFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -84,7 +82,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -108,7 +106,7 @@ describe('useImageUpload', () => {
       const largeFile = new File([largeContent], 'large.png', { type: 'image/png' });
       const event = {
         target: { files: [largeFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -128,7 +126,7 @@ describe('useImageUpload', () => {
       const smallFile = new File(['small'], 'small.png', { type: 'image/png' });
       const event = {
         target: { files: [smallFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -148,7 +146,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.jpg', { type: 'image/jpeg' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -164,7 +162,7 @@ describe('useImageUpload', () => {
 
       const event = {
         target: { files: [] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -184,7 +182,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -220,7 +218,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -275,7 +273,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -315,7 +313,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -358,7 +356,7 @@ describe('useImageUpload', () => {
       const imageFile = new File(['image'], 'test.png', { type: 'image/png' });
       const event = {
         target: { files: [imageFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
@@ -388,7 +386,7 @@ describe('useImageUpload', () => {
       const textFile = new File(['test'], 'test.txt', { type: 'text/plain' });
       const event = {
         target: { files: [textFile] },
-      } as MockChangeEvent;
+      } as unknown as ChangeEvent<HTMLInputElement>;
 
       await act(async () => {
         await result.current.handleImageChange(event);
