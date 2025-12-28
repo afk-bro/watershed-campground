@@ -299,7 +299,7 @@ describe('useImageUpload', () => {
       const mockUrl = 'https://example.com/uploaded-image.jpg';
       
       // Create a promise that we control
-      let resolveUpload: ((value: any) => void) | null = null;
+      let resolveUpload: (value: any) => void = () => {};
       const uploadPromise = new Promise((resolve) => {
         resolveUpload = resolve;
       });
@@ -334,12 +334,10 @@ describe('useImageUpload', () => {
 
       // Now resolve the upload
       await act(async () => {
-        if (resolveUpload) {
-          resolveUpload({
-            ok: true,
-            json: async () => ({ url: mockUrl }),
-          });
-        }
+        resolveUpload({
+          ok: true,
+          json: async () => ({ url: mockUrl }),
+        });
         await uploadPromiseResult;
       });
 

@@ -43,6 +43,7 @@ export default function CampsiteForm({
         code: initialData?.code || '',
         type: initialData?.type || 'rv',
         maxGuests: initialData?.maxGuests || 4,
+        // Use nullish coalescing for baseRate to preserve 0 as a valid value
         baseRate: initialData?.baseRate ?? DEFAULT_BASE_RATE,
         isActive: initialData?.isActive ?? true,
         notes: initialData?.notes || '',
