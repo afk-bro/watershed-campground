@@ -299,7 +299,7 @@ describe('useImageUpload', () => {
       const mockUrl = 'https://example.com/uploaded-image.jpg';
       
       // Create a promise that we control
-      let resolveUpload: (value: { ok: boolean; json: () => Promise<{ url: string }> }) => void;
+      let resolveUpload!: (value: { ok: boolean; json: () => Promise<{ url: string }> }) => void;
       const uploadPromise = new Promise((resolve) => {
         resolveUpload = resolve;
       });
