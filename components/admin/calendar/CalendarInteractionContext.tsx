@@ -9,11 +9,28 @@ import type { ResizeSide } from './BaseCalendarBlock';
  * Provides shared calendar state and handlers to all calendar rows.
  * Eliminates prop drilling of 21 shared props through the component tree.
  *
+ * ARCHITECTURAL BOUNDARIES:
+ *
+ * ✅ ALLOWED - Ephemeral UI interaction state:
+ *    - Drag/resize/selection state (isDragging, isCreating, etc.)
+ *    - Hover, active workflow indicators
+ *    - Validation errors from interactions
+ *
+ * ✅ ALLOWED - Event handlers & helpers:
+ *    - Handlers that operate on already-loaded data
+ *    - Hit-testing helpers (getGhost, cell targeting)
+ *    - Calendar configuration (days, monthStart, etc.)
+ *
+ * ❌ NOT ALLOWED - Data & persistence:
+ *    - Fetching, caching, or transforming reservation data
+ *    - API calls or persistence (belongs in data hooks/services)
+ *    - Global app state (filters, URL sync - belongs in parent)
+ *
  * Benefits:
  * - Reduces CalendarRow props from 25 → 4 (row-specific data only)
  * - Single source of truth for interaction state
+ * - Testable, focused responsibility
  * - Easier to add new interactions without changing signatures
- * - Cleaner component tree
  */
 
 export interface CalendarInteractionContextValue {

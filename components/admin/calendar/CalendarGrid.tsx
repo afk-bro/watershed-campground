@@ -50,6 +50,28 @@ interface CalendarGridProps {
   ) => Promise<CalendarData | undefined>;
 }
 
+/**
+ * CalendarGrid - Calendar Orchestration Layer
+ *
+ * RESPONSIBILITIES:
+ * - Coordinate data, interactions, and rendering for the calendar
+ * - Manage filter state and provide filtered data to rows
+ * - Orchestrate drag/drop, resize, and selection workflows
+ * - Handle dialogs (creation, reschedule, reservation/blackout drawers)
+ * - Provide interaction context to all calendar rows
+ *
+ * ARCHITECTURE:
+ * - Uses CalendarInteractionContext to eliminate prop drilling (25→4 props per row)
+ * - Custom hooks extract complex workflows (creation, reschedule, filters)
+ * - Row data filtering done once at grid level, passed to rows
+ * - All business logic delegated to hooks; grid is just coordination
+ *
+ * SECTIONS:
+ * 1. Data & State Management (filters, mutations, workflows)
+ * 2. Calendar Configuration (days, date ranges, measurements)
+ * 3. Interaction Workflows (drag/drop, selection, auto-scroll)
+ * 4. Render (header, rows with context provider, dialogs, floating rail)
+ */
 export default function CalendarGrid({
   campsites,
   reservations,
@@ -60,6 +82,10 @@ export default function CalendarGrid({
 }: CalendarGridProps) {
   const router = useRouter();
   const { showToast } = useToast();
+
+  // ============================================================================
+  // SECTION 1: DATA & STATE MANAGEMENT
+  // ============================================================================
 
   // UI state
   const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
@@ -172,6 +198,10 @@ export default function CalendarGrid({
     onRevalidate: handleRevalidate,
   });
 
+  // ============================================================================
+  // SECTION 2: CALENDAR CONFIGURATION
+  // ============================================================================
+
   const monthStart = startOfMonth(date);
   const monthEnd = endOfMonth(date);
   const days = eachDayOfInterval({ start: monthStart, end: monthEnd });
@@ -206,10 +236,14 @@ export default function CalendarGrid({
     return map;
   }, [visibleBlackoutDates]);
 
-  const unassignedReservations = useMemo(() => 
-    filteredReservations.filter(r => !r.campsite_id), 
+  const unassignedReservations = useMemo(() =>
+    filteredReservations.filter(r => !r.campsite_id),
     [filteredReservations]
   );
+
+  // ============================================================================
+  // SECTION 3: INTERACTION WORKFLOWS
+  // ============================================================================
 
   // Auto-scroll hook
   const { scrollContainerRef, updateScrollDirection, stopAutoScroll } = useAutoScroll();
@@ -289,15 +323,15 @@ export default function CalendarGrid({
     createBlackout
   });
   
-  const handleReservationClick = (res: Reservation) => {
+  const handleReservationClick = useCallback((res: Reservation) => {
     setSelectedReservation(res);
     setIsDrawerOpen(true);
-  };
+  }, []);
 
   // Blackout click handler
-  const handleBlackoutClick = (blackout: BlackoutDate) => {
+  const handleBlackoutClick = useCallback((blackout: BlackoutDate) => {
     openBlackoutDrawer(blackout);
-  };
+  }, [openBlackoutDrawer]);
 
   const handlePrevMonth = () => {
     onDateChange(new Date(date.getFullYear(), date.getMonth() - 1, 1));
@@ -310,6 +344,63 @@ export default function CalendarGrid({
   const handleGoToToday = () => {
     onDateChange(new Date());
   };
+
+  // Memoize context value to prevent unnecessary re-renders
+  // Stable handlers are already memoized with useCallback
+  const calendarInteractionValue = useMemo(() => ({
+    // Calendar config (changes on month navigation)
+    days,
+    monthStart,
+    monthEnd,
+    totalDays,
+    // Creation state (changes during selection workflow)
+    isCreating,
+    selectionCampsiteId: selection?.campsiteId,
+    selectionStart: selection?.start,
+    selectionEnd: selection?.end,
+    // Drag & drop state (changes during drag operations)
+    isDragging,
+    dragPreview,
+    draggedItemId: draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null,
+    resizeStateItemId: resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null,
+    // UI state (changes on user toggle)
+    showAvailability,
+    validationError,
+    // Handlers (stable via useCallback)
+    onCellPointerDown: handleCellPointerDown,
+    onCellPointerEnter: handleCellPointerEnter,
+    onReservationClick: handleReservationClick,
+    onBlackoutClick: handleBlackoutClick,
+    onDragStart: handleDragPointerDown,
+    onResizeStart: handleResizeStart,
+    getGhost,
+  }), [
+    days,
+    monthStart,
+    monthEnd,
+    totalDays,
+    isCreating,
+    selection?.campsiteId,
+    selection?.start,
+    selection?.end,
+    isDragging,
+    dragPreview,
+    draggedItem,
+    resizeState,
+    showAvailability,
+    validationError,
+    handleCellPointerDown,
+    handleCellPointerEnter,
+    handleReservationClick,
+    handleBlackoutClick,
+    handleDragPointerDown,
+    handleResizeStart,
+    getGhost,
+  ]);
+
+  // ============================================================================
+  // SECTION 4: RENDER
+  // ============================================================================
 
   return (
     <div className="flex flex-col admin-card relative select-none overflow-x-hidden">
@@ -389,36 +480,7 @@ export default function CalendarGrid({
           )}
 
           {/* Rows Group */}
-      <CalendarInteractionProvider
-        value={{
-          // Calendar config
-          days,
-          monthStart,
-          monthEnd,
-          totalDays,
-          // Creation state
-          isCreating,
-          selectionCampsiteId: selection?.campsiteId,
-          selectionStart: selection?.start,
-          selectionEnd: selection?.end,
-          // Drag & drop state
-          isDragging,
-          dragPreview,
-          draggedItemId: draggedItem ? ('id' in draggedItem ? draggedItem.id : null) : null,
-          resizeStateItemId: resizeState?.item ? ('id' in resizeState.item ? resizeState.item.id : null) : null,
-          // UI state
-          showAvailability,
-          validationError,
-          // Handlers
-          onCellPointerDown: handleCellPointerDown,
-          onCellPointerEnter: handleCellPointerEnter,
-          onReservationClick: handleReservationClick,
-          onBlackoutClick: handleBlackoutClick,
-          onDragStart: handleDragPointerDown,
-          onResizeStart: handleResizeStart,
-          getGhost,
-        }}
-      >
+      <CalendarInteractionProvider value={calendarInteractionValue}>
         <div className="flex flex-col select-none">
           {/* Unassigned Row */}
           <CalendarRow
