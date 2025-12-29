@@ -1,9 +1,9 @@
-import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 import { logger } from "@/lib/logger";
+import { errorResponse, successResponse, validationError } from "@/lib/api-helpers";
 
 // GET /api/admin/campsites - List all campsites
 export async function GET(request: Request) {
@@ -28,10 +28,10 @@ export async function GET(request: Request) {
 
         if (error) throw error;
 
-        return NextResponse.json({ data });
+        return successResponse({ data });
     } catch (error) {
         logger.error("Error in GET /api/admin/campsites:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return errorResponse("Internal server error", 500);
     }
 }
 
@@ -47,10 +47,7 @@ export async function POST(request: Request) {
         const validationResult = campsiteFormSchema.safeParse(body);
 
         if (!validationResult.success) {
-            return NextResponse.json(
-                { error: "Validation failed", details: validationResult.error.flatten().fieldErrors },
-                { status: 400 }
-            );
+            return validationError(validationResult.error);
         }
 
         const formData = validationResult.data;
@@ -77,7 +74,7 @@ export async function POST(request: Request) {
 
         if (error) {
             if (error.code === '23505') {
-                return NextResponse.json({ error: "A campsite with this code already exists" }, { status: 409 });
+                return errorResponse("A campsite with this code already exists", 409);
             }
             throw error;
         }
@@ -90,9 +87,9 @@ export async function POST(request: Request) {
             organizationId: organizationId!
         });
 
-        return NextResponse.json({ data }, { status: 201 });
+        return successResponse({ data }, 201);
     } catch (error) {
         logger.error("Error in POST /api/admin/campsites:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return errorResponse("Internal server error", 500);
     }
 }
