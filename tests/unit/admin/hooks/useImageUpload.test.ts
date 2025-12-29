@@ -28,15 +28,19 @@ global.fetch = mockFetch;
 
 describe('useImageUpload', () => {
   beforeEach(() => {
-    vi.clearAllMocks();
-    // Reset mock implementations to ensure clean state
+    // Clear call history and mock implementation
     mockFetch.mockClear();
+    mockFetch.mockReset();
+    // Ensure fetch is assigned
+    global.fetch = mockFetch;
     // Re-assign FileReader mock to ensure clean state
     global.FileReader = MockFileReader as unknown as typeof FileReader;
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     cleanup();
+    // Give FileReader setTimeout(0) time to complete
+    await new Promise(resolve => setImmediate(resolve));
   });
 
   describe('Initialization', () => {
@@ -264,7 +268,10 @@ describe('useImageUpload', () => {
       }).rejects.toThrow('No image selected for upload');
     });
 
-    // FIXME: Test fails when run with full suite due to state pollution (passes in isolation)
+    // KNOWN ISSUE: Test isolation failure - passes individually, fails in suite
+    // Root cause: Global mock state (fetch/FileReader) persists between tests
+    // Tests pass: npx vitest run tests/unit/admin/hooks/useImageUpload.test.ts -t "handles upload failure"
+    // Tracked in: https://github.com/afk-bro/watershed-campground/issues/XXX
     it.skip('handles upload failure and sets error state', async () => {
       const errorMessage = 'Upload failed: Server error';
       mockFetch.mockResolvedValueOnce({
@@ -301,7 +308,7 @@ describe('useImageUpload', () => {
       expect(result.current.imageFile).toBe(imageFile); // File should remain
     });
 
-    // FIXME: Test fails when run with full suite due to state pollution (passes in isolation)
+    // KNOWN ISSUE: Test isolation failure (see "handles upload failure" test above)
     it.skip('tracks uploading progress state during upload', async () => {
       const mockUrl = 'https://example.com/uploaded-image.jpg';
       
@@ -353,7 +360,7 @@ describe('useImageUpload', () => {
       expect(result.current.imagePreview).toBe(mockUrl);
     });
 
-    // FIXME: Test fails when run with full suite due to state pollution (passes in isolation)
+    // KNOWN ISSUE: Test isolation failure (see "handles upload failure" test above)
     it.skip('handles network errors during upload', async () => {
       mockFetch.mockRejectedValueOnce(new Error('Network error'));
 
@@ -387,7 +394,7 @@ describe('useImageUpload', () => {
   });
 
   describe('Error Handling', () => {
-    // FIXME: Test fails when run with full suite due to state pollution (passes in isolation)
+    // KNOWN ISSUE: Test isolation failure (see "handles upload failure" test above)
     it.skip('sets error for invalid file type', async () => {
       const { result } = renderHook(() => useImageUpload());
 
@@ -403,7 +410,7 @@ describe('useImageUpload', () => {
       expect(result.current.error).toBe('Please select a valid image file');
     });
 
-    // FIXME: Test fails when run with full suite due to state pollution (passes in isolation)
+    // KNOWN ISSUE: Test isolation failure (see "handles upload failure" test above)
     it.skip('provides clearError function', () => {
       const { result } = renderHook(() => useImageUpload());
 
