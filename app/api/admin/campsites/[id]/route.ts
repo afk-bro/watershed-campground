@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
-import { logAudit } from "@/lib/audit/audit-service";
+import { logCampsiteChange } from "@/lib/audit/audit-service";
 import { verifyOrgResource } from '@/lib/db-helpers';
 import type { Json } from '@/lib/database.types';
 import { withAdminAuth } from '@/lib/admin/api-wrapper';
@@ -68,11 +68,11 @@ export const PATCH = withAdminAuth(async ({ request, user, organizationId, param
     }
 
     // Audit Logging
-    await logAudit({
+    await logCampsiteChange({
         action: 'CAMPSITE_UPDATE',
         oldData: existingCampsite as unknown as Json,
         newData: updatedCampsite as unknown as Json,
-        changedBy: user.id,
+        userId: user.id,
         organizationId
     });
 
@@ -104,10 +104,11 @@ export const DELETE = withAdminAuth(async ({ user, organizationId, params }) => 
     }
 
     // Audit Logging
-    await logAudit({
+    await logCampsiteChange({
         action: 'CAMPSITE_DEACTIVATE',
         oldData: existingCampsite as unknown as Json,
-        changedBy: user.id,
+        newData: null as never,
+        userId: user.id,
         organizationId
     });
 

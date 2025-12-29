@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { searchCampsites } from "@/lib/availability/engine";
-import { logAudit } from "@/lib/audit/audit-service";
+import { logBulkReservationOperation } from "@/lib/audit/audit-service";
 import { withAdminAuth } from '@/lib/admin/api-wrapper';
 
 export const POST = withAdminAuth(async ({ request, user, organizationId }) => {
@@ -62,10 +62,11 @@ export const POST = withAdminAuth(async ({ request, user, organizationId }) => {
     }
 
     // Audit Logging
-    await logAudit({
-        action: 'RESERVATION_UPDATE',
-        newData: { reservationIds, results },
-        changedBy: user.id,
+    await logBulkReservationOperation({
+        action: 'RESERVATION_BULK_UPDATE',
+        reservationIds,
+        changes: { results },
+        userId: user.id,
         organizationId
     });
 

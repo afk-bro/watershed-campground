@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { blackoutFormSchema } from '@/lib/schemas';
-import { logAudit } from '@/lib/audit/audit-service';
+import { logBlackoutDateChange } from '@/lib/audit/audit-service';
 import { verifyOrgResource } from '@/lib/db-helpers';
 import type { Json } from '@/lib/database.types';
 import { withAdminAuth } from '@/lib/admin/api-wrapper';
@@ -116,11 +116,11 @@ export const PATCH = withAdminAuth(async ({ request, user, organizationId, param
     if (updateError) throw updateError;
 
     // 4. Audit Logging
-    await logAudit({
+    await logBlackoutDateChange({
         action: 'BLACKOUT_UPDATE',
         oldData: existingBlackout,
         newData: updatedBlackout,
-        changedBy: user.id,
+        userId: user.id,
         organizationId
     });
 
@@ -147,10 +147,10 @@ export const DELETE = withAdminAuth(async ({ user, organizationId, params }) => 
     if (deleteError) throw deleteError;
 
     // 3. Audit Logging
-    await logAudit({
+    await logBlackoutDateChange({
         action: 'BLACKOUT_DELETE',
         oldData: existingBlackout as unknown as Json,
-        changedBy: user.id,
+        userId: user.id,
         organizationId
     });
 

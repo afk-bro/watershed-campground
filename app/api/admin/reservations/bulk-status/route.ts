@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { ReservationStatus } from "@/lib/supabase";
-import { logAudit } from "@/lib/audit/audit-service";
+import { logBulkReservationOperation } from "@/lib/audit/audit-service";
 import { z } from "zod";
 import { withAdminAuth } from '@/lib/admin/api-wrapper';
 
@@ -28,10 +28,11 @@ export const POST = withAdminAuth(async ({ request, user, organizationId }) => {
     if (error) throw error;
 
     // Audit Logging
-    await logAudit({
-        action: 'RESERVATION_UPDATE',
-        newData: { reservationIds, status },
-        changedBy: user.id,
+    await logBulkReservationOperation({
+        action: 'RESERVATION_BULK_UPDATE',
+        reservationIds,
+        changes: { status },
+        userId: user.id,
         organizationId
     });
 

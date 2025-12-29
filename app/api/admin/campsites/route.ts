@@ -1,7 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
-import { logAudit } from "@/lib/audit/audit-service";
+import { logCampsiteChange } from "@/lib/audit/audit-service";
 import { logger } from "@/lib/logger";
 import { errorResponse, successResponse, validationError } from "@/lib/api-helpers";
 import { withAdminAuth } from "@/lib/admin/api-wrapper";
@@ -69,10 +69,10 @@ export const POST = withAdminAuth(async ({ request, user, organizationId }) => {
     }
 
     // Audit Logging
-    await logAudit({
-        action: 'CAMPSITE_UPDATE', // Reusing action type or could add CAMPSITE_CREATE
+    await logCampsiteChange({
+        action: 'CAMPSITE_CREATE',
         newData: data,
-        changedBy: user.id,
+        userId: user.id,
         organizationId: organizationId
     });
 

@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { blackoutFormSchema } from '@/lib/schemas';
-import { logAudit } from '@/lib/audit/audit-service';
+import { logBlackoutDateChange } from '@/lib/audit/audit-service';
 import { verifyOrgResource } from '@/lib/db-helpers';
 import { validationError } from "@/lib/api-helpers";
 import { withAdminAuth } from '@/lib/admin/api-wrapper';
@@ -40,10 +40,10 @@ export const POST = withAdminAuth(async ({ request, user, organizationId }) => {
     if (error) throw error;
 
     // 4. Audit Logging
-    await logAudit({
+    await logBlackoutDateChange({
         action: 'BLACKOUT_CREATE',
         newData: data,
-        changedBy: user.id,
+        userId: user.id,
         organizationId
     });
 
