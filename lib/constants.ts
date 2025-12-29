@@ -108,6 +108,10 @@ export const DATE_FORMATS = {
 
 /**
  * Feature Flags
+ *
+ * NOTE: These values are evaluated at module load time (application startup).
+ * If you need to change feature flags at runtime, restart the application
+ * or implement a dynamic configuration system.
  */
 export const FEATURES = {
   /** Enable demo data seeding */
