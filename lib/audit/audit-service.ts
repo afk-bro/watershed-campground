@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { type Json } from "@/lib/database.types";
+import { logger } from "@/lib/logger";
 
 export type AuditAction =
     | 'RESERVATION_UPDATE'
@@ -50,9 +51,9 @@ export async function logAudit({
             });
 
         if (error) {
-            console.error('Failed to write audit log:', error);
+            logger.error('Failed to write audit log:', error);
         }
     } catch (err) {
-        console.error('Audit logging error:', err);
+        logger.error('Audit logging error:', err);
     }
 }

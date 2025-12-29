@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { logger } from '@/lib/logger';
 
 export async function updateSession(request: NextRequest) {
     // Fail fast with clear error if env vars are missing
@@ -7,9 +8,10 @@ export async function updateSession(request: NextRequest) {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
     if (!supabaseUrl || !supabaseAnonKey) {
-        console.error('❌ CRITICAL: Supabase environment variables are missing!');
-        console.error('NEXT_PUBLIC_SUPABASE_URL:', supabaseUrl || 'undefined');
-        console.error('NEXT_PUBLIC_SUPABASE_ANON_KEY:', supabaseAnonKey ? 'defined' : 'undefined');
+        logger.error('❌ CRITICAL: Supabase environment variables are missing!', {
+            NEXT_PUBLIC_SUPABASE_URL: supabaseUrl || 'undefined',
+            NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseAnonKey ? 'defined' : 'undefined'
+        });
         throw new Error(
             'Supabase configuration error: NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY must be defined. ' +
             'Check your .env.test file (for tests) or .env.local file (for development).'

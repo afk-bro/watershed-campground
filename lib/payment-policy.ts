@@ -1,5 +1,6 @@
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database } from "@/lib/database.types";
+import { logger } from "@/lib/logger";
 
 // Types
 export type PaymentPolicyType = 'full' | 'deposit';
@@ -43,7 +44,7 @@ export function toPaymentPolicy(data: Database['public']['Tables']['payment_poli
     // Validate policy_type using type guard for proper type narrowing
     const policyType = data.policy_type;
     if (!isPaymentPolicyType(policyType)) {
-        console.error(
+        logger.error(
             `Invalid policy_type: ${policyType} for payment policy id=${data.id}, name=${data.name}`,
             { row: data }
         );
@@ -53,7 +54,7 @@ export function toPaymentPolicy(data: Database['public']['Tables']['payment_poli
     // Validate deposit_type if present using type guard
     const depositType = data.deposit_type;
     if (depositType !== null && !isDepositType(depositType)) {
-        console.error(
+        logger.error(
             `Invalid deposit_type: ${depositType} for payment policy id=${data.id}, name=${data.name}`,
             { row: data }
         );
@@ -114,7 +115,7 @@ export async function determinePaymentPolicy(
         .select('*');
 
     if (error || !policies) {
-        console.error("Error fetching policies:", error);
+        logger.error("Error fetching policies:", error);
         return DEFAULT_POLICY;
     }
 

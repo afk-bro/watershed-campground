@@ -1,13 +1,15 @@
 
 import { createClient } from '@supabase/supabase-js';
+import { logger } from '@/lib/logger';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
 if (!supabaseUrl || !supabaseKey) {
-    console.error("CRITICAL ERROR: Supabase environment variables are missing!");
-    console.error("NEXT_PUBLIC_SUPABASE_URL:", supabaseUrl);
-    console.error("NEXT_PUBLIC_SUPABASE_ANON_KEY:", supabaseKey ? "Set (Hidden)" : "Missing");
+    logger.error("CRITICAL ERROR: Supabase environment variables are missing!", {
+        NEXT_PUBLIC_SUPABASE_URL: supabaseUrl,
+        NEXT_PUBLIC_SUPABASE_ANON_KEY: supabaseKey ? "Set (Hidden)" : "Missing"
+    });
 }
 
 export const supabase = createClient(supabaseUrl || "", supabaseKey || "");
