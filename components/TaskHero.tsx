@@ -2,14 +2,30 @@
 
 import Container from "./Container";
 
-type Props = {
+/**
+ * Props for TaskHero component
+ *
+ * Hero section for task-based pages with optional step progress indicator.
+ */
+interface TaskHeroProps {
+  /** Main heading text */
   title: string;
+
+  /** Optional subtitle or description */
   subtitle?: string;
+
+  /** Current step number (1-indexed) for progress indicator */
   currentStep?: number;
+
+  /** Total number of steps for progress indicator */
   totalSteps?: number;
+
+  /** Optional labels for each step */
   stepLabels?: string[];
+
+  /** Optional callback when a step is clicked (for navigation) */
   onStepClick?: (step: number) => void;
-};
+}
 
 export default function TaskHero({
   title,
@@ -18,7 +34,7 @@ export default function TaskHero({
   totalSteps,
   stepLabels,
   onStepClick
-}: Props) {
+}: TaskHeroProps) {
   return (
     <section className="relative w-full overflow-hidden" style={{ height: '32vh', minHeight: '240px' }}>
       {/* Organic gradient background - forest to deeper forest with gold warmth */}

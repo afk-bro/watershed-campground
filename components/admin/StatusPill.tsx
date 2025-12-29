@@ -2,11 +2,17 @@ import { memo } from "react";
 import { CheckCircle2, Clock, XCircle, LogIn, LogOut, HelpCircle, type LucideIcon } from "lucide-react";
 import type { ReservationStatus } from "@/lib/supabase";
 
-type Props = {
+/**
+ * Props for StatusPill component
+ *
+ * Displays a colored pill badge with icon for reservation status.
+ */
+interface StatusPillProps {
+    /** The reservation status to display */
     status: ReservationStatus;
-};
+}
 
-const StatusPill = memo(function StatusPill({ status }: Props) {
+const StatusPill = memo(function StatusPill({ status }: StatusPillProps) {
     const config: Record<ReservationStatus, { label: string; icon: LucideIcon; classes: string }> = {
         pending: {
             label: 'Pending',

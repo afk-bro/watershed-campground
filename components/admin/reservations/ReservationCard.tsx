@@ -6,14 +6,35 @@ import { getPaymentStatus, getNights } from "@/lib/admin/reservations/listing";
 import { getPaymentStatusConfig } from "@/lib/payments/config";
 import RowActions from "@/components/admin/RowActions";
 
+/**
+ * Props for ReservationCard component
+ *
+ * Mobile card view displaying reservation details with touch-optimized layout.
+ * Shows guest info, status badge, dates, campsite, and action menu.
+ */
 interface ReservationCardProps {
+    /** The reservation to display */
     reservation: Reservation;
+
+    /** Whether this card is selected (for bulk actions) */
     isSelected: boolean;
+
+    /** Whether any action is currently submitting (disables interactions) */
     isSubmitting: boolean;
+
+    /** Callback to toggle card selection for bulk actions */
     onToggle: (id: string) => void;
+
+    /** Callback when card is clicked (opens reservation drawer) */
     onClick: (reservation: Reservation) => void;
+
+    /** Callback to update reservation status */
     updateStatus: (id: string, status: ReservationStatus) => void;
+
+    /** Callback to archive the reservation */
     handleArchive: (id: string) => void;
+
+    /** Callback to open campsite assignment dialog */
     setAssigningReservation: (reservation: Reservation) => void;
 }
 

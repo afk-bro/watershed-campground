@@ -6,14 +6,35 @@ import { getPaymentStatus, getNights } from "@/lib/admin/reservations/listing";
 import { getPaymentStatusConfig } from "@/lib/payments/config";
 import RowActions from "@/components/admin/RowActions";
 
+/**
+ * Props for ReservationRow component
+ *
+ * Desktop table row displaying reservation details with inline actions.
+ * Displays guest info, dates, details, campsite assignment, status, and action buttons.
+ */
 interface ReservationRowProps {
+    /** The reservation to display */
     reservation: Reservation;
+
+    /** Whether this row is selected (for bulk actions) */
     isSelected: boolean;
+
+    /** Whether any action is currently submitting (disables interactions) */
     isSubmitting: boolean;
+
+    /** Callback to toggle row selection for bulk actions */
     onToggle: (id: string) => void;
+
+    /** Callback when row is clicked (opens reservation drawer) */
     onClick: (reservation: Reservation) => void;
+
+    /** Callback to update reservation status */
     updateStatus: (id: string, status: ReservationStatus) => void;
+
+    /** Callback to archive the reservation */
     handleArchive: (id: string) => void;
+
+    /** Callback to open campsite assignment dialog */
     setAssigningReservation: (reservation: Reservation) => void;
 }
 
