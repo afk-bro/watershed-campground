@@ -15,6 +15,7 @@ import {
     verifyPaymentIntent,
     determinePaymentStatus
 } from "@/lib/services/payment.service";
+import { validationError } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
     try {
@@ -51,10 +52,7 @@ export async function POST(request: Request) {
         // 1. Validation
         const result = reservationFormSchema.safeParse(formDataRaw);
         if (!result.success) {
-            return NextResponse.json(
-                { error: "Validation failed", details: result.error.flatten() },
-                { status: 400 }
-            );
+            return validationError(result.error);
         }
         const formData = result.data;
 
