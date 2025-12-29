@@ -183,6 +183,7 @@ export async function POST(request: Request) {
             recommendedSiteId,
             { siteTotal, addonsTotal, totalAmount },
             paymentContext,
+            organizationId,
             auditContext
         );
 

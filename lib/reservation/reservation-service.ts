@@ -19,7 +19,7 @@ const ALLOWED_RESERVATION_COLUMNS = [
     'status',
     'total_amount', 'stripe_payment_intent_id', 'payment_status',
     'amount_paid', 'balance_due', 'payment_policy_snapshot', 'remainder_due_at',
-    'campsite_id', 'public_edit_token_hash',
+    'campsite_id', 'public_edit_token_hash', 'organization_id',
     'email_sent_at', 'archived_at', 'metadata'
 ] as const;
 
@@ -69,6 +69,7 @@ function toReservationInsert(
     tokenHash: string,
     pricing: ReservationPricing,
     payment: PaymentContext,
+    organizationId: string,
     audit?: AuditContext
 ): ReservationInsert {
     return {
@@ -113,6 +114,7 @@ function toReservationInsert(
         // References
         campsite_id: campsiteId,
         public_edit_token_hash: tokenHash,
+        organization_id: organizationId,
 
         // Audit metadata for debugging, reconciliation, and dispute resolution
         metadata: {
@@ -160,13 +162,14 @@ export async function createReservationRecord(
     campsiteId: string,
     pricing: ReservationPricing,
     payment: PaymentContext,
+    organizationId: string,
     audit?: AuditContext
 ) {
     const rawToken = generateToken();
     const tokenHash = hashToken(rawToken);
 
     // 1. Map to DB-safe insert object (single source of truth)
-    const reservationInsert = toReservationInsert(formData, campsiteId, tokenHash, pricing, payment, audit);
+    const reservationInsert = toReservationInsert(formData, campsiteId, tokenHash, pricing, payment, organizationId, audit);
 
     // 2. Runtime assertion: fail loudly if extra keys leak through
     assertOnlyDbKeys(reservationInsert as Record<string, unknown>, ALLOWED_RESERVATION_COLUMNS);

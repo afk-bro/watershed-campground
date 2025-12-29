@@ -323,6 +323,7 @@ test.describe('Admin Campsite Management', () => {
                     base_rate: 45.00,
                     is_active: true,
                     sort_order: 200,
+                    organization_id: organizationId,
                 })
                 .select()
                 .single();
@@ -444,6 +445,7 @@ test.describe('Admin Campsite Management', () => {
                     base_rate: 25.00,
                     is_active: true,
                     sort_order: 201,
+                    organization_id: organizationId,
                 })
                 .select()
                 .single();
@@ -497,6 +499,7 @@ test.describe('Admin Campsite Management', () => {
                     base_rate: 45.00,
                     is_active: true,
                     sort_order: 300,
+                    organization_id: organizationId,
                 })
                 .select()
                 .single();

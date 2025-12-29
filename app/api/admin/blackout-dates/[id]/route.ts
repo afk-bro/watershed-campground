@@ -58,7 +58,13 @@ export const PATCH = withAdminAuth(async ({ request, user, organizationId, param
     // Validate campsite if provided (verify ownership)
     if (newCampsiteId !== null) {
         // Use verifyOrgResource to ensure campsite belongs to this org
-        await verifyOrgResource('campsites', newCampsiteId, organizationId);
+        const campsite = await verifyOrgResource('campsites', newCampsiteId, organizationId);
+        if (!campsite) {
+            return NextResponse.json(
+                { error: 'Campsite not found or access denied' },
+                { status: 404 }
+            );
+        }
     }
 
     // SERVER-SIDE CONFLICT VALIDATION
@@ -136,6 +142,13 @@ export const DELETE = withAdminAuth(async ({ user, organizationId, params }) => 
 
     // 1. Fetch existing for logging (use verifyOrgResource for 404-before-deletion)
     const existingBlackout = await verifyOrgResource('blackout_dates', id, organizationId);
+
+    if (!existingBlackout) {
+        return NextResponse.json(
+            { error: 'Blackout date not found or access denied' },
+            { status: 404 }
+        );
+    }
 
     // 2. Delete (org-scoped)
     const { error: deleteError } = await supabaseAdmin

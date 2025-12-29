@@ -13,6 +13,10 @@ export const GET = withAdminAuth(async ({ organizationId, params }) => {
     // Use verifyOrgResource for 404 before any FK validation
     const campsite = await verifyOrgResource('campsites', id, organizationId);
 
+    if (!campsite) {
+        return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
+    }
+
     return NextResponse.json({ data: campsite });
 });
 

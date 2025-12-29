@@ -20,11 +20,13 @@ test.describe.serial('Reservation Integration (DB)', () => {
 
     // Setup: Ensure we have a campsite to book
     let campsiteId: string;
+    let organizationId: string;
 
     test.beforeAll(async () => {
-        const { data } = await supabaseAdmin.from('campsites').select('id').limit(1).single();
+        const { data } = await supabaseAdmin.from('campsites').select('id, organization_id').limit(1).single();
         if (!data) throw new Error("No campsites found in DB for integration test");
         campsiteId = data.id;
+        organizationId = data.organization_id;
     });
 
     test('creates reservation and ledger entries', async () => {
@@ -74,7 +76,8 @@ test.describe.serial('Reservation Integration (DB)', () => {
                 balanceDue: 0,
                 paymentType: 'full',
                 paymentIntentId: `pi_test_${Date.now()}` // Fake stripe ID is fine for DB, we aren't validating with Stripe API here
-            }
+            },
+            organizationId
         );
 
         expect(result).toBeDefined();
