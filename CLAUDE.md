@@ -56,11 +56,19 @@ This is implemented at the root layout level (`app/layout.tsx`) and uses Next.js
 - Local development uses `.env.test` with local Supabase credentials
 - Production uses `.env.local` with remote Supabase
 
+**Multi-Tenancy:**
+- All core tables have `organization_id` column (NOT NULL)
+- Default organization: `'00000000-0000-0000-0000-000000000001'`
+- `user_organizations` table links users to organizations
+- Test data MUST include `organization_id` in all inserts
+
 **Key Tables:**
-- `reservations` - Guest bookings with status tracking
-- `campsites` - Site inventory (RV, tent, cabin)
-- `blackout_dates` - Unavailable date ranges
-- `audit_logs` - Admin action tracking
+- `reservations` - Guest bookings with status tracking (org-scoped)
+- `campsites` - Site inventory (RV, tent, cabin) (org-scoped)
+- `blackout_dates` - Unavailable date ranges (org-scoped)
+- `audit_logs` - Admin action tracking (org-scoped)
+- `user_organizations` - User-to-organization mappings
+- `organizations` - Organization metadata
 
 ### Authentication System
 
