@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { addDays, subDays, format } from 'date-fns';
+import { logger } from "@/lib/logger";
 
 /**
  * Seeds demo data for a new campground to help with onboarding.
@@ -25,7 +26,7 @@ export async function seedDemoDataForCampground(
             .neq('metadata->>is_demo', 'true');
 
         if (realReservations && realReservations > 0) {
-            console.log('[Demo Seed] Real reservations exist. Skipping demo seed.');
+            logger.info('[Demo Seed] Real reservations exist. Skipping demo seed.');
             return { success: false, message: 'Organization has real reservations' };
         }
 
@@ -86,23 +87,23 @@ export async function seedDemoDataForCampground(
                 .from('demo_seed_locks')
                 .delete()
                 .eq('organization_id', organizationId);
-            console.log('[Demo Seed] Disabled via env var.');
+            logger.info('[Demo Seed] Disabled via env var.');
             return { success: false, message: 'Demo seeding disabled' };
         }
 
-        console.log(`[Demo Seed] Starting demo data generation for org ${organizationId}...`);
+        logger.info(`[Demo Seed] Starting demo data generation for org ${organizationId}...`);
 
         // 4. Create Demo Campsites
         const campsites = await createDemoCampsites(organizationId);
-        console.log(`[Demo Seed] Created ${campsites.length} demo campsites`);
+        logger.info(`[Demo Seed] Created ${campsites.length} demo campsites`);
 
         // 5. Create Demo Reservations
         const reservations = await createDemoReservations(organizationId, campsites);
-        console.log(`[Demo Seed] Created ${reservations.length} demo reservations`);
+        logger.info(`[Demo Seed] Created ${reservations.length} demo reservations`);
 
         // 6. Create Demo Blackout Date
         await createDemoBlackout(organizationId, campsites[0].id);
-        console.log('[Demo Seed] Created demo blackout date');
+        logger.info('[Demo Seed] Created demo blackout date');
 
         // 7. Mark as completed
         await supabaseAdmin
@@ -142,7 +143,7 @@ export async function seedDemoDataForCampground(
             .from('demo_seed_locks')
             .delete()
             .eq('organization_id', organizationId);
-        console.error('[Demo Seed] Error:', error);
+        logger.error('[Demo Seed] Error:', error);
         throw error;
     }
 }
@@ -535,14 +536,14 @@ export async function clearDemoData(
             .delete()
             .eq('organization_id', organizationId);
 
-        console.log(`[Demo Seed] Cleared demo data for org ${organizationId}:`, deletedCounts);
+        logger.info(`[Demo Seed] Cleared demo data for org ${organizationId}:`, deletedCounts);
         return {
             success: true,
             message: `Cleared ${deletedCounts.reservations} reservations, ${deletedCounts.blackouts} blackouts, ${deletedCounts.campsites} campsites`
         };
 
     } catch (error) {
-        console.error('[Demo Seed] Error clearing demo data:', error);
+        logger.error('[Demo Seed] Error clearing demo data:', error);
         throw error;
     }
 }

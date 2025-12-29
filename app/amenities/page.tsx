@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Container from "../../components/Container";
 import TaskHero from "../../components/TaskHero";
+import { logger } from "@/lib/logger";
 
 type AmenityCardProps = {
   title: string;
@@ -39,7 +40,7 @@ export default function AmenitiesPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    console.log("Contact form submitted:", formData);
+    logger.info("Contact form submitted from amenities page", formData);
     alert("Thank you! We'll get back to you soon.");
     setFormData({ firstName: "", lastName: "", email: "", message: "" });
   };

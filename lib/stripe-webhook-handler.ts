@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import Stripe from "stripe";
 import { Resend } from "resend";
 import { getBaseUrl } from "@/lib/url-utils";
+import { logger } from "@/lib/logger";
 
 // Lazy initialization to avoid build-time errors
 let resendClient: Resend | null = null;
@@ -67,7 +68,7 @@ async function sendConfirmationEmail(reservation: ReservationRecord) {
             .single();
 
         if (latestRes?.email_sent_at) {
-            console.log(`[Webhook] Email already sent for reservation ${reservation.id}. Skipping.`);
+            logger.info(`[Webhook] Email already sent for reservation ${reservation.id}. Skipping.`);
             return { sent: false, reason: 'already_sent' };
         }
 
@@ -110,7 +111,7 @@ async function sendConfirmationEmail(reservation: ReservationRecord) {
             `,
         });
 
-        console.log(`✉️ Confirmation email sent to ${reservation.email}:`, emailResult);
+        logger.info(`✉️ Confirmation email sent to ${reservation.email}`, { emailResult });
 
         // Mark email as sent
         await supabaseAdmin
@@ -120,14 +121,14 @@ async function sendConfirmationEmail(reservation: ReservationRecord) {
 
         return { sent: true, emailId: emailResult.data?.id };
     } catch (error) {
-        console.error(`Failed to send confirmation email for reservation ${reservation.id}:`, error);
+        logger.error(`Failed to send confirmation email for reservation ${reservation.id}:`, error);
         return { sent: false, error: error instanceof Error ? error.message : String(error) };
     }
 }
 
 // Helper to handle the business logic of the webhook
 export async function handleStripeWebhook(event: Stripe.Event) {
-    console.log(`[Stripe] Processing Event: ${event.type} (${event.id})`);
+    logger.info(`[Stripe] Processing Event: ${event.type} (${event.id})`);
 
     // 0. Idempotency Check
     const { data: existingEvent } = await supabaseAdmin
@@ -137,7 +138,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
         .single();
 
     if (existingEvent?.status === 'processed' || existingEvent?.status === 'ignored') {
-        console.log(`🔹 Event ${event.id} already finished (${existingEvent.status}). Ignoring.`);
+        logger.info(`🔹 Event ${event.id} already finished (${existingEvent.status}). Ignoring.`);
         return { received: true, status: 'idempotent_ignore' };
     }
 
@@ -162,7 +163,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
                 const stripeId = paymentIntent.id;
 
-                console.log(`💰 Payment succeeded for PI: ${stripeId}`);
+                logger.info(`💰 Payment succeeded for PI: ${stripeId}`);
 
                 // 1. Find reservation by Stripe PI ID
                 const { data: reservations, error: findError } = await supabaseAdmin
@@ -171,12 +172,12 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                     .eq('stripe_payment_intent_id', stripeId);
 
                 if (findError) {
-                    console.error("Error finding reservation:", findError);
+                    logger.error("Error finding reservation:", findError);
                     throw findError;
                 }
 
                 if (!reservations || reservations.length === 0) {
-                    console.warn(`No reservation found for PaymentIntent ${stripeId}`);
+                    logger.warn(`No reservation found for PaymentIntent ${stripeId}`);
                     // Mark as processed but unmatched so we don't retry indefinitely
                     await supabaseAdmin.from('webhook_events')
                         .update({ status: 'processed', metadata: { result: 'unmatched' } })
@@ -194,7 +195,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                         .eq('id', reservation.id);
 
                     if (updateResError) throw updateResError;
-                    console.log(`Updated Reservation ${reservation.id} to 'confirmed'`);
+                    logger.info(`Updated Reservation ${reservation.id} to 'confirmed'`);
                 }
 
                 // 3. Update Payment Transaction
@@ -210,7 +211,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                     .eq('stripe_payment_intent_id', stripeId);
 
                 if (updateTxError) throw updateTxError;
-                console.log(`Updated Payment Transaction for ${stripeId} to 'succeeded'`);
+                logger.info(`Updated Payment Transaction for ${stripeId} to 'succeeded'`);
 
                 // 4. Send Confirmation Email (isReservationRecord helper check if needed)
                 if (isReservationRecord(reservation)) {
@@ -228,7 +229,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
             case 'payment_intent.payment_failed': {
                 const paymentIntent = event.data.object as Stripe.PaymentIntent;
                 const stripeId = paymentIntent.id;
-                console.log(`❌ Payment failed for PI: ${stripeId}`);
+                logger.warn(`❌ Payment failed for PI: ${stripeId}`);
 
                 const { error: failTxError } = await supabaseAdmin
                     .from('payment_transactions')
@@ -242,7 +243,7 @@ export async function handleStripeWebhook(event: Stripe.Event) {
                     })
                     .eq('stripe_payment_intent_id', stripeId);
 
-                if (failTxError) console.error("Error failing payment transaction:", failTxError);
+                if (failTxError) logger.error("Error failing payment transaction:", failTxError);
 
                 await supabaseAdmin.from('webhook_events')
                     .update({ status: 'processed', metadata: { result: 'payment_failed' } })
@@ -252,12 +253,12 @@ export async function handleStripeWebhook(event: Stripe.Event) {
             }
 
             default:
-                console.log(`Unhandled event type: ${event.type}`);
+                logger.warn(`Unhandled event type: ${event.type}`);
                 await supabaseAdmin.from('webhook_events').update({ status: 'ignored' }).eq('id', event.id);
                 return { received: true, status: 'ignored' };
         }
     } catch (err: unknown) {
-        console.error(`Error handling event ${event.id}:`, err);
+        logger.error(`Error handling event ${event.id}:`, err);
         await supabaseAdmin.from('webhook_events').update({
             status: 'failed',
             metadata: { error: err instanceof Error ? err.message : String(err) }

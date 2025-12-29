@@ -2,6 +2,7 @@ import { ReservationFormData } from "./validation";
 import crypto from 'crypto';
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
+import { logger } from "@/lib/logger";
 
 // Use Supabase-generated types - TypeScript will enforce alignment with actual DB schema
 type ReservationInsert = Database["public"]["Tables"]["reservations"]["Insert"];
@@ -199,7 +200,7 @@ export async function createReservationRecord(
             .insert(addonsToInsert);
 
         if (addonError) {
-            console.error("Error saving addons:", addonError);
+            logger.error("Error saving addons:", addonError);
             // We don't throw here to avoid failing the whole reservation if just addons fail, 
             // but strictly speaking transactions should be atomic. 
             // Supabase doesn't support multi-table transactions easily via JS client without RPC.
@@ -219,7 +220,7 @@ export async function createReservationRecord(
         }]);
 
         if (trxError) {
-            console.error("Failed to insert transaction ledger:", trxError);
+            logger.error("Failed to insert transaction ledger:", trxError);
         }
     }
 

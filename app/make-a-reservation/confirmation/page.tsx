@@ -5,12 +5,13 @@ import { useSearchParams } from "next/navigation";
 import { loadStripe } from "@stripe/stripe-js";
 import Link from "next/link";
 import Container from "@/components/Container";
+import { logger } from "@/lib/logger";
 
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : null;
 
 if (!stripeKey) {
-  console.error("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in environment variables.");
+  logger.warn("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in environment variables.");
 }
 
 function ConfirmationContent() {
@@ -98,7 +99,7 @@ function ConfirmationContent() {
           setMessage("Payment verification failed. Status: " + paymentIntent?.status);
         }
       } catch (err: unknown) {
-        console.error(err);
+        logger.error("Error verifying reservation after payment", err);
         setStatus("error");
         setMessage("An error occurred verifying your reservation.");
       }

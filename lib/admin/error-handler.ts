@@ -9,6 +9,7 @@
 
 import { useCallback } from "react";
 import { useToast } from "@/components/ui/Toast";
+import { logger } from "@/lib/logger";
 
 /**
  * Custom error class for admin panel errors
@@ -37,7 +38,7 @@ export function handleAdminError(
   context: string
 ): AdminError {
   // Log with context for debugging
-  console.error(`[${context}]`, error);
+  logger.error(`[${context}]`, error);
 
   // Already an AdminError, return as-is
   if (error instanceof AdminError) {

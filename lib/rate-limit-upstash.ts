@@ -8,6 +8,7 @@
 
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
+import { logger } from "@/lib/logger";
 
 // Initialize Upstash Redis client
 // Falls back to null if env vars are missing (for local dev without Upstash)
@@ -20,10 +21,10 @@ try {
             token: process.env.UPSTASH_REDIS_REST_TOKEN,
         });
     } else {
-        console.warn('Upstash Redis credentials not found. Rate limiting will be disabled.');
+        logger.warn('Upstash Redis credentials not found. Rate limiting will be disabled.');
     }
 } catch (err) {
-    console.error('Failed to initialize Upstash Redis:', err);
+    logger.error('Failed to initialize Upstash Redis:', err);
 }
 
 /**
@@ -113,7 +114,7 @@ export async function checkRateLimit(
             reset: result.reset,
         };
     } catch (err) {
-        console.error('Rate limit check failed:', err);
+        logger.error('Rate limit check failed:', err);
         // Fail open - allow request if rate limiter is down
         return {
             success: true,

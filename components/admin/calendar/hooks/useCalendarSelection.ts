@@ -184,7 +184,7 @@ export function useCalendarSelection(
         // Anchor must always be either start or end of selection range
         const ok = selection.start === anchor || selection.end === anchor;
         if (!ok) {
-          console.error("[INVARIANT] anchor flipped", {
+          logger.error("[INVARIANT] anchor flipped", undefined, {
             anchor,
             selection,
             anchorRef: anchorRef.current,

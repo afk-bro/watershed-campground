@@ -1,5 +1,6 @@
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { createHash } from 'crypto';
+import { logger } from '@/lib/logger';
 
 /**
  * Hash IP address for logging (non-PII debugging breadcrumb).
@@ -70,14 +71,14 @@ export async function resolvePublicOrganizationId(request: Request): Promise<str
         if (!orgSlug) {
             if (isTestEnv) {
                 // In test/dev, use default org instead of failing
-                console.log('[Tenancy] Using default org (test/dev env)', {
+                logger.info('[Tenancy] Using default org (test/dev env)', {
                     endpoint,
                     default_slug: DEFAULT_ORG_SLUG
                 });
                 orgSlug = DEFAULT_ORG_SLUG;
             } else {
                 // In production, require explicit org parameter
-                console.warn('[Tenancy] Org resolution failed: missing parameter', {
+                logger.warn('[Tenancy] Org resolution failed: missing parameter', {
                     endpoint,
                     ipHash,
                     attempted_slug: null,
@@ -96,7 +97,7 @@ export async function resolvePublicOrganizationId(request: Request): Promise<str
 
         if (error || !org) {
             // Log breadcrumb: helps catch typos, deleted orgs, or frontend bugs
-            console.warn('[Tenancy] Org resolution failed: not found', {
+            logger.warn('[Tenancy] Org resolution failed: not found', {
                 endpoint,
                 ipHash,
                 attempted_slug: orgSlug,
@@ -108,7 +109,7 @@ export async function resolvePublicOrganizationId(request: Request): Promise<str
 
         return org.id;
     } catch (error) {
-        console.error('[Tenancy] Org resolution error:', error);
+        logger.error('[Tenancy] Org resolution error:', error);
         return null;
     }
 }

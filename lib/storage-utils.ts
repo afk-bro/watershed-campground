@@ -5,6 +5,7 @@
  */
 
 import { randomUUID } from 'crypto';
+import { logger } from "@/lib/logger";
 
 /**
  * Generates a secure, org-prefixed storage key for campsite images.
@@ -106,7 +107,7 @@ export async function validateFileHeader(file: File): Promise<boolean> {
 
         return false;
     } catch (error) {
-        console.error('Error validating file header:', error);
+        logger.error('Error validating file header:', error);
         return false;
     }
 }

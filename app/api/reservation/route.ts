@@ -238,7 +238,11 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        logger.error("Reservation API Error:", error);
+        logger.error("Reservation API Error:", error, {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : undefined,
+        });
 
         // Return more helpful error message
         const errorMessage = error instanceof Error ? error.message : "Internal Server Error";

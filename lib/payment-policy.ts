@@ -153,7 +153,7 @@ export async function determinePaymentPolicy(
                 }
             }
 
-            console.log(`Policy: ${p.name}, SiteType: ${p.site_type} vs ${campsiteType}, Match: ${match}, Score: ${score}`);
+            logger.debug(`Policy: ${p.name}, SiteType: ${p.site_type} vs ${campsiteType}, Match: ${match}, Score: ${score}`);
 
             return { policy: p, score, match };
         });

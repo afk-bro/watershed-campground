@@ -115,7 +115,7 @@ export default function CalendarGrid({
     const reservationIds = reservations.map(r => r.id);
     const uniqueReservationIds = new Set(reservationIds);
     if (reservationIds.length !== uniqueReservationIds.size) {
-      console.error('❌ INVARIANT VIOLATION: Duplicate reservation IDs detected!', {
+      logger.error("❌ INVARIANT VIOLATION: Duplicate reservation IDs detected!", undefined, {
         total: reservationIds.length,
         unique: uniqueReservationIds.size,
         duplicates: reservationIds.filter((id, index) => reservationIds.indexOf(id) !== index)
@@ -126,7 +126,7 @@ export default function CalendarGrid({
     const blackoutIds = blackoutDates.map(b => b.id);
     const uniqueBlackoutIds = new Set(blackoutIds);
     if (blackoutIds.length !== uniqueBlackoutIds.size) {
-      console.error('❌ INVARIANT VIOLATION: Duplicate blackout IDs detected!', {
+      logger.error("❌ INVARIANT VIOLATION: Duplicate blackout IDs detected!", undefined, {
         total: blackoutIds.length,
         unique: uniqueBlackoutIds.size,
         duplicates: blackoutIds.filter((id, index) => blackoutIds.indexOf(id) !== index)
@@ -136,7 +136,7 @@ export default function CalendarGrid({
     // Check for temp IDs that aren't currently saving
     const tempReservations = reservations.filter(r => r.id?.startsWith('temp_') && !(r as any)._saving);
     if (tempReservations.length > 0) {
-      console.error('❌ INVARIANT VIOLATION: Temp reservation IDs found that are not saving!', {
+      logger.error("❌ INVARIANT VIOLATION: Temp reservation IDs found that are not saving!", undefined, {
         count: tempReservations.length,
         ids: tempReservations.map(r => r.id)
       });
@@ -144,7 +144,7 @@ export default function CalendarGrid({
 
     const tempBlackouts = blackoutDates.filter(b => b.id?.startsWith('temp_') && !(b as any)._saving);
     if (tempBlackouts.length > 0) {
-      console.error('❌ INVARIANT VIOLATION: Temp blackout IDs found that are not saving!', {
+      logger.error("❌ INVARIANT VIOLATION: Temp blackout IDs found that are not saving!", undefined, {
         count: tempBlackouts.length,
         ids: tempBlackouts.map(b => b.id)
       });
