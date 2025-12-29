@@ -10,6 +10,8 @@ import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 import { logger } from "@/lib/logger";
 
+const isTestEnv = process.env.NODE_ENV === 'test' || process.env.RATE_LIMIT_DISABLED === 'true';
+
 // Initialize Upstash Redis client
 // Falls back to null if env vars are missing (for local dev without Upstash)
 let redis: Redis | null = null;
@@ -45,8 +47,11 @@ export interface RateLimitResult {
  * @returns Ratelimit instance
  */
 function createRateLimiter(requests: number, window: `${number}${'ms' | 's' | 'm' | 'h' | 'd'}`) {
-    if (!redis) {
-        // Return a no-op rate limiter for local development
+    if (isTestEnv || !redis) {
+        // Return a no-op rate limiter for tests/local development
+        if (isTestEnv) {
+            logger.debug('Rate limiting disabled in test environment');
+        }
         return {
             limit: async () => ({
                 success: true,
