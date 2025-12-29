@@ -17,7 +17,6 @@ import {
   createPaymentIntent,
   updatePaymentIntentMetadata,
 } from '@/lib/services/payment.service';
-import type Stripe from 'stripe';
 
 // Create mock payment intents API
 const mockPaymentIntents = {
@@ -137,7 +136,7 @@ describe('payment.service', () => {
         metadata: {
           campsiteId: 'camp_456',
         },
-      } as Stripe.PaymentIntent;
+      } as unknown as Stripe.PaymentIntent;
 
       mockPaymentIntents.retrieve.mockResolvedValue(mockPaymentIntent);
       process.env.STRIPE_SECRET_KEY = 'sk_test_123';
@@ -157,7 +156,7 @@ describe('payment.service', () => {
         metadata: {
           campsiteId: 'camp_456',
         },
-      } as Stripe.PaymentIntent;
+      } as unknown as Stripe.PaymentIntent;
 
       mockPaymentIntents.retrieve.mockResolvedValue(mockPaymentIntent);
       process.env.STRIPE_SECRET_KEY = 'sk_test_123';
@@ -235,7 +234,7 @@ describe('payment.service', () => {
             single: vi.fn().mockResolvedValue({ data: mockPolicy, error: null }),
           }),
         }),
-      } as any);
+      } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
       const mockPaymentIntent = {
         id: 'pi_123',
@@ -243,7 +242,7 @@ describe('payment.service', () => {
         metadata: {
           policyId: 'pol_123',
         },
-      } as Stripe.PaymentIntent;
+      } as unknown as Stripe.PaymentIntent;
 
       const result = await determinePaymentStatus({
         paymentIntent: mockPaymentIntent,

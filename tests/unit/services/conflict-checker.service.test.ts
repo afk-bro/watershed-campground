@@ -49,7 +49,7 @@ import {
 import { supabaseAdmin } from "@/lib/supabase-admin";
 
 // Access mocks
-const mockFrom = (supabaseAdmin as any).from;
+const mockFrom = (supabaseAdmin as unknown as typeof supabaseAdmin & { from: ReturnType<typeof vi.fn> }).from;
 const mockSelect = vi.fn();
 const mockEq = vi.fn();
 const mockOr = vi.fn();

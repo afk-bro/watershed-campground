@@ -78,7 +78,7 @@ describe("email.service", () => {
 
       const client = getResendClient();
 
-      expect((client as any).apiKey).toBe("re_test_456");
+      expect((client as unknown as { apiKey: string }).apiKey).toBe("re_test_456");
     });
   });
 });

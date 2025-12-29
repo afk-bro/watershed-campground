@@ -103,7 +103,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         // Mock no conflicts
         vi.mocked(checkReservationConflicts).mockResolvedValue({
@@ -212,7 +212,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         const params: UpdateReservationParams = {
           id: 'res-999',
@@ -241,7 +241,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         const params: UpdateReservationParams = {
           id: 'res-123',
@@ -273,7 +273,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         const params: UpdateReservationParams = {
           id: 'res-123',
@@ -304,7 +304,7 @@ describe('reservation.service', () => {
                 })
               })
             })
-          } as any)
+          } as unknown as ReturnType<typeof supabaseAdmin.from>)
           // Mock campsite verification failure
           .mockReturnValueOnce({
             select: vi.fn().mockReturnValue({
@@ -317,7 +317,7 @@ describe('reservation.service', () => {
                 })
               })
             })
-          } as any);
+          } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         const params: UpdateReservationParams = {
           id: 'res-123',
@@ -348,7 +348,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
       });
 
       it('should check conflicts when check-in changes', async () => {
@@ -389,7 +389,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         await updateReservation(params);
 
@@ -483,7 +483,7 @@ describe('reservation.service', () => {
               })
             })
           })
-        } as any);
+        } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         vi.mocked(checkReservationConflicts).mockResolvedValue({
           hasConflicts: false,
@@ -537,7 +537,7 @@ describe('reservation.service', () => {
                 })
               })
             })
-          } as any)
+          } as unknown as ReturnType<typeof supabaseAdmin.from>)
           .mockReturnValueOnce({
             update: vi.fn().mockReturnValue({
               eq: vi.fn().mockReturnValue({
@@ -551,7 +551,7 @@ describe('reservation.service', () => {
                 })
               })
             })
-          } as any);
+          } as unknown as ReturnType<typeof supabaseAdmin.from>);
 
         const params: UpdateReservationParams = {
           id: 'res-123',

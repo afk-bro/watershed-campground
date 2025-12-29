@@ -6,7 +6,6 @@
  */
 
 import { Resend } from "resend";
-import { logger } from "@/lib/logger";
 
 // Singleton Resend client with lazy initialization
 let resendClient: Resend | null = null;

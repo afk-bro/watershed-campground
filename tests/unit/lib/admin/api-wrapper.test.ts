@@ -8,6 +8,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextResponse } from 'next/server';
 import { withAdminAuth, type AdminContext } from '@/lib/admin/api-wrapper';
+import type { User } from '@supabase/supabase-js';
 
 // Mock dependencies
 vi.mock('@/lib/admin-auth', () => ({
@@ -36,7 +37,7 @@ describe('api-wrapper', () => {
     vi.clearAllMocks();
   });
 
-  const mockUser = {
+  const mockUser: User = {
     id: 'user-123',
     email: 'admin@example.com',
     aud: 'authenticated',
@@ -44,14 +45,14 @@ describe('api-wrapper', () => {
     created_at: '2025-01-01T00:00:00Z',
     app_metadata: {},
     user_metadata: {}
-  };
+  } as User;
 
   describe('withAdminAuth', () => {
     describe('successful authentication', () => {
       beforeEach(() => {
         vi.mocked(requireAdminWithOrg).mockResolvedValue({
           authorized: true,
-          user: mockUser as any,
+          user: mockUser,
           organizationId: 'org-123',
           response: null
         });
@@ -190,7 +191,7 @@ describe('api-wrapper', () => {
       beforeEach(() => {
         vi.mocked(requireAdminWithOrg).mockResolvedValue({
           authorized: true,
-          user: mockUser as any,
+          user: mockUser,
           organizationId: 'org-123',
           response: null
         });
@@ -242,7 +243,7 @@ describe('api-wrapper', () => {
       beforeEach(() => {
         vi.mocked(requireAdminWithOrg).mockResolvedValue({
           authorized: true,
-          user: mockUser as any,
+          user: mockUser,
           organizationId: 'org-123',
           response: null
         });
@@ -266,7 +267,7 @@ describe('api-wrapper', () => {
       });
 
       it('should handle request with query parameters', async () => {
-        const handler = vi.fn((context: AdminContext) => {
+        const handler = vi.fn(async (context: AdminContext) => {
           const url = new URL(context.request.url);
           const searchParam = url.searchParams.get('filter');
           return NextResponse.json({ filter: searchParam });
@@ -282,7 +283,7 @@ describe('api-wrapper', () => {
       });
 
       it('should preserve request headers', async () => {
-        const handler = vi.fn((context: AdminContext) => {
+        const handler = vi.fn(async (context: AdminContext) => {
           const contentType = context.request.headers.get('content-type');
           return NextResponse.json({ contentType });
         });

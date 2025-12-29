@@ -44,7 +44,6 @@ export async function POST(request: Request) {
                 subject: `New Contact Inquiry from ${name}`,
                 from: email,
                 message,
-                message,
             });
             return successResponse({ success: true, message: "Mock email sent" });
         }

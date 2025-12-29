@@ -290,7 +290,7 @@ describe('notification.service', () => {
           emails: {
             send: vi.fn().mockRejectedValue(new Error('SMTP error'))
           }
-        } as any));
+        } as unknown as ReturnType<typeof getResendClient>));
 
         const params: EmailNotificationParams = {
           type: 'reservation_confirmation',
