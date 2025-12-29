@@ -55,27 +55,31 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (state.hasError && props.resetKeys) {
       const prevKeys = state.prevResetKeys || [];
       const currentKeys = props.resetKeys;
-      
-      if (prevKeys.length !== currentKeys.length || 
-          prevKeys.some((key, i) => key !== currentKeys[i])) {
-        return { 
-          hasError: false, 
-          error: null, 
-          prevResetKeys: currentKeys 
+
+      if (
+        prevKeys.length !== currentKeys.length ||
+        prevKeys.some((key, i) => key !== currentKeys[i])
+      ) {
+        return {
+          hasError: false,
+          error: null,
+          prevResetKeys: currentKeys,
         };
       }
-      
-      // Update prevResetKeys even if no reset
-      if (state.prevResetKeys !== currentKeys) {
-        return { prevResetKeys: currentKeys };
+    }
+
+    // Update prevResetKeys when they change but no error
+    if (!state.hasError) {
+      const prevKeys = state.prevResetKeys || [];
+      const currentKeys = props.resetKeys || [];
+
+      if (
+        prevKeys.length !== currentKeys.length ||
+        prevKeys.some((key, i) => key !== currentKeys[i])
+      ) {
+        return { prevResetKeys: props.resetKeys };
       }
     }
-    
-    // Update prevResetKeys when they change but no error
-    if (!state.hasError && state.prevResetKeys !== props.resetKeys) {
-      return { prevResetKeys: props.resetKeys };
-    }
-    
     return null;
   }
 
