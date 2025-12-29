@@ -22,9 +22,12 @@ export function errorResponse(
   headersOrDetails?: Record<string, string> | unknown
 ) {
   // Determine if the third parameter is headers or details
+  // Headers are plain objects with all string values AND have rate-limit-like keys
   const isHeaders = headersOrDetails &&
     typeof headersOrDetails === 'object' &&
-    Object.values(headersOrDetails).every(v => typeof v === 'string');
+    !Array.isArray(headersOrDetails) &&
+    Object.keys(headersOrDetails as Record<string, unknown>).some(k => k.startsWith('X-RateLimit-')) &&
+    Object.values(headersOrDetails as Record<string, unknown>).every(v => typeof v === 'string');
 
   const headers = isHeaders ? headersOrDetails as Record<string, string> : undefined;
   const details = !isHeaders ? headersOrDetails : undefined;
