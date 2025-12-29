@@ -1,28 +1,20 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import Stripe from "stripe";
 import { checkAvailability } from "@/lib/availability/engine";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { reservationFormSchema } from "@/lib/reservation/validation";
-import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
+import { createReservationRecord, type AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getBaseUrl } from "@/lib/url-utils";
 import { checkRateLimit, rateLimiters, getClientIp, createIpIdentifier, getRateLimitHeaders } from "@/lib/rate-limit-upstash";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { logger } from "@/lib/logger";
-
-// Lazy initialization to avoid build-time errors
-let stripeClient: Stripe | null = null;
-function getStripeClient() {
-    if (!stripeClient) {
-        stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-            apiVersion: "2025-11-17.clover" as const,
-        });
-    }
-    return stripeClient;
-}
+import {
+    verifyPaymentIntent,
+    determinePaymentStatus
+} from "@/lib/services/payment.service";
 
 export async function POST(request: Request) {
     try {
@@ -80,19 +72,16 @@ export async function POST(request: Request) {
         }
 
         // 2. Retrieve Payment Intent & Campsite
-        let paymentIntent: Stripe.PaymentIntent | null = null;
+        let paymentIntent: Awaited<ReturnType<typeof verifyPaymentIntent>>["paymentIntent"] | undefined;
         let recommendedSiteId: string;
 
         if (paymentIntentId) {
-            const stripe = getStripeClient();
-            paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-            if (paymentIntent.status !== 'succeeded') {
-                return NextResponse.json({ error: "Payment not verified" }, { status: 400 });
+            const verification = await verifyPaymentIntent(paymentIntentId);
+            if (!verification.success) {
+                return NextResponse.json({ error: verification.error || "Payment verification failed" }, { status: 400 });
             }
-            if (!paymentIntent.metadata.campsiteId) {
-                return NextResponse.json({ error: "Invalid payment: missing campsite information" }, { status: 400 });
-            }
-            recommendedSiteId = paymentIntent.metadata.campsiteId;
+            paymentIntent = verification.paymentIntent;
+            recommendedSiteId = verification.campsiteId!;
         } else {
             // Check availability for non-prepaid bookings
             // Admin overrides handled at route layer (already guarded above)
@@ -170,49 +159,17 @@ export async function POST(request: Request) {
         const totalAmount = siteTotal + addonsTotal;
 
         // 4. Determine Payment Status
-        const paymentContext: PaymentContext = {
-            paymentStatus: 'pending',
-            amountPaid: 0,
-            balanceDue: 0,
-            paymentType: 'full',
-            paymentIntentId,
-        };
+        const paymentContext = await determinePaymentStatus({
+            paymentIntent,
+            paymentMethod,
+            totalAmount,
+            checkIn: formData.checkIn,
+            isOffline: formData.isOffline
+        });
 
-        if (paymentIntent) {
-            paymentContext.paymentStatus = 'paid';
-            paymentContext.amountPaid = (paymentIntent.amount_received || 0) / 100;
-
-            // Check for Deposit
-            if (paymentIntent.metadata.policyId) {
-                const { data: policy } = await supabaseAdmin.from('payment_policies').select('*').eq('id', paymentIntent.metadata.policyId).single();
-                if (policy?.policy_type === 'deposit') {
-                    paymentContext.paymentStatus = 'deposit_paid';
-                    paymentContext.paymentType = 'deposit';
-                    paymentContext.policySnapshot = policy;
-                    if (policy.due_days_before_checkin) {
-                        const due = new Date(formData.checkIn);
-                        due.setDate(due.getDate() - policy.due_days_before_checkin);
-                        paymentContext.remainderDueAt = due.toISOString();
-                    }
-                }
-            }
-            // Balance Calc
-            if (paymentContext.paymentType === 'full' && Math.abs(totalAmount - paymentContext.amountPaid) < 0.50) {
-                paymentContext.balanceDue = 0;
-            } else {
-                paymentContext.balanceDue = Math.max(0, totalAmount - paymentContext.amountPaid);
-            }
-        } else if (paymentMethod === 'in-person' || formData.isOffline) {
-            paymentContext.paymentStatus = formData.isOffline ? 'paid' : 'pay_on_arrival';
-            paymentContext.paymentType = 'cash'; // Defaulting to cash/external for manual bookings
-            if (formData.isOffline) {
-                paymentContext.amountPaid = totalAmount;
-                paymentContext.balanceDue = 0;
-            } else {
-                paymentContext.balanceDue = totalAmount;
-            }
-        } else {
-            return NextResponse.json({ error: "Payment method required" }, { status: 400 });
+        // Add payment intent ID to context
+        if (paymentIntentId) {
+            paymentContext.paymentIntentId = paymentIntentId;
         }
 
         // 5. Create Reservation with audit context

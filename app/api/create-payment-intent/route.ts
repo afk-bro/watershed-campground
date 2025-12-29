@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import Stripe from "stripe";
 import {
     checkRateLimit,
     getRateLimitHeaders,
@@ -12,21 +11,7 @@ import { checkAvailability } from "@/lib/availability/engine";
 import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { logger } from "@/lib/logger";
-
-// Lazy initialization to avoid build-time errors
-let stripeClient: Stripe | null = null;
-function getStripeClient() {
-    if (!stripeClient) {
-        const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
-        if (!stripeSecretKey) {
-            throw new Error("STRIPE_SECRET_KEY is missing; cannot initialize Stripe client");
-        }
-        stripeClient = new Stripe(stripeSecretKey, {
-            apiVersion: "2025-11-17.clover",
-        });
-    }
-    return stripeClient;
-}
+import { getStripeClient, isStripeConfigured } from "@/lib/services/payment.service";
 
 // Helper function to calculate total site cost
 function calculateTotal(baseRate: string, checkIn: string, checkOut: string): number {
@@ -58,16 +43,15 @@ export async function POST(request: Request) {
             return NextResponse.json({ error: "Not found" }, { status: 404 });
         }
 
-        let stripe: Stripe;
-        try {
-            stripe = getStripeClient();
-        } catch {
+        if (!isStripeConfigured()) {
             logger.error("STRIPE_SECRET_KEY is missing");
             return NextResponse.json(
                 { error: "Payment system configuration missing" },
                 { status: 503 }
             );
         }
+
+        const stripe = getStripeClient();
 
         const { checkIn, checkOut, adults, children, addons = [], campsiteId: requestedSiteId, paymentMethod = 'full', customDepositAmount } = await request.json() as {
             checkIn: string;
