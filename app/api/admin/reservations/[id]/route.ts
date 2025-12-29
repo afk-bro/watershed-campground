@@ -2,8 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { ReservationStatus } from "@/lib/supabase";
-import { generateRescheduleEmail } from "@/lib/emails/rescheduleNotification";
-import { getResendClient } from "@/lib/services/email.service";
+import { sendReservationNotification, shouldSendNotification } from "@/lib/services/notification.service";
 
 type UpdateReservationBody = {
     status?: ReservationStatus;
@@ -138,53 +137,46 @@ export async function PATCH(
 
         // 6. Best-effort email notification
         let emailSent = false;
-        const datesChanged = (check_in && check_in !== oldReservation.check_in) || (check_out && check_out !== oldReservation.check_out);
-        const campsiteChanged = campsite_id !== undefined && campsite_id !== oldReservation.campsite_id;
-        const isCancelled = status === 'cancelled' && oldReservation.status !== 'cancelled';
-
-        if (datesChanged || campsiteChanged || isCancelled) {
-            try {
-                const oldCampsiteName = oldReservation.campsites?.name || "Unassigned";
-                const newCampsiteName = updatedReservation.campsites?.name || "Unassigned";
-                const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
-
-                let emailData;
-                if (isCancelled) {
-                    const { generateCancellationEmail } = await import("@/lib/emails/cancellationConfirmation");
-                    emailData = generateCancellationEmail({
-                        guestFirstName: updatedReservation.first_name,
-                        campsiteName: oldCampsiteName,
-                        checkIn: oldReservation.check_in,
-                        checkOut: oldReservation.check_out,
-                        refundAmount: 0
-                    });
-                } else {
-                    const manageUrl = `${baseUrl}/manage-reservation?rid=${updatedReservation.id}`;
-                    emailData = generateRescheduleEmail({
-                        guestFirstName: updatedReservation.first_name,
-                        oldCampsiteName,
-                        newCampsiteName,
-                        oldCheckIn: oldReservation.check_in,
-                        oldCheckOut: oldReservation.check_out,
-                        newCheckIn: updatedReservation.check_in,
-                        newCheckOut: updatedReservation.check_out,
-                        manageUrl,
-                    });
-                }
-
-                if (emailData) {
-                    const resend = getResendClient();
-                    await resend.emails.send({
-                        from: "The Watershed Campground <onboarding@resend.dev>",
-                        to: [updatedReservation.email],
-                        subject: emailData.subject,
-                        html: emailData.html,
-                    });
-                    emailSent = true;
-                }
-            } catch (e) {
-                logger.error("Email notification failed:", e);
+        const notificationType = shouldSendNotification(
+            {
+                status: oldReservation.status,
+                campsite_id: oldReservation.campsite_id,
+                check_in: oldReservation.check_in,
+                check_out: oldReservation.check_out
+            },
+            {
+                status: updatedReservation.status,
+                campsite_id: updatedReservation.campsite_id,
+                check_in: updatedReservation.check_in,
+                check_out: updatedReservation.check_out
             }
+        );
+
+        if (notificationType) {
+            const result = await sendReservationNotification({
+                type: notificationType,
+                reservation: {
+                    id: updatedReservation.id,
+                    email: updatedReservation.email,
+                    first_name: updatedReservation.first_name,
+                    last_name: updatedReservation.last_name,
+                    check_in: updatedReservation.check_in,
+                    check_out: updatedReservation.check_out,
+                    campsite: updatedReservation.campsites ? {
+                        name: updatedReservation.campsites.name,
+                        code: updatedReservation.campsites.code
+                    } : undefined
+                },
+                changeDetails: {
+                    oldCampsite: oldReservation.campsites?.name,
+                    newCampsite: updatedReservation.campsites?.name,
+                    oldCheckIn: oldReservation.check_in,
+                    newCheckIn: updatedReservation.check_in,
+                    oldCheckOut: oldReservation.check_out,
+                    newCheckOut: updatedReservation.check_out
+                }
+            });
+            emailSent = result.sent;
         }
 
         return NextResponse.json({
