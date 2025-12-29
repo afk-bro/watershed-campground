@@ -15,7 +15,7 @@ test.describe('Guest Booking - Error Handling', () => {
     async function navigateToPayment(page: Page) {
         await page.goto('/make-a-reservation');
 
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
 
         const checkInDay = format(tomorrow, 'd');
@@ -171,7 +171,7 @@ test.describe('Guest Booking - Error Handling', () => {
         test('should validate required email field', async ({ page }) => {
             await page.goto('/make-a-reservation');
 
-            const tomorrow = addDays(new Date(), 1);
+            const tomorrow = addDays(new Date(), 10);
             const checkOutDate = addDays(tomorrow, 2);
             const checkInDay = format(tomorrow, 'd');
             const checkOutDay = format(checkOutDate, 'd');
@@ -213,7 +213,7 @@ test.describe('Guest Booking - Error Handling', () => {
         test('should validate email format', async ({ page }) => {
             await page.goto('/make-a-reservation');
 
-            const tomorrow = addDays(new Date(), 1);
+            const tomorrow = addDays(new Date(), 10);
             const checkOutDate = addDays(tomorrow, 2);
             const checkInDay = format(tomorrow, 'd');
             const checkOutDay = format(checkOutDate, 'd');
@@ -249,7 +249,7 @@ test.describe('Guest Booking - Error Handling', () => {
         test('should validate phone number minimum length', async ({ page }) => {
             await page.goto('/make-a-reservation');
 
-            const tomorrow = addDays(new Date(), 1);
+            const tomorrow = addDays(new Date(), 10);
             const checkOutDate = addDays(tomorrow, 2);
             const checkInDay = format(tomorrow, 'd');
             const checkOutDay = format(checkOutDate, 'd');
@@ -365,7 +365,7 @@ test.describe('Guest Booking - Error Handling', () => {
         test('should prevent selecting check-out before check-in', async ({ page }) => {
             await page.goto('/make-a-reservation');
 
-            const tomorrow = addDays(new Date(), 1);
+            const tomorrow = addDays(new Date(), 10);
             const yesterday = subDays(tomorrow, 1); // Earlier date
 
             // Select tomorrow as check-in
@@ -421,7 +421,7 @@ test.describe('Guest Booking - Error Handling', () => {
 
             await page.goto('/make-a-reservation');
 
-            const tomorrow = addDays(new Date(), 1);
+            const tomorrow = addDays(new Date(), 10);
             const checkOutDate = addDays(tomorrow, 2);
             const checkInDay = format(tomorrow, 'd');
             const checkOutDay = format(checkOutDate, 'd');

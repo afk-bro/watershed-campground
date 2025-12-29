@@ -201,6 +201,7 @@ test.describe('Admin Blackout Dates', () => {
             const { data } = await supabaseAdmin
                 .from('blackout_dates')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(startDate, 'yyyy-MM-dd'),
                     end_date: format(endDate, 'yyyy-MM-dd'),
                     campsite_id: null, // All sites
@@ -339,6 +340,7 @@ test.describe('Admin Blackout Dates', () => {
             const { data: blackout } = await supabaseAdmin
                 .from('blackout_dates')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(startDate, 'yyyy-MM-dd'),
                     end_date: format(endDate, 'yyyy-MM-dd'),
                     campsite_id: testCampsiteId, // Only S2
@@ -434,12 +436,14 @@ test.describe('Admin Blackout Dates', () => {
             // Create multiple blackout dates for listing tests
             const blackouts = [
                 {
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(addDays(new Date(), 140), 'yyyy-MM-dd'),
                     end_date: format(addDays(new Date(), 145), 'yyyy-MM-dd'),
                     campsite_id: null,
                     reason: 'Test blackout 1',
                 },
                 {
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(addDays(new Date(), 150), 'yyyy-MM-dd'),
                     end_date: format(addDays(new Date(), 152), 'yyyy-MM-dd'),
                     campsite_id: null,
@@ -518,6 +522,7 @@ test.describe('Admin Blackout Dates', () => {
             const { data: siteBlackout } = await supabaseAdmin
                 .from('blackout_dates')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(addDays(new Date(), 160), 'yyyy-MM-dd'),
                     end_date: format(addDays(new Date(), 162), 'yyyy-MM-dd'),
                     campsite_id: campsite.id,

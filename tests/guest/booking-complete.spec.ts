@@ -24,7 +24,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
         // ==========================================
         // STEP 2: Select Dates (Wizard Step 1)
         // ==========================================
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
         const checkInDay = format(tomorrow, 'd');
         const checkOutDay = format(checkOutDate, 'd');
@@ -369,7 +369,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
     // ... (Keep existing tests)
     test('should handle validation errors correctly', async ({ page }) => {
         await page.goto('/make-a-reservation');
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
         const checkInDay = format(tomorrow, 'd');
         const checkOutDay = format(checkOutDate, 'd');
@@ -400,7 +400,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
 
     test('should allow changing dates from personal info form', async ({ page }) => {
         await page.goto('/make-a-reservation');
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
         const checkInDay = format(tomorrow, 'd');
         const checkOutDay = format(checkOutDate, 'd');

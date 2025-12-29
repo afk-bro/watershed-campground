@@ -32,6 +32,7 @@ test.describe('Guest Manage Reservation', () => {
             const { data, error } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     first_name: 'Guest',
                     last_name: 'Manager',
                     email: 'guest.manage@test.com',
@@ -137,6 +138,7 @@ test.describe('Guest Manage Reservation', () => {
             const { data, error } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     first_name: 'Cancel',
                     last_name: 'Test',
                     email: 'cancel.test@test.com',
@@ -390,6 +392,7 @@ test.describe('Guest Manage Reservation', () => {
             const { data } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     first_name: 'Already',
                     last_name: 'Cancelled',
                     email: 'cancelled@test.com',
@@ -444,6 +447,7 @@ test.describe('Guest Manage Reservation', () => {
             const { data } = await supabaseAdmin
                 .from('reservations')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     first_name: 'Checked',
                     last_name: 'In',
                     email: 'checkedin@test.com',

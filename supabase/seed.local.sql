@@ -28,6 +28,7 @@ TRUNCATE TABLE public.reservations CASCADE;
 TRUNCATE TABLE public.campsites CASCADE;
 TRUNCATE TABLE public.blackout_dates CASCADE;
 TRUNCATE TABLE public.audit_logs CASCADE;
+TRUNCATE TABLE public.user_organizations CASCADE;
 
 -- Clean up test auth data
 DELETE FROM auth.identities WHERE id = '00000000-0000-0000-0000-000000000001'::uuid;
