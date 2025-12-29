@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -21,7 +22,7 @@ export async function GET() {
             database: 'connected'
         });
     } catch (error) {
-        console.error('[Health Check] Database connectivity failed:', error);
+        logger.error('[Health Check] Database connectivity failed:', error);
         return NextResponse.json(
             {
                 status: 'unhealthy',

@@ -1,5 +1,6 @@
 "use client";
 
+import { memo } from "react";
 import type { ReservationStatus, OverviewItem } from "@/lib/supabase";
 import type { FilterType } from "@/lib/admin/reservations/listing";
 
@@ -16,7 +17,7 @@ interface DashboardStatsProps {
     getFilterLabel: () => string;
 }
 
-export default function DashboardStats({
+const DashboardStats = memo(function DashboardStats({
     filter,
     setFilter,
     showArchived,
@@ -124,4 +125,8 @@ export default function DashboardStats({
             </div>
         </div>
     );
-}
+});
+
+DashboardStats.displayName = 'DashboardStats';
+
+export default DashboardStats;

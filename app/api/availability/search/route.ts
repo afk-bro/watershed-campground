@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { searchCampsites } from "@/lib/availability/engine";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const searchSchema = z.object({
     checkIn: z.string(),
@@ -46,7 +47,7 @@ export async function POST(request: Request) {
         if (error instanceof z.ZodError) {
             return NextResponse.json({ error: "Invalid search parameters", details: error.issues }, { status: 400 });
         }
-        console.error("Campsite Search Error:", error);
+        logger.error("Campsite Search Error:", error);
         return NextResponse.json({ error: "Failed to search campsites" }, { status: 500 });
     }
 }

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from '@testing-library/react';
-import { CalendarInteractionProvider, useCalendarInteraction } from '@/components/admin/calendar/CalendarInteractionContext';
+import { CalendarInteractionProvider, useCalendarInteraction, type CalendarInteractionContextValue } from '@/components/admin/calendar/CalendarInteractionContext';
 
 describe('CalendarInteractionContext', () => {
   describe('Contract Tests', () => {
@@ -22,7 +22,7 @@ describe('CalendarInteractionContext', () => {
     });
 
     it('provides context value to children', () => {
-      const mockValue = {
+      const mockValue: CalendarInteractionContextValue = {
         // Calendar config
         days: [new Date('2025-01-01')],
         monthStart: new Date('2025-01-01'),
@@ -51,13 +51,13 @@ describe('CalendarInteractionContext', () => {
         getGhost: () => null,
       };
 
-      const TestComponent = ({ onValue }: { onValue: (val: typeof mockValue) => void }) => {
+      const TestComponent = ({ onValue }: { onValue: (val: CalendarInteractionContextValue) => void }) => {
         const ctx = useCalendarInteraction();
         onValue(ctx);
         return null;
       };
 
-      let receivedValue: typeof mockValue | undefined;
+      let receivedValue: CalendarInteractionContextValue | undefined;
 
       render(
         <CalendarInteractionProvider value={mockValue}>
@@ -69,10 +69,10 @@ describe('CalendarInteractionContext', () => {
     });
 
     it('provides stable handler references when memoized', () => {
-      const onCellPointerDown = () => {};
-      const getGhost = () => null;
+      const onCellPointerDown: CalendarInteractionContextValue['onCellPointerDown'] = () => {};
+      const getGhost: CalendarInteractionContextValue['getGhost'] = () => null;
 
-      const mockValue = {
+      const mockValue: CalendarInteractionContextValue = {
         days: [new Date()],
         monthStart: new Date(),
         monthEnd: new Date(),
@@ -96,7 +96,10 @@ describe('CalendarInteractionContext', () => {
         getGhost,
       };
 
-      const handlers: Array<{ onCellPointerDown: () => void; getGhost: () => null }> = [];
+      const handlers: Array<{
+        onCellPointerDown: CalendarInteractionContextValue['onCellPointerDown'];
+        getGhost: CalendarInteractionContextValue['getGhost'];
+      }> = [];
 
       const TestComponent = () => {
         const ctx = useCalendarInteraction();
@@ -126,7 +129,7 @@ describe('CalendarInteractionContext', () => {
     });
 
     it('updates state when interaction state changes', () => {
-      const initialValue = {
+      const initialValue: CalendarInteractionContextValue = {
         days: [new Date()],
         monthStart: new Date(),
         monthEnd: new Date(),
@@ -150,7 +153,7 @@ describe('CalendarInteractionContext', () => {
         getGhost: () => null,
       };
 
-      const updatedValue = {
+      const updatedValue: CalendarInteractionContextValue = {
         ...initialValue,
         isCreating: true,
         selectionCampsiteId: 'campsite-1',
@@ -189,7 +192,7 @@ describe('CalendarInteractionContext', () => {
 
   describe('Architectural Boundaries', () => {
     it('context only contains ephemeral UI state and handlers', () => {
-      const mockValue = {
+      const mockValue: CalendarInteractionContextValue = {
         days: [],
         monthStart: new Date(),
         monthEnd: new Date(),
@@ -213,9 +216,9 @@ describe('CalendarInteractionContext', () => {
         getGhost: () => null,
       };
 
-      let receivedContext: typeof mockValue | undefined;
+      let receivedContext: CalendarInteractionContextValue | undefined;
 
-      const TestComponent = ({ onValue }: { onValue: (val: typeof mockValue) => void }) => {
+      const TestComponent = ({ onValue }: { onValue: (val: CalendarInteractionContextValue) => void }) => {
         const ctx = useCalendarInteraction();
         onValue(ctx);
         return null;

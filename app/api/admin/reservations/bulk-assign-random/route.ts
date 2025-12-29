@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { searchCampsites } from "@/lib/availability/engine";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
     try {
@@ -77,7 +78,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ results });
 
     } catch (error) {
-        console.error("Bulk Assign Random Error:", error);
+        logger.error("Bulk Assign Random Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

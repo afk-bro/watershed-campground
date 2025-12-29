@@ -1,12 +1,26 @@
-type Props = {
+/**
+ * Props for Card component
+ *
+ * Generic card component with title, subtitle, and content area.
+ */
+interface CardProps {
+  /** Card title (required) */
   title: string;
-  subtitle?: string;
-  content?: React.ReactNode | string;
-  imageSrc?: string;
-  variant?: "default" | "outlined";
-};
 
-export default function Card({ title, subtitle, content, variant = "default" }: Props) {
+  /** Optional subtitle text */
+  subtitle?: string;
+
+  /** Optional content to display in the card body */
+  content?: React.ReactNode | string;
+
+  /** Optional image source URL (currently unused but kept for future enhancement) */
+  imageSrc?: string;
+
+  /** Visual variant - default has background, outlined has border only */
+  variant?: "default" | "outlined";
+}
+
+export default function Card({ title, subtitle, content, variant = "default" }: CardProps) {
   const base = "rounded-lg p-6 shadow-sm h-full flex flex-col hover-lift hover:shadow-lg transition-surface";
   const style = variant === "outlined"
     ? "border border-[var(--color-border-default)] hover:border-[var(--color-border-strong)]"

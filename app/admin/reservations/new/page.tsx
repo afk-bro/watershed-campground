@@ -7,6 +7,8 @@ import Container from "@/components/Container";
 import Link from "next/link";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import { toLocalMidnight, getLocalToday } from "@/lib/date";
+import { FormField } from "@/components/admin/shared/forms/FormField";
+import { logger } from "@/lib/logger";
 
 type Addon = {
     id: string;
@@ -116,7 +118,7 @@ function ReservationForm() {
                     setValidationResult(data);
                 }
             } catch (error) {
-                console.error("Availability check failed", error);
+                logger.error("Availability check failed", error);
             }
         };
 
@@ -208,7 +210,7 @@ function ReservationForm() {
             showToast("Reservation created successfully!", "success");
             router.push("/admin");
         } catch (err: unknown) {
-            console.error(err);
+            logger.error("Failed to create reservation", err);
             showToast(err instanceof Error ? err.message : "Unknown error", "error");
         } finally {
             setLoading(false);
@@ -226,53 +228,122 @@ function ReservationForm() {
                  <form onSubmit={handleSubmit} className="max-w-2xl admin-card p-6 md:p-8 space-y-6">
                     {/* Dates & Site */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Check In</label>
-                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.checkIn} onChange={e => setFormData({...formData, checkIn: e.target.value})} />
-                        </div>
-                        <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Check Out</label>
-                            <input type="date" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.checkOut} onChange={e => setFormData({...formData, checkOut: e.target.value})} />
-                        </div>
+                        <FormField
+                            label="Check In"
+                            name="checkIn"
+                            type="date"
+                            required
+                            value={formData.checkIn}
+                            onChange={(value) => setFormData({...formData, checkIn: value as string})}
+                        />
+                        <FormField
+                            label="Check Out"
+                            name="checkOut"
+                            type="date"
+                            required
+                            value={formData.checkOut}
+                            onChange={(value) => setFormData({...formData, checkOut: value as string})}
+                        />
                     </div>
 
-                    <div>
-                        <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Campsite</label>
-                        <select required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.campsiteId} onChange={e => setFormData({...formData, campsiteId: e.target.value})}>
-                            <option value="">Select a Site...</option>
-                            {campsites.map(c => (
-                                <option key={c.id} value={c.id}>{c.name} ({c.type})</option>
-                            ))}
-                        </select>
-                        <p className="text-xs text-[var(--color-text-muted)] mt-2">Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first.</p>
-                    </div>
+                    <FormField
+                        label="Campsite"
+                        name="campsiteId"
+                        type="select"
+                        required
+                        value={formData.campsiteId}
+                        onChange={(value) => setFormData({...formData, campsiteId: value as string})}
+                        options={[
+                            { value: '', label: 'Select a Site...' },
+                            ...campsites.map(c => ({ value: c.id, label: `${c.name} (${c.type})` }))
+                        ]}
+                        hint="Note: Does not auto-check availability. Using &quot;Force&quot; logic in API if ID provided? No, API still checks. Please check calendar first."
+                    />
 
                     {/* Guests */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Adults</label>
-                            <input type="number" min="1" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.adults} onChange={e => setFormData({...formData, adults: parseInt(e.target.value)})} />
-                        </div>
-                        <div>
-                             <label className="block text-sm font-medium text-[var(--color-text-primary)] mb-3">Children</label>
-                             <input type="number" min="0" className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.children} onChange={e => setFormData({...formData, children: parseInt(e.target.value)})} />
-                        </div>
+                        <FormField
+                            label="Adults"
+                            name="adults"
+                            type="number"
+                            required
+                            min={1}
+                            value={formData.adults}
+                            onChange={(value) => setFormData({...formData, adults: Number(value)})}
+                        />
+                        <FormField
+                            label="Children"
+                            name="children"
+                            type="number"
+                            min={0}
+                            value={formData.children}
+                            onChange={(value) => setFormData({...formData, children: Number(value)})}
+                        />
                     </div>
 
                     {/* Contact */}
                      <div className="space-y-4 border-t border-[var(--color-border-default)] pt-6">
                         <h3 className="font-bold text-[var(--color-text-primary)]">Guest Details</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <input type="text" placeholder="First Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.firstName} onChange={e => setFormData({...formData, firstName: e.target.value})} />
-                             <input type="text" placeholder="Last Name" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.lastName} onChange={e => setFormData({...formData, lastName: e.target.value})} />
+                            <FormField
+                                label="First Name"
+                                name="firstName"
+                                type="text"
+                                required
+                                value={formData.firstName}
+                                onChange={(value) => setFormData({...formData, firstName: value as string})}
+                            />
+                            <FormField
+                                label="Last Name"
+                                name="lastName"
+                                type="text"
+                                required
+                                value={formData.lastName}
+                                onChange={(value) => setFormData({...formData, lastName: value as string})}
+                            />
                         </div>
-                        <input type="email" placeholder="Email" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
-                        <input type="tel" placeholder="Phone" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
-                        <input type="text" placeholder="Address" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.address1} onChange={e => setFormData({...formData, address1: e.target.value})} />
+                        <FormField
+                            label="Email"
+                            name="email"
+                            type="email"
+                            required
+                            value={formData.email}
+                            onChange={(value) => setFormData({...formData, email: value as string})}
+                        />
+                        <FormField
+                            label="Phone"
+                            name="phone"
+                            type="tel"
+                            required
+                            value={formData.phone}
+                            onChange={(value) => setFormData({...formData, phone: value as string})}
+                        />
+                        <FormField
+                            label="Address"
+                            name="address1"
+                            type="text"
+                            required
+                            value={formData.address1}
+                            onChange={(value) => setFormData({...formData, address1: value as string})}
+                        />
 
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                             <input type="text" placeholder="City" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.city} onChange={e => setFormData({...formData, city: e.target.value})} />
-                             <input type="text" placeholder="Postal Code" required className="w-full border border-[var(--color-border-default)] bg-[var(--color-surface-card)] text-[var(--color-text-primary)] text-base px-4 py-3.5 md:py-3 rounded-lg" value={formData.postalCode} onChange={e => setFormData({...formData, postalCode: e.target.value})} />
+                            <FormField
+                                label="City"
+                                name="city"
+                                type="text"
+                                required
+                                value={formData.city}
+                                onChange={(value) => setFormData({...formData, city: value as string})}
+                            />
+                            <FormField
+                                label="Postal Code"
+                                name="postalCode"
+                                type="text"
+                                required
+                                value={formData.postalCode}
+                                onChange={(value) => setFormData({...formData, postalCode: value as string})}
+                            />
                         </div>
                      </div>
 

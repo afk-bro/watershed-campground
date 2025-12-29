@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startOfMonth, endOfMonth, parseISO, format } from 'date-fns';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/admin/calendar
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
         });
 
     } catch (error) {
-        console.error('Error fetching calendar data:', error);
+        logger.error('Error fetching calendar data:', error);
         return NextResponse.json(
             { error: 'Failed to fetch calendar data' },
             { status: 500 }

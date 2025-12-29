@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { campsiteFormSchema } from "@/lib/schemas";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
+import { logger } from "@/lib/logger";
 
 // GET /api/admin/campsites - List all campsites
 export async function GET(request: Request) {
@@ -29,7 +30,7 @@ export async function GET(request: Request) {
 
         return NextResponse.json({ data });
     } catch (error) {
-        console.error("Error in GET /api/admin/campsites:", error);
+        logger.error("Error in GET /api/admin/campsites:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -91,7 +92,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json({ data }, { status: 201 });
     } catch (error) {
-        console.error("Error in POST /api/admin/campsites:", error);
+        logger.error("Error in POST /api/admin/campsites:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

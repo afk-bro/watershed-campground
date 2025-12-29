@@ -2,6 +2,7 @@ import { headers } from "next/headers";
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { handleStripeWebhook } from "@/lib/stripe-webhook-handler";
+import { logger } from "@/lib/logger";
 
 export const runtime = "nodejs";
 
@@ -32,14 +33,14 @@ export async function POST(req: Request) {
             // For now, we strictly require signature unless specifically enabling "Public Mock" mode which is risky.
             // Instead, for our verification script, we will unit test the handler directly or mock the signature? 
             // Actually, standard Stripe library requires the secret to be set.
-            console.error("Missing stripe-signature or STRIPE_WEBHOOK_SECRET");
+            logger.error("Missing stripe-signature or STRIPE_WEBHOOK_SECRET");
             return new NextResponse("Webhook Error: Missing signature/secret", { status: 400 });
         }
 
         const stripe = getStripeClient();
         event = stripe.webhooks.constructEvent(body, signature, webhookSecret);
     } catch (err: unknown) {
-        console.error(`Webhook signature verification failed: ${err instanceof Error ? err.message : String(err)}`);
+        logger.error(`Webhook signature verification failed: ${err instanceof Error ? err.message : String(err)}`);
         return new NextResponse(`Webhook Error: ${err instanceof Error ? err.message : String(err)}`, { status: 400 });
     }
 
@@ -47,7 +48,7 @@ export async function POST(req: Request) {
         const result = await handleStripeWebhook(event);
         return NextResponse.json(result);
     } catch (err: unknown) {
-        console.error(`Error processing webhook: ${err instanceof Error ? err.message : String(err)}`);
+        logger.error(`Error processing webhook: ${err instanceof Error ? err.message : String(err)}`);
         return new NextResponse(`Webhook Handler Error: ${err instanceof Error ? err.message : String(err)}`, { status: 500 });
     }
 }

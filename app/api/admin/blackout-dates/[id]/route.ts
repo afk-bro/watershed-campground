@@ -5,6 +5,7 @@ import { blackoutFormSchema } from '@/lib/schemas';
 import { logAudit } from '@/lib/audit/audit-service';
 import { verifyOrgResource } from '@/lib/db-helpers';
 import type { Json } from '@/lib/database.types';
+import { logger } from "@/lib/logger";
 
 /**
  * PATCH /api/admin/blackout-dates/[id]
@@ -137,7 +138,7 @@ export async function PATCH(
 
         return NextResponse.json(updatedBlackout);
     } catch (error) {
-        console.error('Error in PATCH /api/admin/blackout-dates/[id]:', error);
+        logger.error('Error in PATCH /api/admin/blackout-dates/[id]:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }
@@ -179,7 +180,7 @@ export async function DELETE(
 
         return NextResponse.json({ message: 'Blackout date deleted successfully' });
     } catch (error) {
-        console.error('Error in DELETE /api/admin/blackout-dates/[id]:', error);
+        logger.error('Error in DELETE /api/admin/blackout-dates/[id]:', error);
         return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
     }
 }

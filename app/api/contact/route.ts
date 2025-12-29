@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { Resend } from "resend";
 import { contactFormSchema } from "@/lib/schemas";
 import { escapeHtml } from "@/lib/htmlEscape";
+import { logger } from "@/lib/logger";
 
 // Initialize Resend inside the handler to avoid build-time errors if key is missing
 // const resend = new Resend(process.env.RESEND_API_KEY);
@@ -24,10 +25,11 @@ export async function POST(request: Request) {
 
         // Check for API key
         if (!process.env.RESEND_API_KEY) {
-            console.log("Mock Email Sending (RESEND_API_KEY missing):", {
+            logger.warn("Mock email sending - RESEND_API_KEY not configured", {
                 to: "info@thewatershedcampground.com",
                 subject: `New Contact Inquiry from ${name}`,
                 from: email,
+                message,
                 message,
             });
             return NextResponse.json({ success: true, message: "Mock email sent" });
@@ -52,14 +54,17 @@ export async function POST(request: Request) {
 
             return NextResponse.json({ success: true, data });
         } catch (emailError) {
-            console.error("Resend error:", emailError);
+            logger.error("Failed to send contact email via Resend", emailError, {
+                name,
+                email,
+            });
             return NextResponse.json(
                 { error: "Failed to send email" },
                 { status: 500 }
             );
         }
     } catch (error) {
-        console.error("Contact API error:", error);
+        logger.error("Contact form API error", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

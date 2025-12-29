@@ -25,6 +25,7 @@ import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { reservationUpdateSchema } from "@/lib/schemas";
 import { logAudit } from "@/lib/audit/audit-service";
 import { verifyOrgResource, updateWithOrg } from '@/lib/db-helpers';
+import { logger } from "@/lib/logger";
 
 export async function PATCH(
     request: Request,
@@ -191,7 +192,7 @@ export async function PATCH(
                     emailSent = true;
                 }
             } catch (e) {
-                console.error("Email notification failed:", e);
+                logger.error("Email notification failed:", e);
             }
         }
 
@@ -200,7 +201,7 @@ export async function PATCH(
             emailSent
         });
     } catch (error) {
-        console.error("Error in PATCH /api/admin/reservations/[id]:", error);
+        logger.error("Error in PATCH /api/admin/reservations/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

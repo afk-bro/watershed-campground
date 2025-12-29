@@ -5,6 +5,7 @@ import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 import { verifyOrgResource } from '@/lib/db-helpers';
 import type { Json } from '@/lib/database.types';
+import { logger } from "@/lib/logger";
 
 type Params = {
     params: Promise<{
@@ -25,7 +26,7 @@ export async function GET(request: Request, { params }: Params) {
 
         return NextResponse.json({ data: campsite });
     } catch (error) {
-        console.error("Error in GET /api/admin/campsites/[id]:", error);
+        logger.error("Error in GET /api/admin/campsites/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -96,7 +97,7 @@ export async function PATCH(request: Request, { params }: Params) {
 
         return NextResponse.json({ data: updatedCampsite });
     } catch (error) {
-        console.error("Error in PATCH /api/admin/campsites/[id]:", error);
+        logger.error("Error in PATCH /api/admin/campsites/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
@@ -139,7 +140,7 @@ export async function DELETE(request: Request, { params }: Params) {
 
         return NextResponse.json({ message: "Campsite deleted permanently" });
     } catch (error) {
-        console.error("Error in DELETE /api/admin/campsites/[id]:", error);
+        logger.error("Error in DELETE /api/admin/campsites/[id]:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }

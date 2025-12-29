@@ -6,6 +6,7 @@
  */
 
 import { useRef, useCallback } from 'react';
+import { logger } from "@/lib/logger";
 
 // Constants for auto-scroll behavior
 const SCROLL_ZONE_PX = 60; // Distance from edge to trigger scroll
@@ -80,7 +81,7 @@ export function useAutoScroll(): UseAutoScrollReturn {
   const updateScrollDirection = useCallback((clientX: number, clientY: number) => {
     const container = scrollContainerRef.current;
     if (!container) {
-      console.log('[AUTO-SCROLL] No container ref');
+      logger.debug('[AUTO-SCROLL] No container ref');
       return;
     }
 
@@ -95,10 +96,10 @@ export function useAutoScroll(): UseAutoScrollReturn {
     // Horizontal scrolling - use container's visible edges
     if (clientX < leftEdge + SCROLL_ZONE_PX) {
       x = -1; // Scroll left
-      console.log('[AUTO-SCROLL] Scrolling LEFT', { clientX, leftEdge, SCROLL_ZONE_PX });
+      logger.debug('[AUTO-SCROLL] Scrolling LEFT', { clientX, leftEdge, SCROLL_ZONE_PX });
     } else if (clientX > rightEdge - SCROLL_ZONE_PX) {
       x = 1; // Scroll right
-      console.log('[AUTO-SCROLL] Scrolling RIGHT', { clientX, rightEdge, SCROLL_ZONE_PX });
+      logger.debug('[AUTO-SCROLL] Scrolling RIGHT', { clientX, rightEdge, SCROLL_ZONE_PX });
     }
 
     // Vertical scrolling removed - page handles vertical scroll naturally

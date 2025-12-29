@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 type PaymentStatus = 'paid' | 'deposit_paid' | 'payment_due' | 'overdue' | 'failed' | 'refunded';
 
 interface PaymentBadgeProps {
@@ -5,7 +7,7 @@ interface PaymentBadgeProps {
     amount?: number;
 }
 
-export default function PaymentBadge({ status, amount }: PaymentBadgeProps) {
+const PaymentBadge = memo(function PaymentBadge({ status, amount }: PaymentBadgeProps) {
     const config = {
         paid: {
             icon: '✓',
@@ -47,4 +49,8 @@ export default function PaymentBadge({ status, amount }: PaymentBadgeProps) {
             <span>{label}</span>
         </span>
     );
-}
+});
+
+PaymentBadge.displayName = 'PaymentBadge';
+
+export default PaymentBadge;

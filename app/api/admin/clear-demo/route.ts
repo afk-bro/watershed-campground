@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { clearDemoData } from '@/lib/seed/demo-seed';
+import { logger } from "@/lib/logger";
 
 /**
  * DELETE /api/admin/clear-demo
@@ -20,7 +21,7 @@ export async function DELETE(request: Request) {
         });
 
     } catch (error) {
-        console.error('[API] Clear demo error:', error);
+        logger.error('[API] Clear demo error:', error);
         return NextResponse.json(
             { error: 'Failed to clear demo data' },
             { status: 500 }

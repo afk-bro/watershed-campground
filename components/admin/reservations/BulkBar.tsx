@@ -1,3 +1,5 @@
+import { memo } from "react";
+
 type BulkBarProps = {
     selectedCount: number;
     showArchived: boolean;
@@ -11,7 +13,7 @@ type BulkBarProps = {
     onClearSelection: () => void;
 };
 
-export default function BulkBar({
+const BulkBar = memo(function BulkBar({
     selectedCount,
     showArchived,
     isSubmitting = false,
@@ -107,4 +109,8 @@ export default function BulkBar({
             </button>
         </div>
     );
-}
+});
+
+BulkBar.displayName = 'BulkBar';
+
+export default BulkBar;

@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import Container from "@/components/Container";
 import CampsiteForm from "@/components/admin/CampsiteForm";
 import type { CampsiteFormData } from "@/components/admin/CampsiteForm";
+import { logger } from "@/lib/logger";
 
 export default function NewCampsitePage() {
     const router = useRouter();
@@ -30,7 +31,7 @@ export default function NewCampsitePage() {
             // Success - redirect to campsites list
             router.push('/admin/campsites');
         } catch (err: unknown) {
-            console.error('Error creating campsite:', err);
+            logger.error('Error creating campsite:', err);
             setError(err instanceof Error ? err.message : 'Failed to create campsite');
             setLoading(false);
         }

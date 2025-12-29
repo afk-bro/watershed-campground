@@ -3,16 +3,38 @@
 import { memo } from "react";
 import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import { getPaymentStatus, getNights } from "@/lib/admin/reservations/listing";
+import { getPaymentStatusConfig } from "@/lib/payments/config";
 import RowActions from "@/components/admin/RowActions";
 
+/**
+ * Props for ReservationCard component
+ *
+ * Mobile card view displaying reservation details with touch-optimized layout.
+ * Shows guest info, status badge, dates, campsite, and action menu.
+ */
 interface ReservationCardProps {
+    /** The reservation to display */
     reservation: Reservation;
+
+    /** Whether this card is selected (for bulk actions) */
     isSelected: boolean;
+
+    /** Whether any action is currently submitting (disables interactions) */
     isSubmitting: boolean;
+
+    /** Callback to toggle card selection for bulk actions */
     onToggle: (id: string) => void;
+
+    /** Callback when card is clicked (opens reservation drawer) */
     onClick: (reservation: Reservation) => void;
+
+    /** Callback to update reservation status */
     updateStatus: (id: string, status: ReservationStatus) => void;
+
+    /** Callback to archive the reservation */
     handleArchive: (id: string) => void;
+
+    /** Callback to open campsite assignment dialog */
     setAssigningReservation: (reservation: Reservation) => void;
 }
 
@@ -51,15 +73,7 @@ const ReservationCard = memo(function ReservationCard({
         ...reservation,
         metadata: reservation.metadata || undefined
     });
-    const paymentConfig = {
-        paid: { icon: '✓', label: 'Paid in full', color: 'text-green-600/60 dark:text-green-400/60' },
-        deposit_paid: { icon: '💳', label: 'Deposit paid', color: 'text-blue-600/60 dark:text-blue-400/60' },
-        payment_due: { icon: '⏳', label: 'Payment due', color: 'text-amber-600/80 dark:text-amber-400/80' },
-        overdue: { icon: '⚠️', label: 'Payment overdue', color: 'text-red-600/80 dark:text-red-400/80' },
-        failed: { icon: '✕', label: 'Payment failed', color: 'text-red-600/80 dark:text-red-400/80' },
-        refunded: { icon: '↩', label: 'Refunded', color: 'text-gray-600/60 dark:text-gray-400/60' }
-    };
-    const config = paymentConfig[paymentStatus];
+    const config = getPaymentStatusConfig(paymentStatus);
 
     return (
         <div className={cardClass} data-testid={`reservation-card-${reservation.id}`}>

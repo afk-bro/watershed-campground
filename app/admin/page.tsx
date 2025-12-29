@@ -10,6 +10,7 @@ import BulkBar from "@/components/admin/reservations/BulkBar";
 import { computeCounts } from "@/lib/admin/reservations/listing";
 import { useToast } from "@/components/ui/Toast";
 import type { BlockingEventOverviewItem } from "@/lib/supabase";
+import { ErrorBoundary, CompactErrorFallback } from "@/components/ErrorBoundary";
 
 // New modular components
 import ReservationRow from "@/components/admin/reservations/ReservationRow";
@@ -25,12 +26,15 @@ import { useViewportModeContext } from "@/components/providers/ViewportModeProvi
 import { useReservationData } from "@/hooks/admin/useReservationData";
 import { useReservationFilters } from "@/hooks/admin/useReservationFilters";
 import { useBulkActions } from "@/hooks/admin/useBulkActions";
+import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { adminAPI } from "@/lib/admin/api-client";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/lib/admin/constants";
+import { logger } from "@/lib/logger";
 
 export default function AdminPage() {
     const { showToast } = useToast();
     const { isPhone } = useViewportModeContext();
+    const { showConfirm, ConfirmDialogComponent: statusConfirmDialog } = useConfirmDialog();
 
     // UI state
     const [selectedReservation, setSelectedReservation] = useState<Reservation | null>(null);
@@ -81,7 +85,16 @@ export default function AdminPage() {
 
     const updateStatus = async (id: string, status: ReservationStatus) => {
         if (isSubmitting) return;
-        if (status === 'cancelled' && !confirm('Are you sure?')) return;
+
+        if (status === 'cancelled') {
+            const confirmed = await showConfirm({
+                title: "Cancel Reservation",
+                message: "Are you sure you want to cancel this reservation?",
+                confirmLabel: "Cancel Reservation",
+                variant: "danger"
+            });
+            if (!confirmed) return;
+        }
 
         setIsSubmitting(true);
         try {
@@ -89,7 +102,7 @@ export default function AdminPage() {
             await refetch();
             showToast(`Reservation ${status.replace('_', ' ')}`, 'success');
         } catch (error) {
-            console.error('Error updating status:', error);
+            logger.error('Error updating status:', error);
             showToast(ERROR_MESSAGES.RESERVATION_UPDATE_FAILED, 'error');
         } finally {
             setIsSubmitting(false);
@@ -171,6 +184,7 @@ export default function AdminPage() {
                 />
 
                 {/* Mobile Card View */}
+                <ErrorBoundary fallback={<CompactErrorFallback message="Failed to load reservations list" />}>
                 {isPhone ? (
                     <div className="space-y-3">
                         {sortedItems.length === 0 ? (
@@ -278,6 +292,7 @@ export default function AdminPage() {
                         </div>
                     </div>
                 )}
+                </ErrorBoundary>
             </Container>
 
             <ReservationDrawer reservation={selectedReservation} isOpen={!!selectedReservation} onClose={() => setSelectedReservation(null)} />
@@ -294,6 +309,8 @@ export default function AdminPage() {
                 onRestore={() => bulkActions.handleBulkArchive('restore', selectedIds)}
                 onClearSelection={() => setSelectedIds(new Set())}
             />
+            {bulkActions.ConfirmDialogComponent}
+            {statusConfirmDialog}
         </div>
     );
 }

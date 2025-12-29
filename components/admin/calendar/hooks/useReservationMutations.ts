@@ -11,6 +11,7 @@ import type { CalendarData } from '@/lib/calendar/calendar-types';
 import { useToast } from '@/components/ui/Toast';
 import { calendarService } from '@/lib/calendar/calendar-service';
 import { handleAdminError } from '@/lib/admin/error-handler';
+import { logger } from "@/lib/logger";
 
 interface UseReservationMutationsProps {
   onDataMutate?: (
@@ -44,7 +45,7 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
   const rescheduleReservation = useCallback(async (params: RescheduleParams) => {
     // Fall back to reload if no mutate function provided
     if (!onDataMutate) {
-      console.warn('[RESCHEDULE] No mutate function provided, falling back to reload');
+      logger.warn('[RESCHEDULE] No mutate function provided, falling back to reload');
       try {
         const campsiteId = params.newCampsiteId === 'UNASSIGNED' ? null : params.newCampsiteId;
 
@@ -106,7 +107,7 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
       // Get current data for optimistic update
       const currentData = await onDataMutate();
       if (!currentData) {
-        console.error('[RESCHEDULE] No current data available');
+        logger.error('[RESCHEDULE] No current data available');
         throw new Error('No current data available');
       }
 
@@ -136,7 +137,7 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
             abortControllerRef.current.signal
           );
 
-          console.log('[RESCHEDULE] Server confirmed:', updatedReservation);
+          logger.debug('[RESCHEDULE] Server confirmed:', { updatedReservation });
 
           // Show success notification
           if (emailSent) {
