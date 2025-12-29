@@ -4,6 +4,7 @@ import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { blackoutFormSchema } from '@/lib/schemas';
 import { logAudit } from '@/lib/audit/audit-service';
 import { verifyOrgResource } from '@/lib/db-helpers';
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
     try {
@@ -56,7 +57,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(data);
     } catch (error) {
-        console.error('Error creating blackout date:', error);
+        logger.error('Error creating blackout date:', error);
         return NextResponse.json(
             { error: 'Failed to create blackout date' },
             { status: 500 }

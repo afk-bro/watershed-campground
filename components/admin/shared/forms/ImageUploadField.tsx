@@ -2,6 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useImageUpload } from '@/components/admin/hooks/useImageUpload';
+import { logger } from "@/lib/logger";
 
 /**
  * Props for ImageUploadField component
@@ -79,7 +80,7 @@ export function ImageUploadField({
           // Note: Error is logged and already set by the hook for user display.
           // For production error tracking (e.g., Sentry), add service call here or
           // consider adding an optional onError callback prop for flexible handling.
-          console.error('Image upload failed:', err);
+          logger.error('Image upload failed:', err);
         });
     }
     // Note: uploadImage is intentionally excluded from dependencies to avoid infinite loop.

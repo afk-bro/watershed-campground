@@ -4,6 +4,7 @@ import { ReservationStatus } from "@/lib/supabase";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 import { z } from "zod";
+import { logger } from "@/lib/logger";
 
 const bulkStatusSchema = z.object({
     reservationIds: z.array(z.string()).min(1),
@@ -43,7 +44,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ updated: data });
 
     } catch (error) {
-        console.error("Bulk Status Error:", error);
+        logger.error("Bulk Status Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

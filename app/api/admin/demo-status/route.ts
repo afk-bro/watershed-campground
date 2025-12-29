@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { supabaseAdmin } from '@/lib/supabase-admin';
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/admin/demo-status
@@ -52,7 +53,7 @@ export async function GET(request: Request) {
         });
 
     } catch (error) {
-        console.error('[API] Demo status error:', error);
+        logger.error('[API] Demo status error:', error);
         return NextResponse.json(
             { error: 'Failed to get demo status' },
             { status: 500 }

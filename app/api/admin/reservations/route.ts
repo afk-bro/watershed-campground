@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { OverviewItem } from "@/lib/supabase";
 import { requireAdminWithOrg } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
 
 /**
  * GET /api/admin/reservations
@@ -26,7 +27,7 @@ export async function GET() {
             .is('archived_at', null);
 
         if (reservationsError) {
-            console.error("Error fetching reservations:", reservationsError);
+            logger.error("Error fetching reservations:", reservationsError);
             return NextResponse.json(
                 { error: "Failed to fetch reservations" },
                 { status: 500 }
@@ -43,7 +44,7 @@ export async function GET() {
             .eq('organization_id', organizationId!);
 
         if (blackoutError) {
-            console.error("Error fetching blackout dates:", blackoutError);
+            logger.error("Error fetching blackout dates:", blackoutError);
             return NextResponse.json(
                 { error: "Failed to fetch blackout dates" },
                 { status: 500 }
@@ -79,7 +80,7 @@ export async function GET() {
         });
 
     } catch (error) {
-        console.error("Error in reservations endpoint:", error);
+        logger.error("Error in reservations endpoint:", error);
         return NextResponse.json(
             { error: "Internal server error" },
             { status: 500 }

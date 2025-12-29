@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Container from "@/components/Container";
 import Link from "next/link";
 import { format } from "date-fns";
+import { logger } from "@/lib/logger";
 
 type ReportData = {
     revenue: number;
@@ -28,7 +29,7 @@ export default function ReportsPage() {
             const json = await res.json();
             setData(json);
         } catch (err) {
-            console.error(err);
+            logger.error("Failed to fetch admin report", err);
             setError("Error loading report");
         } finally {
             setLoading(false);

@@ -36,6 +36,7 @@ import CalendarRow from "./CalendarRow";
 import FloatingCalendarRail from "./FloatingCalendarRail";
 import { CalendarInteractionProvider } from "./CalendarInteractionContext";
 import { UI_CONSTANTS } from "@/lib/admin/constants";
+import { logger } from "@/lib/logger";
 
 
 interface CalendarGridProps {
@@ -183,12 +184,12 @@ export default function CalendarGrid({
     // Prevents spamming server if multiple items get stuck simultaneously
     const now = Date.now();
     if (now - lastRevalidateRef.current < 3000) {
-      console.log('[STUCK SAVING FAILSAFE] Skipping revalidate (throttled - multiple items stuck)');
+      logger.debug('[STUCK SAVING FAILSAFE] Skipping revalidate (throttled - multiple items stuck)');
       return;
     }
 
     lastRevalidateRef.current = now;
-    console.log('[STUCK SAVING FAILSAFE] Auto-revalidating calendar data');
+    logger.debug('[STUCK SAVING FAILSAFE] Auto-revalidating calendar data');
     onDataMutate(undefined, { revalidate: true });
   }, [onDataMutate]);
 

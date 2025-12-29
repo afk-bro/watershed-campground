@@ -16,6 +16,7 @@
 import { useEffect, useRef } from 'react';
 import { Reservation, BlackoutDate } from '@/lib/supabase';
 import { useToast } from '@/components/ui/Toast';
+import { logger } from "@/lib/logger";
 
 interface UseStuckSavingFailsafeProps {
   reservations: (Reservation & { _saving?: boolean })[];
@@ -49,7 +50,7 @@ export function useStuckSavingFailsafe({
       const key = `reservation-${r.id}`;
       if (!timeouts.has(key)) {
         const timeout = setTimeout(() => {
-          console.error('[STUCK SAVING] Reservation stuck saving for 10s:', r.id);
+          logger.error('[STUCK SAVING] Reservation stuck saving for 10s:', r.id);
           showToast('Still saving... Syncing with server.', 'warning');
 
           // Auto-revalidate to sync reality
@@ -68,7 +69,7 @@ export function useStuckSavingFailsafe({
       const key = `blackout-${b.id}`;
       if (!timeouts.has(key)) {
         const timeout = setTimeout(() => {
-          console.error('[STUCK SAVING] Blackout stuck saving for 10s:', b.id);
+          logger.error('[STUCK SAVING] Blackout stuck saving for 10s:', b.id);
           showToast('Still saving... Syncing with server.', 'warning');
 
           // Auto-revalidate to sync reality

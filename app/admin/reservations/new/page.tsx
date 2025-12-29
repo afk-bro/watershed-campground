@@ -8,6 +8,7 @@ import Link from "next/link";
 import { ToastProvider, useToast } from "@/components/ui/Toast";
 import { toLocalMidnight, getLocalToday } from "@/lib/date";
 import { FormField } from "@/components/admin/shared/forms/FormField";
+import { logger } from "@/lib/logger";
 
 type Addon = {
     id: string;
@@ -117,7 +118,7 @@ function ReservationForm() {
                     setValidationResult(data);
                 }
             } catch (error) {
-                console.error("Availability check failed", error);
+                logger.error("Availability check failed", error);
             }
         };
 
@@ -209,7 +210,7 @@ function ReservationForm() {
             showToast("Reservation created successfully!", "success");
             router.push("/admin");
         } catch (err: unknown) {
-            console.error(err);
+            logger.error("Failed to create reservation", err);
             showToast(err instanceof Error ? err.message : "Unknown error", "error");
         } finally {
             setLoading(false);

@@ -4,6 +4,7 @@ import { useState, FormEvent } from 'react';
 import type { CampsiteType } from '@/lib/supabase';
 import { FormField } from './shared/forms/FormField';
 import { ImageUploadField } from './shared/forms/ImageUploadField';
+import { logger } from "@/lib/logger";
 
 export interface CampsiteFormData {
     name: string;
@@ -58,7 +59,7 @@ export default function CampsiteForm({
         try {
             await onSubmit(formData);
         } catch (err: unknown) {
-            console.error('Error in CampsiteForm submission:', err);
+            logger.error('Error in CampsiteForm submission:', err);
             setError(err instanceof Error ? err.message : 'An error occurred');
         }
     }

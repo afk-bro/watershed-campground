@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { checkDailyAvailability } from "@/lib/availability/engine";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
     try {
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
         const availability = await checkDailyAvailability(monthDate, organizationId);
         return NextResponse.json(availability);
     } catch (error) {
-        console.error("Calendar Availability Error:", error);
+        logger.error("Calendar Availability Error:", error);
         return NextResponse.json({ error: "Failed to fetch availability" }, { status: 500 });
     }
 }

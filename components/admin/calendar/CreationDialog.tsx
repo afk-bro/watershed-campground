@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { X, Calendar, Ban } from "lucide-react";
 import { format } from "date-fns";
+import { logger } from "@/lib/logger";
 
 interface CreationDialogProps {
   isOpen: boolean;
@@ -37,7 +38,7 @@ export default function CreationDialog({
       await onCreateBlackout(reason);
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to create event", e);
     } finally {
       setIsSubmitting(false);
     }

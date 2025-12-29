@@ -46,6 +46,7 @@ async function uploadImageToSupabase(file: File): Promise<string> {
 }
 
 import { requireAdminWithOrg } from '@/lib/admin-auth';
+import { logger } from "@/lib/logger";
 
 export async function POST(request: NextRequest) {
     // HARD FAIL-CLOSED: This endpoint is NOT multi-tenant safe
@@ -78,7 +79,7 @@ export async function POST(request: NextRequest) {
             { status: 200 }
         );
     } catch (error: unknown) {
-        console.error('Image upload error:', error);
+        logger.error('Image upload error:', error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Failed to upload image' },
             { status: 500 }

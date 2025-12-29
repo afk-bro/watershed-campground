@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { NextResponse } from "next/server";
+import { logger } from "@/lib/logger";
 
 export async function GET() {
     try {
@@ -10,13 +11,13 @@ export async function GET() {
             .order("name");
 
         if (error) {
-            console.error("Error fetching addons:", error);
+            logger.error("Error fetching addons:", error);
             return NextResponse.json({ error: "Failed to fetch addons" }, { status: 500 });
         }
 
         return NextResponse.json(addons);
     } catch (err) {
-        console.error("Internal Error:", err);
+        logger.error("Internal Error:", err);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

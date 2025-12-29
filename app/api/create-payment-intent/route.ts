@@ -11,6 +11,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { checkAvailability } from "@/lib/availability/engine";
 import { determinePaymentPolicy, calculatePaymentAmounts } from "@/lib/payment-policy";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
+import { logger } from "@/lib/logger";
 
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
@@ -61,7 +62,7 @@ export async function POST(request: Request) {
         try {
             stripe = getStripeClient();
         } catch {
-            console.error("STRIPE_SECRET_KEY is missing");
+            logger.error("STRIPE_SECRET_KEY is missing");
             return NextResponse.json(
                 { error: "Payment system configuration missing" },
                 { status: 503 }
@@ -111,7 +112,7 @@ export async function POST(request: Request) {
             .single();
 
         if (siteError || !campsite) {
-            console.error("Site fetch error:", siteError);
+            logger.error("Site fetch error:", siteError);
             return NextResponse.json({ error: "Failed to retrieve campsite details" }, { status: 500 });
         }
 
@@ -215,7 +216,7 @@ export async function POST(request: Request) {
             }
         );
     } catch (error) {
-        console.error("Internal Error:", error);
+        logger.error("Internal Error:", error);
         return NextResponse.json(
             { error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` },
             { status: 500 }

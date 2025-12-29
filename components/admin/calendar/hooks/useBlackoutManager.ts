@@ -4,6 +4,7 @@ import { useToast } from "@/components/ui/Toast";
 import type { CalendarData } from "@/lib/calendar/calendar-types";
 import { calendarService } from "@/lib/calendar/calendar-service";
 import { handleAdminError } from "@/lib/admin/error-handler";
+import { logger } from "@/lib/logger";
 
 interface UseBlackoutManagerProps {
     onDataMutate?: (
@@ -39,7 +40,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
     const updateBlackout = useCallback(async (id: string, reason: string, extraParams: Partial<{ start_date: string, end_date: string, campsite_id: string | null }> = {}) => {
         // Fallback if no onDataMutate (Standard Fetch)
         if (!onDataMutate) {
-            console.warn('[UPDATE BLACKOUT] No mutate function provided, falling back to reload');
+            logger.warn('[UPDATE BLACKOUT] No mutate function provided, falling back to reload');
             try {
                 abortControllerRef.current?.abort();
                 abortControllerRef.current = new AbortController();
@@ -49,7 +50,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                 setTimeout(() => window.location.reload(), 500);
             } catch (e: any) {
                 if (e.name === 'AbortError') return;
-                console.error('[UPDATE BLACKOUT ERROR]', e);
+                logger.error('[UPDATE BLACKOUT ERROR]', e);
                 showToast(e.message || 'Failed to update blackout', 'error');
                 throw e;
             }
@@ -58,7 +59,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
         // Optimistic Update
         try {
-            console.log('[UPDATE BLACKOUT] Optimistic update', { id, reason, ...extraParams });
+            logger.debug('[UPDATE BLACKOUT] Optimistic update', { id, reason, ...extraParams });
 
             await onDataMutate(async (current) => {
                 if (!current) throw new Error('No current data');
@@ -67,7 +68,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                 abortControllerRef.current = new AbortController();
 
                 const updated = await calendarService.updateBlackoutDate(id, { reason, ...extraParams }, abortControllerRef.current.signal);
-                console.log('[UPDATE BLACKOUT] Server confirmed:', updated);
+                logger.debug('[UPDATE BLACKOUT] Server confirmed:', updated);
 
                 return {
                     ...current,
@@ -78,7 +79,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
             showToast('Blackout updated successfully', 'success');
         } catch (e: any) {
             if (e.name === 'AbortError') return;
-            console.error('[UPDATE BLACKOUT ERROR]', e);
+            logger.error('[UPDATE BLACKOUT ERROR]', e);
             showToast(e.message || 'Failed to update blackout', 'error');
             throw e;
         }
@@ -94,7 +95,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
         // Fallback if no mutate function provided
         if (!onDataMutate) {
-            console.warn('[CREATE BLACKOUT] No mutate function provided, falling back to reload');
+            logger.warn('[CREATE BLACKOUT] No mutate function provided, falling back to reload');
             try {
                 abortControllerRef.current?.abort();
                 abortControllerRef.current = new AbortController();
@@ -119,7 +120,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
         // Optimistic update
         try {
-            console.log('[CREATE BLACKOUT] Optimistic update', { start, end, campsite_id: campsiteId, reason });
+            logger.debug('[CREATE BLACKOUT] Optimistic update', { start, end, campsite_id: campsiteId, reason });
 
             // Create optimistic blackout with temporary ID
             const optimisticBlackout = {
@@ -154,7 +155,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                         reason
                     }, abortControllerRef.current.signal);
 
-                    console.log('[CREATE BLACKOUT] Server confirmed:', newBlackout);
+                    logger.debug('[CREATE BLACKOUT] Server confirmed:', newBlackout);
 
                     return {
                         ...current,
@@ -179,7 +180,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
     const deleteBlackout = useCallback(async (id: string) => {
         // Fallback
         if (!onDataMutate) {
-            console.warn('[DELETE BLACKOUT] No mutate function provided, falling back to reload');
+            logger.warn('[DELETE BLACKOUT] No mutate function provided, falling back to reload');
             try {
                 abortControllerRef.current?.abort();
                 abortControllerRef.current = new AbortController();
@@ -190,7 +191,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                 setTimeout(() => window.location.reload(), 500);
             } catch (e: any) {
                 if (e.name === 'AbortError') return;
-                console.error('[DELETE BLACKOUT ERROR]', e);
+                logger.error('[DELETE BLACKOUT ERROR]', e);
                 showToast(e.message || 'Failed to delete blackout', 'error');
                 throw e;
             }
@@ -199,7 +200,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
 
         // Optimistic
         try {
-            console.log('[DELETE BLACKOUT] Optimistic update', { id });
+            logger.debug('[DELETE BLACKOUT] Optimistic update', { id });
 
             await onDataMutate(async (current) => {
                 if (!current) throw new Error('No current data');
@@ -208,7 +209,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                 abortControllerRef.current = new AbortController();
 
                 await calendarService.deleteBlackoutDate(id, abortControllerRef.current.signal);
-                console.log('[DELETE BLACKOUT] Server confirmed deletion');
+                logger.debug('[DELETE BLACKOUT] Server confirmed deletion');
 
                 return {
                     ...current,
@@ -219,7 +220,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
             showToast('Blackout deleted', 'success');
         } catch (e: any) {
             if (e.name === 'AbortError') return;
-            console.error('[DELETE BLACKOUT ERROR]', e);
+            logger.error('[DELETE BLACKOUT ERROR]', e);
             showToast(e.message || 'Failed to delete blackout', 'error');
             throw e;
         }

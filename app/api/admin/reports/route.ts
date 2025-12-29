@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/supabase-admin';
 import { startOfMonth, endOfMonth, parse, eachDayOfInterval, isWithinInterval } from 'date-fns';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
+import { logger } from "@/lib/logger";
 
 export async function GET(request: Request) {
     try {
@@ -85,7 +86,7 @@ export async function GET(request: Request) {
         });
 
     } catch (error) {
-        console.error("Reporting Error:", error);
+        logger.error("Reporting Error:", error);
         return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
     }
 }
