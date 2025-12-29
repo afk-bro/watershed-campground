@@ -13,21 +13,29 @@ import type { ZodError } from "zod";
  *
  * @param message - Error message
  * @param status - HTTP status code
- * @param details - Optional additional error details
+ * @param headersOrDetails - Optional headers object or additional error details
  * @returns NextResponse with error payload
  */
 export function errorResponse(
   message: string,
   status: number,
-  details?: unknown
+  headersOrDetails?: Record<string, string> | unknown
 ) {
+  // Determine if the third parameter is headers or details
+  const isHeaders = headersOrDetails &&
+    typeof headersOrDetails === 'object' &&
+    Object.values(headersOrDetails).every(v => typeof v === 'string');
+
+  const headers = isHeaders ? headersOrDetails as Record<string, string> : undefined;
+  const details = !isHeaders ? headersOrDetails : undefined;
+
   return NextResponse.json(
     {
       error: message,
       ...(details ? { details } : {}),
       timestamp: new Date().toISOString(),
     },
-    { status }
+    { status, ...(headers ? { headers } : {}) }
   );
 }
 

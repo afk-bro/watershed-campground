@@ -4,6 +4,13 @@ import { searchCampsites } from "@/lib/availability/engine";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { z } from "zod";
 import { logger } from "@/lib/logger";
+import {
+    checkRateLimit,
+    getRateLimitHeaders,
+    getClientIp,
+    createIpIdentifier,
+    rateLimiters
+} from "@/lib/rate-limit-upstash";
 
 const searchSchema = z.object({
     checkIn: z.string(),
@@ -15,6 +22,21 @@ const searchSchema = z.object({
 
 export async function POST(request: Request) {
     try {
+        // Rate Limiting (30 requests per minute - DoS prevention)
+        const ip = getClientIp(request);
+        const identifier = createIpIdentifier(ip, 'availability-search');
+        const rateLimit = await checkRateLimit(identifier, rateLimiters.availability);
+
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: "Too many search requests. Please try again later." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit)
+                }
+            );
+        }
+
         // CRITICAL: Resolve organization BEFORE any queries
         const organizationId = await resolvePublicOrganizationId(request);
         if (!organizationId) {

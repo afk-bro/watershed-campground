@@ -2,9 +2,31 @@ import { NextResponse } from "next/server";
 import { checkDailyAvailability } from "@/lib/availability/engine";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { logger } from "@/lib/logger";
+import {
+    checkRateLimit,
+    getRateLimitHeaders,
+    getClientIp,
+    createIpIdentifier,
+    rateLimiters
+} from "@/lib/rate-limit-upstash";
 
 export async function GET(request: Request) {
     try {
+        // Rate Limiting (30 requests per minute - DoS prevention)
+        const ip = getClientIp(request);
+        const identifier = createIpIdentifier(ip, 'availability-calendar');
+        const rateLimit = await checkRateLimit(identifier, rateLimiters.availability);
+
+        if (!rateLimit.success) {
+            return NextResponse.json(
+                { error: "Too many availability requests. Please try again later." },
+                {
+                    status: 429,
+                    headers: getRateLimitHeaders(rateLimit)
+                }
+            );
+        }
+
         // CRITICAL: Resolve organization BEFORE any queries
         const organizationId = await resolvePublicOrganizationId(request);
         if (!organizationId) {

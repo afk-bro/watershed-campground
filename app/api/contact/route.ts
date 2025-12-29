@@ -3,9 +3,29 @@ import { escapeHtml } from "@/lib/htmlEscape";
 import { logger } from "@/lib/logger";
 import { errorResponse, successResponse, validationError } from "@/lib/api-helpers";
 import { getResendClient, isResendConfigured } from "@/lib/services/email.service";
+import {
+    checkRateLimit,
+    getRateLimitHeaders,
+    getClientIp,
+    createIpIdentifier,
+    rateLimiters
+} from "@/lib/rate-limit-upstash";
 
 export async function POST(request: Request) {
     try {
+        // Rate Limiting (3 requests per 5 minutes per IP - spam prevention)
+        const ip = getClientIp(request);
+        const identifier = createIpIdentifier(ip, 'contact-form');
+        const rateLimit = await checkRateLimit(identifier, rateLimiters.contactForm);
+
+        if (!rateLimit.success) {
+            return errorResponse(
+                "Too many contact requests. Please try again later.",
+                429,
+                getRateLimitHeaders(rateLimit)
+            );
+        }
+
         const body = await request.json();
 
         // Validate request body
