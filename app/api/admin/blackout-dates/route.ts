@@ -5,6 +5,7 @@ import { blackoutFormSchema } from '@/lib/schemas';
 import { logAudit } from '@/lib/audit/audit-service';
 import { verifyOrgResource } from '@/lib/db-helpers';
 import { logger } from "@/lib/logger";
+import { validationError } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
     try {
@@ -17,10 +18,7 @@ export async function POST(request: Request) {
         const validation = blackoutFormSchema.safeParse(body);
 
         if (!validation.success) {
-            return NextResponse.json(
-                { error: 'Validation failed', details: validation.error.flatten().fieldErrors },
-                { status: 400 }
-            );
+            return validationError(validation.error);
         }
 
         const { start_date, end_date, campsite_id, reason } = validation.data;
