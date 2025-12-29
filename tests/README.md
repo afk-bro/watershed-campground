@@ -460,25 +460,17 @@ npm run test:report
 - Node.js 20+
 - NPM dependencies installed
 
-### Local Supabase
-Tests run against a local Supabase instance.
+### Supabase (Hosted test project)
+Tests in CI run against a hosted Supabase test project. For local development, create a `.env.test` that points to the hosted test project credentials provided by your team.
 
-**Test Credentials:**
-- Admin Email: `admin@test.com`
-- Admin Password: `testpass123`
-- Supabase Studio: http://localhost:54323
-- PostgreSQL: `postgresql://postgres:postgres@localhost:54322/postgres`
-
-### Environment Variables
-Configuration in `.env.test`:
+Example `.env.test`:
 
 ```bash
-# Local Supabase (from npx supabase start)
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
 SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
 
-# Test Admin Credentials
+# Test Admin Credentials (if seeded in the hosted test project)
 TEST_ADMIN_EMAIL=admin@test.com
 TEST_ADMIN_PASSWORD=testpass123
 
@@ -497,7 +489,7 @@ STRIPE_SECRET_KEY=sk_test_...
    - **Only run explicitly via `npm run test:db:reset`**
    - **Never in `sql_paths`** (not auto-executed by Supabase)
 
-2. **`supabase/seed.sql`** - SAFE (all environments)
+2. **`supabase/seeds/dev_seed.sql`** - SAFE (all environments)
    - Inserts test data with explicit `ON CONFLICT (business_key) DO NOTHING`
    - Idempotent - safe to run multiple times
    - Includes E2E validation that fails loudly if incomplete
@@ -521,18 +513,10 @@ STRIPE_SECRET_KEY=sk_test_...
 **Production Safety:** The destructive `seed.local.sql` will NEVER run in production because:
 - It's **NOT in `sql_paths`** (must be run explicitly via test scripts)
 - Has safety checks that abort if not running on local Supabase
-- Vercel/preview/production only run the safe `seed.sql` (if at all)
+- Vercel/preview/production only run the safe `supabase/seeds/dev_seed.sql` (if at all)
 
-**Local Reset Command:**
-```bash
-npm run test:db:reset  # Runs migrations + seed.local.sql + seed.sql
-```
-
-This script:
-1. Runs `npx supabase db reset` (migrations + seed.sql)
-2. Explicitly runs `seed.local.sql` (truncate)
-3. Re-runs `seed.sql` (reload test data)
-4. Validates all data loaded correctly
+**Local reset / seeding**
+If you control the hosted test project, apply migrations and (optionally) run `supabase db reset` from a machine with CLI access to that hosted project. Otherwise ask the team to perform resets/seeding on the shared test project. Avoid running local destructive seeds against production or preview environments.
 
 **Validation:** After seeding, validation checks ensure:
 - At least 7 campsites exist
@@ -658,16 +642,10 @@ Error: Port 3000 is already in use
 lsof -ti:3000 | xargs kill -9
 ```
 
-### Supabase Not Starting
-```
-Error: Failed to start Supabase
-```
-**Fix:** Reset Docker containers
-```bash
-npx supabase stop
-docker system prune -f
-npx supabase start
-```
+### Supabase / Test DB Issues
+If tests can't reach the test database, ensure `.env.test` points to a reachable hosted test project and that the project has been migrated and seeded.
+
+If you run a local Supabase instance intentionally, manage it manually and be careful to avoid running it on shared machines. Local CLI usage is opt-in and not required by CI.
 
 ### Auth Setup Failing
 ```
@@ -700,12 +678,13 @@ npx supabase db reset
 - Check browser console for Stripe errors
 
 ### Calendar Tests Fail
-- Ensure local Supabase is running: `npx supabase start`
-- Verify at least 2 active campsites exist in database
-- Check `tests/.auth/admin.json` exists (run setup first)
+- Ensure the test project's database contains at least 2 active campsites
+- Verify `tests/.auth/admin.json` exists (run setup first)
+If you're using a hosted test project, ask the team to apply migrations and seed data. If you run a local DB, set `LOCAL_SUPABASE=1` before using local setup scripts.
 
 ### Database State Errors
-- Reset local database: `npx supabase db reset`
+- For hosted test project, ask the team to reset/seed the test project or apply migrations.
+- For isolated local testing, use `LOCAL_SUPABASE=1 ./scripts/test-setup.sh --test` to enable local Supabase startup (unsupported by CI).
 - Run migrations: Check `supabase/migrations/`
 - Verify test data cleanup in `afterAll` hooks
 

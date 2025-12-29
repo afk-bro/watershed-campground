@@ -4,73 +4,22 @@
 
 Before running E2E tests, ensure all prerequisites are met:
 
-### ✅ 1. Docker Desktop Running
-```bash
-# Verify Docker is running
-docker ps
-```
+### ✅ 1. Hosted Supabase Credentials
 
-**If not running:**
-- Start Docker Desktop
-- Enable WSL 2 integration in Docker Desktop settings
-- Restart WSL: `wsl --shutdown` then reopen terminal
+This project uses a hosted Supabase instance for CI and for developer testing against a shared test project. To run tests locally against hosted Supabase, create a `.env.test` with the hosted project's credentials (stored in your org's secrets or provided by the team).
 
----
-
-### ✅ 2. Supabase CLI Installed
-```bash
-# Check if installed
-npx supabase --version
-```
-
-Should show version like `1.x.x`
-
----
-
-### ✅ 3. Environment Variables Set
-Verify `.env.test` exists and contains:
+Example `.env.test` (replace values with your hosted test project credentials):
 ```env
-NEXT_PUBLIC_SUPABASE_URL=http://127.0.0.1:54321
-NEXT_PUBLIC_SUPABASE_ANON_KEY=<from supabase start>
-SUPABASE_SERVICE_ROLE_KEY=<from supabase start>
+NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=sb_publishable_...
+SUPABASE_SERVICE_ROLE_KEY=sb_secret_...
 TEST_ADMIN_EMAIL=admin@test.com
 TEST_ADMIN_PASSWORD=testpass123
 ```
 
----
-
-### ✅ 4. Start Local Supabase
-```bash
-npx supabase start
-```
-
-**Expected output:**
-```
-Started supabase local development setup.
-
-         API URL: http://127.0.0.1:54321
-          DB URL: postgresql://postgres:postgres@127.0.0.1:54322/postgres
-      Studio URL: http://127.0.0.1:54323
-    Inbucket URL: http://127.0.0.1:54324
-      JWT secret: <secret>
-        anon key: <anon-key>
-service_role key: <service-role-key>
-```
-
-**Copy the keys to `.env.test`**
-
----
-
-### ✅ 5. Verify Database is Seeded
-```bash
-# Check if admin user exists
-npx supabase db dump --data-only | grep admin@test.com
-```
-
-If no admin user, seed the database:
-```bash
-npx supabase db reset
-```
+Optional workflows:
+- Use a dedicated hosted test project (recommended) and keep credentials in your password manager or environment.
+- Use an ephemeral Postgres service for isolated DB-backed tests (see CI alternatives below).
 
 ---
 
@@ -143,22 +92,15 @@ npx playwright test tests/guest-booking-complete.spec.ts tests/admin/reservation
 
 ## Troubleshooting
 
-### Issue: "Cannot connect to Docker daemon"
-**Solution:** Start Docker Desktop and enable WSL 2 integration
-
-### Issue: "Supabase not running"
-**Solution:**
-```bash
-npx supabase stop
-npx supabase start
-```
+### Issue: "Missing Supabase credentials"
+**Solution:** Ensure `.env.test` contains `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY` from your hosted test project or CI secrets.
 
 ### Issue: "Test fails with 'admin@test.com not found'"
-**Solution:** Reset database to run migrations and seeds:
-```bash
-npx supabase db reset
-```
+**Solution:** If you control the hosted test project, apply migrations and (optionally) run `supabase db reset` from a machine that has CLI access and is intended for administering that project. Otherwise ask the team to apply migrations and seed data to the shared test project.
 
+### CI alternatives (if you want isolated DBs for CI)
+- Use GitHub Actions `services: postgres` and run migrations inside the job (fast, isolated).
+- Use hosted Supabase test project and rely on credentials in repository secrets (recommended for parity with production features like Auth and Storage).
 ### Issue: "Stripe Elements not loading"
 **Solution:** Check `.env.local` has:
 ```env
@@ -202,9 +144,8 @@ Once all tests pass:
 
 ```bash
 # Full test cycle
-npx supabase start                          # Start local DB
-npx playwright test --list                  # Verify tests load
-npx playwright test --headed                # Run all with UI
+npx playwright test --list                  # Verify tests load (uses hosted `.env.test`)
+npx playwright test --headed                # Run all with UI (uses hosted `.env.test`)
 npx playwright show-report                  # View results
 
 # Individual test suites
@@ -217,5 +158,6 @@ npx playwright test --debug
 npx playwright test -g "should complete full booking" --debug
 
 # Clean up
-npx supabase stop                           # Stop Supabase
+# If you started a local Supabase instance manually, stop it. Otherwise nothing to do.
+# npx supabase stop
 ```

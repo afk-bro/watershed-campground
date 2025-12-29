@@ -35,7 +35,7 @@ npm run lint -- app/**/*.tsx
 **Purpose:** Verify critical user flows work end-to-end
 
 **What it does:**
-- Starts local Supabase instance with Docker
+- Uses hosted Supabase credentials stored in CI secrets (no local Docker)
 - Installs Playwright browsers (Chromium)
 - Runs all 24 E2E tests:
   - ✅ Guest booking flow (3 tests)
@@ -50,12 +50,12 @@ npm run lint -- app/**/*.tsx
 - **Retries:** 2 (in CI mode)
 - **Workers:** 1 (sequential to avoid DB conflicts)
 
-**Run locally:**
-```bash
-# Start local Supabase
-npx supabase start
+**Run locally (developer recommended):**
+1. Obtain hosted test project credentials from the team and create `.env.test` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+2. Run tests against the hosted test project:
 
-# Run all tests
+```bash
+# Run all tests against hosted test project
 npx playwright test
 
 # Run specific suite
@@ -64,6 +64,8 @@ npx playwright test tests/guest-booking-complete.spec.ts
 # Debug mode
 npx playwright test --debug
 ```
+
+If you prefer an isolated DB for local testing, consider using GitHub Actions `services: postgres` or a local ephemeral Postgres instance and apply migrations; avoid running the Supabase Docker stack unless necessary.
 
 **View reports:**
 - **In CI:** Download artifact from GitHub Actions run
@@ -339,10 +341,9 @@ npm run type-check
 echo "🏗️ Running Build Check..."
 npm run build
 
-echo "🎭 Running E2E Tests..."
-npx supabase start
-npx playwright test
-npx supabase stop
+echo "🎭 Running E2E Tests (smoke suite)..."
+# CI runs a small deterministic Playwright smoke suite on every push/PR. Full Lighthouse runs are nightly/manual.
+npx playwright test tests/admin/smoke.spec.ts
 
 echo "✅ Local CI Passed!"
 ```

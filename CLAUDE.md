@@ -26,13 +26,15 @@ npx playwright show-report                   # View test report
 # Run a single test file
 npx playwright test tests/admin/smoke.spec.ts
 
-# Database (Supabase Local - installed via npm)
-npx supabase start          # Start local Supabase (requires Docker)
-npx supabase stop           # Stop local instance
-npx supabase db reset       # Reset DB with migrations + test data (campsites, reservations)
-./scripts/db-reset-clean.sh # Reset DB with migrations + admin user only (clean slate)
-npx supabase migration new <name>  # Create new migration
-npx supabase db push        # Push local schema to remote (use carefully)
+# Database (Hosted Supabase)
+This project relies on a hosted Supabase project for CI and developer testing. Avoid running a local Supabase Docker stack unless you have a specific need.
+
+Common tasks:
+- Apply schema changes to hosted (run from a machine with proper access): `supabase db push --project-ref <project_ref>`
+- Generate types from hosted: `supabase gen types typescript --project-id <project_ref> --schema public > supabase/types.ts`
+- Reset or seed the hosted test project only when you control that environment.
+
+If you still need a local development database, use an isolated ephemeral Postgres instance or maintain local-only artifacts on a branch. The default contributor workflow expects credentials in `.env.test` or CI secrets.
 ```
 
 ## Architecture Overview

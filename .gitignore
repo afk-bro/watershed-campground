@@ -44,3 +44,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 tests/.auth/
+
+# Supabase local runtime (keep migrations + types, ignore local-only junk)
+supabase/.temp/
+supabase/docker/
+supabase/config.toml
+supabase/seed.local.sql

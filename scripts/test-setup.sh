@@ -129,27 +129,32 @@ echo -e "${GREEN}✓ .env.test configured correctly${NC}"
 echo ""
 
 # ============================================
-# Step 3: Start Supabase
+# Step 3: Start Supabase (optional)
 # ============================================
-echo -e "${YELLOW}[3/6] Starting local Supabase...${NC}"
+echo -e "${YELLOW}[3/6] Local Supabase start is optional for this script${NC}"
 
-# Check if Supabase is already running
-if npx supabase status &> /dev/null; then
-    echo -e "${BLUE}Supabase is already running. Stopping and restarting...${NC}"
-    npx supabase stop
-fi
+# For CI and recommended developer workflows we use a hosted Supabase test project.
+# To preserve legacy behavior, set LOCAL_SUPABASE=1 to allow this script to start
+# the local Supabase Docker stack. Otherwise this step is skipped.
 
-# Start Supabase
-npx supabase start
-
-if [ $? -eq 0 ]; then
-    echo -e "${GREEN}✓ Supabase started successfully${NC}"
+if [ "$LOCAL_SUPABASE" != "1" ]; then
+    echo -e "${BLUE}Skipping local Supabase start (LOCAL_SUPABASE!=1).${NC}"
+    echo "If you really need to start a local Supabase instance, set LOCAL_SUPABASE=1 and re-run this script."
 else
-    echo -e "${RED}Error: Failed to start Supabase${NC}"
-    exit 1
+    echo -e "${YELLOW}LOCAL_SUPABASE=1 detected — attempting to start local Supabase...${NC}"
+    if npx supabase status &> /dev/null; then
+        echo -e "${BLUE}Supabase is already running. Stopping and restarting...${NC}"
+        npx supabase stop
+    fi
+    npx supabase start
+    if [ $? -eq 0 ]; then
+        echo -e "${GREEN}✓ Supabase started successfully${NC}"
+    else
+        echo -e "${RED}Error: Failed to start Supabase${NC}"
+        exit 1
+    fi
 fi
 
-echo ""
 
 # ============================================
 # Step 4: Reset Database & Run Migrations

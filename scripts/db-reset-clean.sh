@@ -18,6 +18,13 @@ PROJECT_ROOT="$( cd "$SCRIPT_DIR/.." && pwd )"
 # Change to project root
 cd "$PROJECT_ROOT"
 
+# Safety: require explicit opt-in to run destructive local reset
+if [ "${LOCAL_SUPABASE:-}" != "1" ]; then
+  echo "LOCAL_SUPABASE=1 required for local reset. Skipping." >&2
+  echo "To run a local clean reset, set LOCAL_SUPABASE=1 and re-run this script." >&2
+  exit 0
+fi
+
 echo "🧹 Resetting database with clean tables (admin user only)..."
 
 # Step 1: Run migrations (creates all tables)
@@ -69,4 +76,4 @@ echo "  ✗ No reservations"
 echo "  ✗ No test data"
 echo ""
 echo "💡 To add campsites and test data, run:"
-echo "   npx supabase db reset (to reload with seed.sql)"
+echo "   npx supabase db reset (to reload with supabase/seeds/dev_seed.sql)"
