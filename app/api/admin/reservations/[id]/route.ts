@@ -1,21 +1,13 @@
 import { NextResponse } from "next/server";
-import { createClient } from "@/lib/supabase/server";
-import { supabaseAdmin } from "@/lib/supabase-admin";
-import type { ReservationStatus } from "@/lib/supabase";
-import { sendReservationNotification, shouldSendNotification } from "@/lib/services/notification.service";
-
-type UpdateReservationBody = {
-    status?: ReservationStatus;
-    campsite_id?: string | null;
-    check_in?: string;
-    check_out?: string;
-};
-
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { reservationUpdateSchema } from "@/lib/schemas";
-import { logAudit } from "@/lib/audit/audit-service";
-import { verifyOrgResource, updateWithOrg } from '@/lib/db-helpers';
 import { logger } from "@/lib/logger";
+import {
+  updateReservation,
+  ReservationValidationError,
+  ReservationConflictError
+} from "@/lib/services/reservation.service";
+import { validationError, errorResponse } from "@/lib/api-helpers";
 
 export async function PATCH(
     request: Request,
@@ -28,163 +20,49 @@ export async function PATCH(
 
         const { id } = await params;
 
-        // 2. Fetch current reservation for comparison/logging (org-scoped)
-        const { data: oldReservation, error: fetchError } = await supabaseAdmin
-            .from('reservations')
-            .select('*, campsites(id, name, code)')
-            .eq('id', id)
-            .eq('organization_id', organizationId!)
-            .single();
-
-        if (fetchError || !oldReservation) {
-            return NextResponse.json({ error: "Reservation not found" }, { status: 404 });
-        }
-
-        // 3. Validation
+        // 2. Validation
         const body = await request.json();
         const validation = reservationUpdateSchema.safeParse(body);
 
         if (!validation.success) {
-            return NextResponse.json(
-                { error: "Validation failed", details: validation.error.flatten().fieldErrors },
-                { status: 400 }
-            );
+            return validationError(validation.error);
         }
 
-        const updates: any = {
-            updated_at: new Date().toISOString(),
-        };
+        const { status, campsite_id, check_in, check_out, firstName, lastName, email, phone, notes } = validation.data;
 
-        const { status, campsite_id, check_in, check_out, firstName, lastName, email, phone } = validation.data;
-
-        if (status !== undefined) updates.status = status;
-        if (campsite_id !== undefined) updates.campsite_id = campsite_id;
-        if (check_in !== undefined) updates.check_in = check_in;
-        if (check_out !== undefined) updates.check_out = check_out;
-        if (firstName !== undefined) updates.first_name = firstName;
-        if (lastName !== undefined) updates.last_name = lastName;
-        if (email !== undefined) updates.email = email;
-        if (phone !== undefined) updates.phone = phone;
-
-        // Validate date order if changed
-        const finalCheckIn = check_in || oldReservation.check_in;
-        const finalCheckOut = check_out || oldReservation.check_out;
-        if (new Date(finalCheckOut) <= new Date(finalCheckIn)) {
-            return NextResponse.json({ error: "Check-out must be after check-in" }, { status: 400 });
-        }
-
-        // Validate campsite if provided (org-scoped)
-        if (campsite_id !== undefined && campsite_id !== null) {
-            const campsite = await verifyOrgResource('campsites', campsite_id, organizationId!);
-
-            if (!campsite) {
-                return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
-            }
-        }
-
-        // Conflict check (skipped for brevity but should be logically here)
-        // I will preserve the conflict check logic...
-        const targetCampsiteId = campsite_id !== undefined ? campsite_id : oldReservation.campsite_id;
-        if (targetCampsiteId !== null && (campsite_id !== undefined || check_in !== undefined || check_out !== undefined)) {
-            // [PRESERVED CONFLICT LOGIC - org-scoped]
-            const { data: blackoutConflicts } = await supabaseAdmin
-                .from('blackout_dates')
-                .select('reason')
-                .eq('organization_id', organizationId!)
-                .or(`campsite_id.is.null,campsite_id.eq.${targetCampsiteId}`)
-                .lt('start_date', finalCheckOut)
-                .gte('end_date', finalCheckIn);
-
-            if (blackoutConflicts && blackoutConflicts.length > 0) {
-                return NextResponse.json({ error: `Conflict with blackout date` }, { status: 409 });
-            }
-
-            const { data: conflicts } = await supabaseAdmin
-                .from('reservations')
-                .select('id, first_name, last_name')
-                .eq('organization_id', organizationId!)
-                .eq('campsite_id', targetCampsiteId)
-                .neq('id', id)
-                .lt('check_in', finalCheckOut)
-                .gt('check_out', finalCheckIn)
-                .not('status', 'in', '(cancelled,no_show)');
-
-            if (conflicts && conflicts.length > 0) {
-                return NextResponse.json({ error: `Conflicts with existing reservation` }, { status: 409 });
-            }
-        }
-
-        // 4. Update (org-scoped)
-        const { data: updatedReservation, error: updateError } = await supabaseAdmin
-            .from('reservations')
-            .update(updates)
-            .eq('id', id)
-            .eq('organization_id', organizationId!)
-            .select('*, campsites(id, name, code)')
-            .single();
-
-        if (updateError) throw updateError;
-
-        // 5. Audit Logging
-        await logAudit({
-            action: 'RESERVATION_UPDATE',
-            reservationId: id,
-            oldData: oldReservation,
-            newData: updatedReservation,
-            changedBy: user!.id,
-            organizationId: organizationId!
-        });
-
-        // 6. Best-effort email notification
-        let emailSent = false;
-        const notificationType = shouldSendNotification(
-            {
-                status: oldReservation.status,
-                campsite_id: oldReservation.campsite_id,
-                check_in: oldReservation.check_in,
-                check_out: oldReservation.check_out
+        // 3. Update reservation using service layer
+        const result = await updateReservation({
+            id,
+            updates: {
+                status,
+                campsite_id,
+                check_in,
+                check_out,
+                first_name: firstName,
+                last_name: lastName,
+                email,
+                phone,
+                notes
             },
-            {
-                status: updatedReservation.status,
-                campsite_id: updatedReservation.campsite_id,
-                check_in: updatedReservation.check_in,
-                check_out: updatedReservation.check_out
-            }
-        );
-
-        if (notificationType) {
-            const result = await sendReservationNotification({
-                type: notificationType,
-                reservation: {
-                    id: updatedReservation.id,
-                    email: updatedReservation.email,
-                    first_name: updatedReservation.first_name,
-                    last_name: updatedReservation.last_name,
-                    check_in: updatedReservation.check_in,
-                    check_out: updatedReservation.check_out,
-                    campsite: updatedReservation.campsites ? {
-                        name: updatedReservation.campsites.name,
-                        code: updatedReservation.campsites.code
-                    } : undefined
-                },
-                changeDetails: {
-                    oldCampsite: oldReservation.campsites?.name,
-                    newCampsite: updatedReservation.campsites?.name,
-                    oldCheckIn: oldReservation.check_in,
-                    newCheckIn: updatedReservation.check_in,
-                    oldCheckOut: oldReservation.check_out,
-                    newCheckOut: updatedReservation.check_out
-                }
-            });
-            emailSent = result.sent;
-        }
+            organizationId: organizationId!,
+            userId: user!.id
+        });
 
         return NextResponse.json({
-            reservation: updatedReservation,
-            emailSent
+            reservation: result.reservation,
+            emailSent: result.emailSent
         });
     } catch (error) {
+        // Handle specific service errors with appropriate status codes
+        if (error instanceof ReservationValidationError) {
+            return errorResponse(error.message, 400);
+        }
+
+        if (error instanceof ReservationConflictError) {
+            return errorResponse(error.message, 409);
+        }
+
         logger.error("Error in PATCH /api/admin/reservations/[id]:", error);
-        return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+        return errorResponse("Internal server error", 500);
     }
 }
