@@ -26,6 +26,14 @@ export default defineConfig({
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
+        // Leak-proof settings to prevent zombie Chrome processes
+        headless: true,
+        launchOptions: {
+            args: [
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+            ],
+        },
     },
     projects: [
         // ============================================
