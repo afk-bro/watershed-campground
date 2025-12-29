@@ -7,6 +7,7 @@ import CampsiteForm from "@/components/admin/CampsiteForm";
 import type { CampsiteFormData } from "@/components/admin/CampsiteForm";
 import type { Campsite } from "@/lib/supabase";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
+import { logger } from "@/lib/logger";
 
 export default function EditCampsitePage() {
     const router = useRouter();
@@ -30,7 +31,7 @@ export default function EditCampsitePage() {
             const { data } = await response.json();
             setCampsite(data);
         } catch (err: unknown) {
-            console.error('Error fetching campsite:', err);
+            logger.error('Error fetching campsite:', err);
             setError(err instanceof Error ? err.message : 'Failed to load campsite');
         } finally {
             setLoading(false);
@@ -62,7 +63,7 @@ export default function EditCampsitePage() {
             // Success - redirect to campsites list
             router.push('/admin/campsites');
         } catch (err: unknown) {
-            console.error('Error updating campsite:', err);
+            logger.error('Error updating campsite:', err);
             setError(err instanceof Error ? err.message : 'Failed to update campsite');
             setSaving(false);
         }
@@ -91,7 +92,7 @@ export default function EditCampsitePage() {
             // Success - redirect to campsites list
             router.push('/admin/campsites');
         } catch (err: unknown) {
-            console.error('Error deactivating campsite:', err);
+            logger.error('Error deactivating campsite:', err);
             alert(err instanceof Error ? err.message : 'Failed to deactivate campsite');
         }
     }

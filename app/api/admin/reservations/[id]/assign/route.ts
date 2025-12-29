@@ -3,6 +3,7 @@ import { supabaseAdmin } from "@/lib/supabase-admin";
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { logAudit } from "@/lib/audit/audit-service";
 import { verifyOrgResource } from '@/lib/db-helpers';
+import { logger } from "@/lib/logger";
 
 export async function POST(
     request: Request,
@@ -94,7 +95,7 @@ export async function POST(
         return NextResponse.json({ success: true, campsiteId });
 
     } catch (error) {
-        console.error("Assignment Error:", error);
+        logger.error("Assignment Error:", error);
         return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
     }
 }

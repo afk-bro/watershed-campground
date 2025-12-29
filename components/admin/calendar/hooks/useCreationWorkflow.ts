@@ -3,6 +3,7 @@ import { useCalendarSelection } from './useCalendarSelection';
 import type { BlackoutDate, Reservation } from '@/lib/supabase';
 import { handleAdminError } from '@/lib/admin/error-handler';
 import { useToast } from '@/components/ui/Toast';
+import { logger } from "@/lib/logger";
 
 export interface UseCreationWorkflowParams {
   /** Whether drag or resize is currently active (blocks creation) */
@@ -124,10 +125,10 @@ export function useCreationWorkflow({
   // Attaches ONCE when isCreating becomes true, removes when it becomes false
   useEffect(() => {
     if (isCreating) {
-      console.log('[CREATION] Setting up pointermove listener for auto-scroll');
+      logger.debug('[CREATION] Setting up pointermove listener for auto-scroll');
       window.addEventListener('pointermove', handleCreationPointerMove);
       return () => {
-        console.log('[CREATION] Removing pointermove listener');
+        logger.debug('[CREATION] Removing pointermove listener');
         window.removeEventListener('pointermove', handleCreationPointerMove);
         stopAutoScroll(); // Stop any active scrolling
       };

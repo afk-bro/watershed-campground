@@ -5,6 +5,7 @@ import { X, Trash2, Calendar, AlertTriangle } from "lucide-react";
 import { format, parseISO } from "date-fns";
 import type { BlackoutDate, Campsite } from "@/lib/supabase";
 import { FormField } from "@/components/admin/shared/forms/FormField";
+import { logger } from "@/lib/logger";
 
 interface BlackoutDrawerProps {
   blackout: BlackoutDate | null;
@@ -52,7 +53,7 @@ export default function BlackoutDrawer({
       await onUpdate(blackout.id, reason);
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to update blackout", e);
     } finally {
       setIsSubmitting(false);
     }
@@ -64,7 +65,7 @@ export default function BlackoutDrawer({
       await onDelete(blackout.id);
       onClose();
     } catch (e) {
-      console.error(e);
+      logger.error("Failed to delete blackout", e);
     } finally {
       setIsSubmitting(false);
     }

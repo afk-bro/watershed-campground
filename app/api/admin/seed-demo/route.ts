@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { seedDemoDataForCampground } from '@/lib/seed/demo-seed';
+import { logger } from "@/lib/logger";
 
 /**
  * POST /api/admin/seed-demo
@@ -27,7 +28,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        console.error('[API] Seed demo error:', error);
+        logger.error('[API] Seed demo error:', error);
         return NextResponse.json(
             { error: 'Failed to seed demo data' },
             { status: 500 }

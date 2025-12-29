@@ -2,6 +2,7 @@
 import { NextResponse } from "next/server";
 import { checkAvailability } from "@/lib/availability/engine";
 import { requireAdminWithOrg } from "@/lib/admin-auth";
+import { logger } from "@/lib/logger";
 
 export async function POST(request: Request) {
     try {
@@ -58,7 +59,7 @@ export async function POST(request: Request) {
         return NextResponse.json(result);
 
     } catch (error) {
-        console.error("Availability Check API Error:", error);
+        logger.error("Availability Check API Error:", error);
         return NextResponse.json(
             { available: false, message: "Server error checking availability" },
             { status: 500 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { supabaseAdmin } from "@/lib/supabase-admin";
+import { logger } from "@/lib/logger";
 
 function hashToken(token: string): string {
     return crypto.createHash('sha256').update(token).digest('hex');
@@ -67,7 +68,7 @@ export async function POST(req: Request) {
 
         return NextResponse.json({ reservation: data });
     } catch (error) {
-        console.error('Error cancelling reservation:', error);
+        logger.error('Error cancelling reservation:', error);
         return NextResponse.json(
             { error: 'Internal server error' },
             { status: 500 }

@@ -3,6 +3,7 @@ import { supabaseAdmin } from '@/lib/supabase-admin';
 import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { verifyOrgResource } from '@/lib/db-helpers';
 import { campsiteImageKey, isValidImageType, validateFileHeader, isValidImageSize, getExtensionFromMimeType } from '@/lib/storage-utils';
+import { logger } from "@/lib/logger";
 
 export const runtime = 'nodejs';
 
@@ -107,7 +108,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             });
 
         if (uploadError) {
-            console.error('Storage upload error:', uploadError);
+            logger.error('Storage upload error:', uploadError);
             throw new Error(`Upload failed: ${uploadError.message}`);
         }
 
@@ -127,7 +128,7 @@ export async function POST(request: NextRequest, { params }: Params) {
             .eq('organization_id', organizationId!);
 
         if (updateError) {
-            console.error('Database update error:', updateError);
+            logger.error('Database update error:', updateError);
             // Attempt to clean up uploaded file
             await supabaseAdmin.storage
                 .from('campsite-images')
@@ -142,7 +143,7 @@ export async function POST(request: NextRequest, { params }: Params) {
         }, { status: 200 });
 
     } catch (error: unknown) {
-        console.error('Image upload error:', error);
+        logger.error('Image upload error:', error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Failed to upload image' },
             { status: 500 }
@@ -189,7 +190,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         // URL format: https://<project>.supabase.co/storage/v1/object/public/campsite-images/<storageKey>
         const urlParts = campsite.image_url.split('/campsite-images/');
         if (urlParts.length !== 2) {
-            console.error('Invalid image URL format:', campsite.image_url);
+            logger.error('Invalid image URL format:', campsite.image_url);
             return NextResponse.json(
                 { error: 'Invalid image URL format' },
                 { status: 400 }
@@ -201,7 +202,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         // 4. Verify Storage Key Belongs to This Org (prevent cross-org deletion)
         const expectedPrefix = `org/${organizationId}/campsites/${campsiteId}/`;
         if (!storageKey.startsWith(expectedPrefix)) {
-            console.warn(`[Security] Attempted cross-org deletion: ${storageKey} does not match ${expectedPrefix}`);
+            logger.warn(`[Security] Attempted cross-org deletion: ${storageKey} does not match ${expectedPrefix}`);
             return NextResponse.json(
                 { error: 'Unauthorized: storage key does not belong to this organization' },
                 { status: 403 }
@@ -214,7 +215,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             .remove([storageKey]);
 
         if (storageError) {
-            console.error('Storage deletion error:', storageError);
+            logger.error('Storage deletion error:', storageError);
             // Continue even if storage deletion fails (file might not exist)
         }
 
@@ -229,7 +230,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
             .eq('organization_id', organizationId!);
 
         if (updateError) {
-            console.error('Database update error:', updateError);
+            logger.error('Database update error:', updateError);
             throw new Error('Failed to update campsite record');
         }
 
@@ -238,7 +239,7 @@ export async function DELETE(request: NextRequest, { params }: Params) {
         }, { status: 200 });
 
     } catch (error: unknown) {
-        console.error('Image deletion error:', error);
+        logger.error('Image deletion error:', error);
         return NextResponse.json(
             { error: error instanceof Error ? error.message : 'Failed to delete image' },
             { status: 500 }

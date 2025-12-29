@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useViewportModeContext } from '@/components/providers/ViewportModeProvider';
 import type { ViewportMode } from '@/lib/hooks/useViewportMode';
+import { logger } from "@/lib/logger";
 
 /**
  * Calendar UX Modes (aligned with global viewport modes)
@@ -111,7 +112,7 @@ function saveAllViewPrefs(prefs: ViewPrefs): void {
   try {
     localStorage.setItem(VIEW_PREFS_KEY, JSON.stringify(prefs));
   } catch (e) {
-    console.warn('Failed to save view preferences:', e);
+    logger.warn('Failed to save view preferences');
   }
 }
 

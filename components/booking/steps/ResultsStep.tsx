@@ -34,7 +34,7 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
                      setSites(await res.json());
                  }
              } catch (e) {
-                 console.error(e);
+                 logger.error("Search results error", e);
              } finally {
                  setLoading(false);
              }
@@ -120,3 +120,4 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
 }
 
 import { Users } from 'lucide-react';
+import { logger } from "@/lib/logger";

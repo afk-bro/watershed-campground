@@ -11,6 +11,7 @@ import { requireAdmin } from "@/lib/admin-auth";
 import { getBaseUrl } from "@/lib/url-utils";
 import { checkRateLimit, rateLimiters, getClientIp, createIpIdentifier, getRateLimitHeaders } from "@/lib/rate-limit-upstash";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
+import { logger } from "@/lib/logger";
 
 // Lazy initialization to avoid build-time errors
 let stripeClient: Stripe | null = null;
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
         );
 
         if (!rlResult.success) {
-            console.warn(`[RateLimit] Blocked reservation attempt from ${ip}`);
+            logger.warn(`[RateLimit] Blocked reservation attempt from ${ip}`);
             return NextResponse.json(
                 { error: "Too many reservation attempts. Please try again later." },
                 {
@@ -266,7 +267,7 @@ export async function POST(request: Request) {
                 });
             } catch (emailError) {
                 // Log email failure but don't fail the entire request
-                console.error("Failed to send reservation emails:", emailError);
+                logger.error("Failed to send reservation emails:", emailError);
                 // Note: The reservation was successfully created, but email failed
                 // Consider implementing a retry mechanism or background job
             }
@@ -282,7 +283,7 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        console.error("Reservation API Error:", error);
+        logger.error("Reservation API Error:", error);
         console.error("Error details:", {
             message: error instanceof Error ? error.message : String(error),
             stack: error instanceof Error ? error.stack : undefined,

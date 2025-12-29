@@ -28,6 +28,7 @@ import { useBulkActions } from "@/hooks/admin/useBulkActions";
 import { useConfirmDialog } from "@/hooks/useConfirmDialog";
 import { adminAPI } from "@/lib/admin/api-client";
 import { SUCCESS_MESSAGES, ERROR_MESSAGES } from "@/lib/admin/constants";
+import { logger } from "@/lib/logger";
 
 export default function AdminPage() {
     const { showToast } = useToast();
@@ -100,7 +101,7 @@ export default function AdminPage() {
             await refetch();
             showToast(`Reservation ${status.replace('_', ' ')}`, 'success');
         } catch (error) {
-            console.error('Error updating status:', error);
+            logger.error('Error updating status:', error);
             showToast(ERROR_MESSAGES.RESERVATION_UPDATE_FAILED, 'error');
         } finally {
             setIsSubmitting(false);

@@ -4,6 +4,7 @@ import { useCallback, useEffect, useState } from "react";
 import { format, addMonths, subMonths, startOfMonth, endOfMonth, eachDayOfInterval, parseISO } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { DayStatus } from "@/lib/availability/engine";
+import { logger } from "@/lib/logger";
 
 interface DateStepProps {
     checkIn: string | null;
@@ -33,7 +34,7 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
                 setAvailability(data);
             }
         } catch (err) {
-            console.error(err);
+            logger.error("Date step error", err);
         } finally {
             setLoading(false);
         }
