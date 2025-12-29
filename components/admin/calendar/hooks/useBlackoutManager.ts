@@ -68,7 +68,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                 abortControllerRef.current = new AbortController();
 
                 const updated = await calendarService.updateBlackoutDate(id, { reason, ...extraParams }, abortControllerRef.current.signal);
-                logger.debug('[UPDATE BLACKOUT] Server confirmed:', updated);
+                logger.debug('[UPDATE BLACKOUT] Server confirmed:', { updated });
 
                 return {
                     ...current,
@@ -155,7 +155,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                         reason
                     }, abortControllerRef.current.signal);
 
-                    logger.debug('[CREATE BLACKOUT] Server confirmed:', newBlackout);
+                    logger.debug('[CREATE BLACKOUT] Server confirmed:', { newBlackout });
 
                     return {
                         ...current,

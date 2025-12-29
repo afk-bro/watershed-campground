@@ -84,7 +84,11 @@ class Logger {
                            level === 'info' ? console.info :
                            console.log;
 
-      consoleMethod(`[${logEntry.level}]`, message, metadata || '');
+      if (metadata && Object.keys(metadata).length > 0) {
+        consoleMethod(`[${logEntry.level}]`, message, metadata);
+      } else {
+        consoleMethod(`[${logEntry.level}]`, message);
+      }
     } else {
       // In production, use structured JSON logging
       // This can be easily parsed by log aggregation services

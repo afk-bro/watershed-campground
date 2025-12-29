@@ -29,6 +29,7 @@ export async function POST(request: Request) {
                 to: "info@thewatershedcampground.com",
                 subject: `New Contact Inquiry from ${name}`,
                 from: email,
+                message,
             });
             return NextResponse.json({ success: true, message: "Mock email sent" });
         }
