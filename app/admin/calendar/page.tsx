@@ -7,6 +7,7 @@ import { format, parse } from "date-fns";
 import Container from "@/components/Container";
 import CalendarGrid from "@/components/admin/calendar/CalendarGrid";
 import { useCalendarData } from "@/hooks/useCalendarData";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 export default function CalendarPage() {
   const searchParams = useSearchParams();
@@ -78,14 +79,24 @@ export default function CalendarPage() {
           </p>
         </div>
 
-        <CalendarGrid
-          campsites={data?.campsites || []}
-          reservations={data?.reservations || []}
-          date={currentDate}
-          onDateChange={setCurrentDate}
-          blackoutDates={data?.blackoutDates || []}
-          onDataMutate={mutate}
-        />
+        <ErrorBoundary
+          fallback={
+            <div className="p-8 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg">
+              <p className="text-red-700 dark:text-red-200 font-medium">
+                Failed to load calendar. Please refresh the page.
+              </p>
+            </div>
+          }
+        >
+          <CalendarGrid
+            campsites={data?.campsites || []}
+            reservations={data?.reservations || []}
+            date={currentDate}
+            onDateChange={setCurrentDate}
+            blackoutDates={data?.blackoutDates || []}
+            onDataMutate={mutate}
+          />
+        </ErrorBoundary>
       </div>
     </div>
   );

@@ -10,6 +10,7 @@ import BulkBar from "@/components/admin/reservations/BulkBar";
 import { computeCounts } from "@/lib/admin/reservations/listing";
 import { useToast } from "@/components/ui/Toast";
 import type { BlockingEventOverviewItem } from "@/lib/supabase";
+import { ErrorBoundary, CompactErrorFallback } from "@/components/ErrorBoundary";
 
 // New modular components
 import ReservationRow from "@/components/admin/reservations/ReservationRow";
@@ -183,6 +184,7 @@ export default function AdminPage() {
                 />
 
                 {/* Mobile Card View */}
+                <ErrorBoundary fallback={<CompactErrorFallback message="Failed to load reservations list" />}>
                 {isPhone ? (
                     <div className="space-y-3">
                         {sortedItems.length === 0 ? (
@@ -290,6 +292,7 @@ export default function AdminPage() {
                         </div>
                     </div>
                 )}
+                </ErrorBoundary>
             </Container>
 
             <ReservationDrawer reservation={selectedReservation} isOpen={!!selectedReservation} onClose={() => setSelectedReservation(null)} />
