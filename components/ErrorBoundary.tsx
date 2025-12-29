@@ -14,6 +14,7 @@ interface ErrorBoundaryProps {
 interface ErrorBoundaryState {
   hasError: boolean;
   error: Error | null;
+  prevResetKeys?: Array<string | number | undefined>;
 }
 
 /**
@@ -39,24 +40,43 @@ interface ErrorBoundaryState {
 export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundaryState> {
   constructor(props: ErrorBoundaryProps) {
     super(props);
-    this.state = { hasError: false, error: null };
+    this.state = { hasError: false, error: null, prevResetKeys: props.resetKeys };
   }
 
-  static getDerivedStateFromError(error: Error): ErrorBoundaryState {
+  static getDerivedStateFromError(error: Error): Partial<ErrorBoundaryState> {
     return { hasError: true, error };
   }
 
-  componentDidUpdate(prevProps: ErrorBoundaryProps): void {
-    // Reset error state if resetKeys change
-    if (this.state.hasError && this.props.resetKeys) {
-      const prevKeys = prevProps.resetKeys || [];
-      const currentKeys = this.props.resetKeys;
+  static getDerivedStateFromProps(
+    props: ErrorBoundaryProps,
+    state: ErrorBoundaryState
+  ): Partial<ErrorBoundaryState> | null {
+    // Reset error state if resetKeys have changed
+    if (state.hasError && props.resetKeys) {
+      const prevKeys = state.prevResetKeys || [];
+      const currentKeys = props.resetKeys;
       
       if (prevKeys.length !== currentKeys.length || 
           prevKeys.some((key, i) => key !== currentKeys[i])) {
-        this.setState({ hasError: false, error: null });
+        return { 
+          hasError: false, 
+          error: null, 
+          prevResetKeys: currentKeys 
+        };
+      }
+      
+      // Update prevResetKeys even if no reset
+      if (state.prevResetKeys !== currentKeys) {
+        return { prevResetKeys: currentKeys };
       }
     }
+    
+    // Update prevResetKeys when they change but no error
+    if (!state.hasError && state.prevResetKeys !== props.resetKeys) {
+      return { prevResetKeys: props.resetKeys };
+    }
+    
+    return null;
   }
 
   componentDidCatch(error: Error, errorInfo: React.ErrorInfo): void {
