@@ -14,6 +14,8 @@ const isWindows = platform() === 'win32';
 /**
  * Run a command and stream output
  */
+// Hard-coded commands, no user input, local-only script; lint suppression for child_process warning is intentional.
+// eslint-disable-next-line security/detect-child-process, security/detect-non-literal-require
 function run(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, {

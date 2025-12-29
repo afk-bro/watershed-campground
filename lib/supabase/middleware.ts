@@ -35,9 +35,19 @@ export async function updateSession(request: NextRequest) {
                     supabaseResponse = NextResponse.next({
                         request,
                     });
-                    cookiesToSet.forEach(({ name, value, options }) =>
-                        supabaseResponse.cookies.set(name, value, options)
-                    );
+                    cookiesToSet.forEach(({ name, value, options }) => {
+                        // Enforce safer cookie defaults; keep secure env-aware to avoid breaking localhost auth
+                        const safeOptions = {
+                            sameSite: options?.sameSite ?? 'lax',
+                            secure: options?.secure ?? (process.env.NODE_ENV === 'production'),
+                            httpOnly: options?.httpOnly ?? true,
+                            path: options?.path ?? '/',
+                            maxAge: options?.maxAge,
+                            expires: options?.expires,
+                            domain: options?.domain,
+                        };
+                        supabaseResponse.cookies.set(name, value, safeOptions);
+                    });
                 },
             },
         }
