@@ -247,8 +247,8 @@ export async function updateReservation(
   await logAudit({
     action: 'RESERVATION_UPDATE',
     reservationId: id,
-    oldData: oldReservation,
-    newData: updatedReservation,
+    oldData: oldReservation as unknown as import('@/lib/database.types').Json,
+    newData: updatedReservation as unknown as import('@/lib/database.types').Json,
     changedBy: userId,
     organizationId
   });

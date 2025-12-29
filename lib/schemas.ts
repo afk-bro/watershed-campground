@@ -82,6 +82,7 @@ export const reservationUpdateSchema = z.object({
     lastName: z.string().optional(),
     email: emailWithSecurityValidation.optional(),
     phone: z.string().optional(),
+    notes: z.string().optional(),
 });
 
 export type ContactFormData = z.infer<typeof contactFormSchema>;

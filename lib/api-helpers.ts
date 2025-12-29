@@ -24,7 +24,7 @@ export function errorResponse(
   return NextResponse.json(
     {
       error: message,
-      ...(details && { details }),
+      ...(details ? { details } : {}),
       timestamp: new Date().toISOString(),
     },
     { status }

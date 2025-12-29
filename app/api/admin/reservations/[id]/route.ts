@@ -1,5 +1,4 @@
 import { NextResponse } from "next/server";
-import { requireAdminWithOrg } from '@/lib/admin-auth';
 import { reservationUpdateSchema } from "@/lib/schemas";
 import { logger } from "@/lib/logger";
 import {
@@ -8,29 +7,23 @@ import {
   ReservationConflictError
 } from "@/lib/services/reservation.service";
 import { validationError, errorResponse } from "@/lib/api-helpers";
+import { withAdminAuth } from '@/lib/admin/api-wrapper';
 
-export async function PATCH(
-    request: Request,
-    { params }: { params: Promise<{ id: string }> }
-) {
+export const PATCH = withAdminAuth(async ({ request, user, organizationId, params }) => {
+    const { id } = params;
+
+    // 1. Validation
+    const body = await request.json();
+    const validation = reservationUpdateSchema.safeParse(body);
+
+    if (!validation.success) {
+        return validationError(validation.error);
+    }
+
+    const { status, campsite_id, check_in, check_out, firstName, lastName, email, phone, notes } = validation.data;
+
+    // 2. Update reservation using service layer
     try {
-        // 1. Authorization
-        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
-        if (!authorized) return authResponse!;
-
-        const { id } = await params;
-
-        // 2. Validation
-        const body = await request.json();
-        const validation = reservationUpdateSchema.safeParse(body);
-
-        if (!validation.success) {
-            return validationError(validation.error);
-        }
-
-        const { status, campsite_id, check_in, check_out, firstName, lastName, email, phone, notes } = validation.data;
-
-        // 3. Update reservation using service layer
         const result = await updateReservation({
             id,
             updates: {
@@ -44,8 +37,8 @@ export async function PATCH(
                 phone,
                 notes
             },
-            organizationId: organizationId!,
-            userId: user!.id
+            organizationId,
+            userId: user.id
         });
 
         return NextResponse.json({
@@ -65,4 +58,4 @@ export async function PATCH(
         logger.error("Error in PATCH /api/admin/reservations/[id]:", error);
         return errorResponse("Internal server error", 500);
     }
-}
+});
