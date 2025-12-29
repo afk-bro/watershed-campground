@@ -2,17 +2,8 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import type { ReservationStatus } from "@/lib/supabase";
-import { Resend } from "resend";
 import { generateRescheduleEmail } from "@/lib/emails/rescheduleNotification";
-
-// Lazy initialization to avoid build-time errors
-let resendClient: Resend | null = null;
-function getResendClient() {
-    if (!resendClient) {
-        resendClient = new Resend(process.env.RESEND_API_KEY);
-    }
-    return resendClient;
-}
+import { getResendClient } from "@/lib/services/email.service";
 
 type UpdateReservationBody = {
     status?: ReservationStatus;
