@@ -13,14 +13,27 @@ interface Campsite {
     max_guests: number;
 }
 
-interface Props {
+/**
+ * Props for AssignmentDialog component
+ *
+ * Modal dialog for assigning a campsite to a reservation.
+ * Fetches available campsites based on reservation dates and criteria.
+ */
+interface AssignmentDialogProps {
+    /** The reservation to assign a campsite to (null when dialog is closed) */
     reservation: Reservation | null;
+
+    /** Whether the dialog is currently open */
     isOpen: boolean;
+
+    /** Callback to close the dialog */
     onClose: () => void;
+
+    /** Callback to assign the selected campsite to the reservation */
     onAssign: (reservationId: string, campsiteId: string) => Promise<void>;
 }
 
-export default function AssignmentDialog({ reservation, isOpen, onClose, onAssign }: Props) {
+export default function AssignmentDialog({ reservation, isOpen, onClose, onAssign }: AssignmentDialogProps) {
     const [campsites, setCampsites] = useState<Campsite[]>([]);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);

@@ -4,12 +4,25 @@ import type { Reservation, ReservationStatus } from "@/lib/supabase";
 import type { LucideIcon } from "lucide-react";
 import Tooltip from "@/components/ui/Tooltip";
 
-type Props = {
+/**
+ * Props for RowActions component
+ *
+ * Action buttons for reservation status management (confirm, check-in, check-out, cancel, archive).
+ * Displays different actions based on current reservation status.
+ */
+interface RowActionsProps {
+    /** The reservation to display actions for */
     reservation: Reservation;
+
+    /** Callback to update reservation status */
     updateStatus: (id: string, status: ReservationStatus) => void;
+
+    /** Optional callback to archive the reservation (shown for completed/cancelled reservations) */
     onArchive?: (id: string) => void;
+
+    /** Whether any action is currently submitting (disables all buttons) */
     isSubmitting?: boolean;
-};
+}
 
 type ActionButtonProps = {
     onClick: () => void;
@@ -40,7 +53,7 @@ function ActionButton({ onClick, icon: Icon, colorClass, title, disabled = false
     );
 }
 
-const RowActions = memo(function RowActions({ reservation, updateStatus, onArchive, isSubmitting = false }: Props) {
+const RowActions = memo(function RowActions({ reservation, updateStatus, onArchive, isSubmitting = false }: RowActionsProps) {
     const { id, status } = reservation;
 
     if (!id) return null;

@@ -39,12 +39,26 @@ import { UI_CONSTANTS } from "@/lib/admin/constants";
 import { logger } from "@/lib/logger";
 
 
+/**
+ * Props for CalendarGrid component
+ */
 interface CalendarGridProps {
+  /** All campsites to display as rows in the calendar */
   campsites: Campsite[];
+
+  /** All reservations to render as blocks on the calendar */
   reservations: Reservation[];
+
+  /** Blackout dates to render as blocking periods */
   blackoutDates: BlackoutDate[];
-  date: Date; // The month we are viewing
+
+  /** The month currently being viewed */
+  date: Date;
+
+  /** Callback to change the viewed month */
   onDateChange: (date: Date) => void;
+
+  /** Optional SWR mutate function for optimistic updates and cache invalidation */
   onDataMutate?: (
     data?: CalendarData | Promise<CalendarData> | ((current: CalendarData | undefined) => CalendarData | Promise<CalendarData>),
     options?: { optimisticData?: CalendarData; rollbackOnError?: boolean; populateCache?: boolean; revalidate?: boolean }
