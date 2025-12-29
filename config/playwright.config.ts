@@ -96,6 +96,8 @@ export default defineConfig({
                 Object.entries(process.env).filter(([, v]) => v !== undefined)
             ),
             // Fast failsafe timeout for tests (500ms instead of 10s in production)
+            // Disable rate limiting during E2E to prevent 429s
+            RATE_LIMIT_DISABLED: process.env.RATE_LIMIT_DISABLED || 'true',
             NEXT_PUBLIC_STUCK_SAVING_TIMEOUT_MS: '500',
         } as Record<string, string>,
     },
