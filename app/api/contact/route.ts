@@ -1,11 +1,8 @@
-import { Resend } from "resend";
 import { contactFormSchema } from "@/lib/schemas";
 import { escapeHtml } from "@/lib/htmlEscape";
 import { logger } from "@/lib/logger";
 import { errorResponse, successResponse, validationError } from "@/lib/api-helpers";
-
-// Initialize Resend inside the handler to avoid build-time errors if key is missing
-// const resend = new Resend(process.env.RESEND_API_KEY);
+import { getResendClient, isResendConfigured } from "@/lib/services/email.service";
 
 export async function POST(request: Request) {
     try {
@@ -21,7 +18,7 @@ export async function POST(request: Request) {
         const name = `${firstName} ${lastName}`; // Add name variable here
 
         // Check for API key
-        if (!process.env.RESEND_API_KEY) {
+        if (!isResendConfigured()) {
             logger.warn("Mock email sending - RESEND_API_KEY not configured", {
                 to: "info@thewatershedcampground.com",
                 subject: `New Contact Inquiry from ${name}`,
@@ -32,7 +29,7 @@ export async function POST(request: Request) {
             return successResponse({ success: true, message: "Mock email sent" });
         }
 
-        const resend = new Resend(process.env.RESEND_API_KEY);
+        const resend = getResendClient();
 
         try {
             const data = await resend.emails.send({
