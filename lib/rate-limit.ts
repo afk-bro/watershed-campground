@@ -1,4 +1,5 @@
 import { supabaseAdmin } from './supabase-admin';
+import { logger } from '@/lib/logger';
 
 /**
  * Checks if a request has exceeded its rate limit.
@@ -59,7 +60,7 @@ export async function checkRateLimit(key: string, limit: number, windowSeconds: 
             return true;
         }
     } catch (err) {
-        console.error("Rate Limit Error:", err);
+        logger.error("Rate Limit Error:", err);
         // Fail open to prevent blocking users on system error
         return true;
     }
