@@ -50,7 +50,7 @@ export function useStuckSavingFailsafe({
       const key = `reservation-${r.id}`;
       if (!timeouts.has(key)) {
         const timeout = setTimeout(() => {
-          logger.error('[STUCK SAVING] Reservation stuck saving for 10s:', r.id);
+          logger.error('[STUCK SAVING] Reservation stuck saving for 10s:', undefined, { reservationId: r.id });
           showToast('Still saving... Syncing with server.', 'warning');
 
           // Auto-revalidate to sync reality
@@ -69,7 +69,7 @@ export function useStuckSavingFailsafe({
       const key = `blackout-${b.id}`;
       if (!timeouts.has(key)) {
         const timeout = setTimeout(() => {
-          logger.error('[STUCK SAVING] Blackout stuck saving for 10s:', b.id);
+          logger.error('[STUCK SAVING] Blackout stuck saving for 10s:', undefined, { blackoutId: b.id });
           showToast('Still saving... Syncing with server.', 'warning');
 
           // Auto-revalidate to sync reality

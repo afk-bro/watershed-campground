@@ -137,7 +137,7 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
             abortControllerRef.current.signal
           );
 
-          logger.debug('[RESCHEDULE] Server confirmed:', updatedReservation);
+          logger.debug('[RESCHEDULE] Server confirmed:', { updatedReservation });
 
           // Show success notification
           if (emailSent) {
