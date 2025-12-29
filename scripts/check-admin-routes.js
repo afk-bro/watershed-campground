@@ -36,8 +36,8 @@ function checkRouteFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     const relativePath = path.relative(ADMIN_API_DIR, filePath);
 
-    // Check if migrated (uses requireAdminWithOrg)
-    const isMigrated = content.includes('requireAdminWithOrg');
+    // Check if migrated (uses requireAdminWithOrg directly OR via withAdminAuth wrapper)
+    const isMigrated = content.includes('requireAdminWithOrg') || content.includes('withAdminAuth');
 
     // Check if guarded (uses migrationGate)
     const isGuarded = content.includes('migrationGate');
@@ -64,7 +64,7 @@ function main() {
     const guarded = results.filter(r => r.isGuarded);
     const unsafe = results.filter(r => !r.isSafe);
 
-    console.log(`✅ Migrated (requireAdminWithOrg): ${migrated.length}`);
+    console.log(`✅ Migrated (requireAdminWithOrg / withAdminAuth): ${migrated.length}`);
     migrated.forEach(r => console.log(`   - ${r.path}`));
 
     console.log(`\n🛡️  Guarded (migrationGate): ${guarded.length}`);
@@ -74,7 +74,7 @@ function main() {
         console.log(`\n❌ UNSAFE (no guard or migration): ${unsafe.length}`);
         unsafe.forEach(r => console.log(`   - ${r.path}`));
         console.log('\n⚠️  These endpoints are NOT safe for production!');
-        console.log('   Add migrationGate() or migrate to requireAdminWithOrg()');
+        console.log('   Add migrationGate() or migrate to withAdminAuth() / requireAdminWithOrg()');
         process.exit(1);
     }
 
