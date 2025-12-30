@@ -66,7 +66,7 @@ export async function resolvePublicOrganizationId(request: Request): Promise<str
         // Fallback to default org in test/development environments
         // This allows E2E tests to work without updating every test file
         const isTestEnv = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
-        const DEFAULT_ORG_SLUG = 'watershed';
+        const DEFAULT_ORG_SLUG = 'watershed-campground';
 
         if (!orgSlug) {
             if (isTestEnv) {
