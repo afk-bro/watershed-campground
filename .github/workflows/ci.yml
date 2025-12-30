@@ -106,6 +106,9 @@ jobs:
           echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
           echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
           echo "ADMIN_EMAILS=admin@test.com" >> .env.test
+          echo "NEXT_PUBLIC_ORG_SLUG=watershed-campground" >> .env.test
+          echo "E2E_DB_RESET_ENABLED=true" >> .env.test
+          echo "E2E_ORG_SLUG=watershed-campground" >> .env.test
 
       - name: Verify .env.test file (masked)
         run: |
@@ -125,6 +128,9 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TEST_ADMIN_EMAIL: admin@test.com
           TEST_ADMIN_PASSWORD: testpass123
+          ADMIN_EMAILS: admin@test.com
+          NEXT_PUBLIC_ORG_SLUG: watershed-campground
+          E2E_DB_RESET_ENABLED: true
 
       - name: Upload Playwright report
         if: always()
@@ -144,7 +150,77 @@ jobs:
 
       # No local Supabase to stop in hosted CI workflow
 
-  # Job 3: Build Check
+  # Job 3: Stripe E2E Tests (Separate job to avoid blocking main CI)
+  stripe-e2e-tests:
+    name: Stripe E2E Tests
+    runs-on: ubuntu-latest
+
+    # Only run on main branch or manual trigger (not on every PR)
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    needs: lint-and-typecheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create test environment with Stripe credentials
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
+          echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
+          echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
+          echo "ADMIN_EMAILS=admin@test.com" >> .env.test
+          echo "NEXT_PUBLIC_ORG_SLUG=watershed-campground" >> .env.test
+          echo "E2E_DB_RESET_ENABLED=true" >> .env.test
+          echo "E2E_ORG_SLUG=watershed-campground" >> .env.test
+
+          # Stripe test keys (enable payment tests)
+          echo "STRIPE_TESTS_ENABLED=true" >> .env.test
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_TEST_SECRET_KEY }}" >> .env.test
+          echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}" >> .env.test
+          echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> .env.test
+
+      - name: Run Stripe-enabled E2E tests
+        run: |
+          echo "Running E2E tests with Stripe payment flow enabled"
+          npx playwright test
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_ADMIN_EMAIL: admin@test.com
+          TEST_ADMIN_PASSWORD: testpass123
+          ADMIN_EMAILS: admin@test.com
+          NEXT_PUBLIC_ORG_SLUG: watershed-campground
+          E2E_DB_RESET_ENABLED: true
+          STRIPE_TESTS_ENABLED: true
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
+
+      - name: Upload Stripe test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stripe-playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  # Job 4: Build Check
   build:
     name: Build Check
     runs-on: ubuntu-latest
@@ -167,10 +243,12 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          # Provide dummy env vars for build
+          # Provide required env vars for build
           NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key-for-build
           SUPABASE_SERVICE_ROLE_KEY: dummy-key-for-build
+          ADMIN_EMAILS: admin@test.com
+          NEXT_PUBLIC_ORG_SLUG: watershed-campground
 
   # Note: Lighthouse moved to a separate, scheduled/manual workflow to avoid flaky blocking on pushes.
 
