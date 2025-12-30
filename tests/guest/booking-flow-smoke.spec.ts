@@ -22,13 +22,13 @@ test.describe('Booking Flow Smoke Test (No Payment)', () => {
         // ==========================================
         await page.goto('/');
 
-        // Click "Book Now" button
-        const bookNowButton = page.getByRole('link', { name: /book now/i }).first();
-        await expect(bookNowButton, 'Book Now button should be visible').toBeVisible();
+        // Click "Make a Reservation" button
+        const bookNowButton = page.getByRole('link', { name: /make a reservation/i }).first();
+        await expect(bookNowButton, 'Make a Reservation button should be visible').toBeVisible();
         await bookNowButton.click();
 
         // Should navigate to booking page
-        await expect(page, 'Should navigate to /booking').toHaveURL(/\/booking/);
+        await expect(page, 'Should navigate to /make-a-reservation').toHaveURL(/\/make-a-reservation/);
 
         // ==========================================
         // STEP 2: Select Dates (Uses /api/availability/calendar - tests org resolution)
@@ -36,31 +36,70 @@ test.describe('Booking Flow Smoke Test (No Payment)', () => {
         const tomorrow = addDays(new Date(), 7);
         const dayAfterTomorrow = addDays(tomorrow, 2);
 
-        // Fill check-in date
-        const checkInInput = page.locator('input[name="checkIn"]');
-        await checkInInput.fill(format(tomorrow, 'yyyy-MM-dd'));
+        // Helper to select date in custom calendar
+        const selectDate = async (date: Date) => {
+            const targetMonth = format(date, 'MMMM yyyy');
+            const targetDay = format(date, 'd'); // 1-31
 
-        // Fill check-out date
-        const checkOutInput = page.locator('input[name="checkOut"]');
-        await checkOutInput.fill(format(dayAfterTomorrow, 'yyyy-MM-dd'));
+            // Navigate to correct month
+            while (true) {
+                const visibleHeader = await page.locator('.font-bold.text-lg').textContent();
+                if (visibleHeader?.trim() === targetMonth) break;
+                // Assuming moving forward for future dates
+                await page.locator('button:has(svg.lucide-chevron-right)').click();
+                await page.waitForTimeout(200); // Animation
+            }
 
-        // Fill adults
-        const adultsInput = page.locator('input[name="adults"]');
-        await adultsInput.fill('2');
+            // Click the day button
+            // Note: There might be duplicate numbers if we padded previous month, but current implementation uses empty divs for padding.
+            // But if we have multiple calendars? No, single calendar.
+            // We use strict text match on the button content (DateStep renders plain number).
+            // But we must avoid "FULL" text which is inside button.
+            // Use :text-is() pseudo or exact match for text content.
+            // Playwright .getByText('15', { exact: true }) works.
+            await page.getByRole('button', { name: targetDay, exact: true }).click();
+        };
+
+        await selectDate(tomorrow);
+        await selectDate(dayAfterTomorrow);
+
+        // Step 2: Details (Guests)
+        // Wait for step 2 to appear
+        await expect(page.getByText('Who is coming?', { exact: false })).toBeVisible();
+
+        // Fill adults/guests
+        // "Guest Count" is a counter, default is 2. No need to fill if we want 2.
+        // We MUST select a unit type to proceed.
+
+        // Select "RV / Trailer"
+        await page.getByRole('button', { name: 'RV / Trailer' }).click();
+
+        // RV Length slider appears. Default is 0?
+        // Let's set it to 25.
+        // Range input requires js handle or careful interaction.
+        // For smoke test, checking default (0) might be enough if valid?
+        // But let's try to set it if possible, or just skip if 0 is valid.
+        // isValid checks: rvLength is not checked for validity in CampsiteParamsStep, only guests and unitType.
+
+        // Continue to search (Button says "Find Campsites")
+        await page.getByRole('button', { name: /find campsites/i }).click();
 
         // ==========================================
         // STEP 3: Check Availability (Tests /api/availability/search endpoint)
         // ==========================================
-        const checkAvailabilityButton = page.getByRole('button', { name: /check availability/i });
-        await expect(checkAvailabilityButton, 'Check Availability button should be visible').toBeVisible();
+        // Note: The wizard auto-searches when entering Step 3.
+        // We triggered navigation to Step 3 by clicking Next in Step 2.
 
+        // Removed checkAvailabilityButton check as Wizard is different.
+
+        // Click and wait for API response
         // Click and wait for API response
         const [availabilityResponse] = await Promise.all([
             page.waitForResponse(
                 response => response.url().includes('/api/availability/search') && response.status() === 200,
                 { timeout: 10000 }
             ),
-            checkAvailabilityButton.click()
+            // The "Next" button in Step 2 triggers the search in Step 3
         ]);
 
         // Verify API call succeeded
@@ -78,34 +117,43 @@ test.describe('Booking Flow Smoke Test (No Payment)', () => {
         await expect(campsiteCard, 'At least one campsite should be available').toBeVisible({ timeout: 5000 });
 
         // Click "Select" button on first available campsite
-        const selectButton = campsiteCard.getByRole('button', { name: /select/i });
+        // Click "Book Now" button on first available campsite
+        const selectButton = campsiteCard.getByRole('button', { name: /book now/i });
         await selectButton.click();
 
         // ==========================================
         // STEP 5: Fill Guest Details
         // ==========================================
-        await expect(page.getByText(/guest information/i), 'Should show guest information form')
-            .toBeVisible({ timeout: 5000 });
+        await expect(page.getByText(/personal information/i), 'Should show guest details form')
+            .toBeVisible({ timeout: 10000 });
 
         // Fill out guest details
         await page.locator('input[name="firstName"]').fill('Smoke');
         await page.locator('input[name="lastName"]').fill('Test');
         await page.locator('input[name="email"]').fill(`smoke.test.${Date.now()}@example.com`);
-        await page.locator('input[name="phone"]').fill('555-0199');
+        await page.locator('input[name="phone"]').fill('555-555-0199');
         await page.locator('input[name="address1"]').fill('123 Smoke Test St');
         await page.locator('input[name="city"]').fill('Test City');
         await page.locator('input[name="postalCode"]').fill('12345');
 
-        // Select RV camping unit
-        await page.locator('select[name="campingUnit"]').selectOption('RV / Trailer');
-        await page.locator('input[name="rvLength"]').fill('25');
+        await page.locator('input[name="postalCode"]').fill('12345');
+
+        // Unit type and length are already selected in Step 2.
 
         // Select contact method
         await page.locator('select[name="contactMethod"]').selectOption('Email');
 
-        // Continue to next step
-        const continueButton = page.getByRole('button', { name: /continue/i });
-        await continueButton.click();
+        // Continue to next step (Add-ons)
+        await page.getByRole('button', { name: /continue/i }).click();
+
+        // ==========================================
+        // STEP 5.5: Add-ons Step
+        // ==========================================
+        await expect(page.getByText(/enhance.*stay/i), 'Should show add-ons page')
+            .toBeVisible({ timeout: 10000 });
+
+        // Continue to Review (Button says "Review & Pay")
+        await page.getByRole('button', { name: 'Review & Pay', exact: true }).click();
 
         // ==========================================
         // STEP 6: Review Page (Before Payment)
@@ -114,12 +162,17 @@ test.describe('Booking Flow Smoke Test (No Payment)', () => {
             .toBeVisible({ timeout: 10000 });
 
         // Verify reservation details are displayed
-        await expect(page.getByText(/smoke test/i), 'Should show guest name').toBeVisible();
-        await expect(page.getByText(format(tomorrow, 'MMM')), 'Should show check-in date').toBeVisible();
+        // Guest name is not shown in PaymentReview component
+        // await expect(page.getByText(/smoke test/i), 'Should show guest name').toBeVisible();
+
+        // Verify Check-In date is shown (format might be '2026-01-06' or MMM d?)
+        // PaymentReview shows: Site Cost (yyyy-MM-dd to yyyy-MM-dd)
+        // So we expect checkIn string. format(tomorrow, 'yyyy-MM-dd')
+        await expect(page.getByText(format(tomorrow, 'yyyy-MM-dd')), 'Should show check-in date').toBeVisible();
 
         // Verify pricing is calculated
-        await expect(page.getByText(/total/i), 'Should show total amount').toBeVisible();
-        await expect(page.getByText(/\$/), 'Should show dollar amounts').toBeVisible();
+        await expect(page.getByText('Grand Total:'), 'Should show total amount').toBeVisible();
+        await expect(page.getByText(/\$/).first(), 'Should show dollar amounts').toBeVisible();
 
         // ==========================================
         // STEP 7: Verify Payment Intent Creation (Tests /api/create-payment-intent - org resolution)
@@ -164,19 +217,22 @@ test.describe('Booking Flow Smoke Test (No Payment)', () => {
         // ==========================================
         // SUCCESS: Booking flow worked up to payment
         // ==========================================
-        console.log('✅ Smoke test passed: Complete booking flow works (date selection → campsite → guest details → review)');
     });
 
     test('should handle calendar API with proper org resolution', async ({ page }) => {
         // Simpler test that just verifies the calendar API works
         // This catches org slug issues early without full booking flow
 
-        await page.goto('/booking');
+        await page.goto('/make-a-reservation');
 
         // Fill dates to trigger calendar API call
-        const tomorrow = addDays(new Date(), 7);
-        const checkInInput = page.locator('input[name="checkIn"]');
-        await checkInInput.fill(format(tomorrow, 'yyyy-MM-dd'));
+        // Fill dates via calendar
+        // Since this is a smoke test helper, we just verify the calendar API is called
+        // when we load the page (DateStep fetches initial month).
+        // No need to fill.
+
+        // Actually, the test wants to trigger the API.
+        // DateStep fetches on mount. So just visiting the page triggers it.
 
         // Wait for calendar API call (should NOT be 404)
         const calendarResponse = await page.waitForResponse(

@@ -217,7 +217,8 @@ test.describe('Admin Blackout Dates', () => {
             });
 
             // Database constraint should prevent this
-            expect(response.status()).toBe(500);
+            // Schema validation should prevent this (400 Bad Request)
+            expect(response.status()).toBe(400);
         });
     });
 
@@ -276,7 +277,9 @@ test.describe('Admin Blackout Dates', () => {
             const body = await parseJsonOrThrow(response);
 
             if (response.status() === 200) {
-                expect(body.available).toBe(false);
+                // Should return empty array
+                expect(Array.isArray(body)).toBe(true);
+                expect(body.length).toBe(0);
             } else {
                 expect(response.status()).toBe(400);
                 expect(body.error).toBeDefined();
@@ -311,7 +314,9 @@ test.describe('Admin Blackout Dates', () => {
 
             const body = await parseJsonOrThrow(response);
             // Should have availability (unless all sites are booked for other reasons)
-            expect(body).toBeDefined();
+            // Should have availability
+            expect(Array.isArray(body)).toBe(true);
+            expect(body.length).toBeGreaterThan(0);
         });
 
         test('should allow availability after blackout period', async ({ request }) => {
@@ -416,9 +421,13 @@ test.describe('Admin Blackout Dates', () => {
             });
 
             // Parse response with guard to avoid silent HTML parse errors
+            // The API ignores campsiteId in search, but returns ALL available sites.
+            // We verify that our specific site is NOT in the list.
             const body = await parseJsonOrThrow(response);
             if (response.status() === 200) {
-                expect(body.available).toBe(false);
+                expect(Array.isArray(body)).toBe(true);
+                const availableIds = body.map((site: any) => site.id);
+                expect(availableIds).not.toContain(testCampsiteId);
             }
         });
 
@@ -457,7 +466,13 @@ test.describe('Admin Blackout Dates', () => {
             });
 
             // Other site should be available (unless it has its own blackout)
+            // Other site should be available
             expect(response.status()).toBe(200);
+            const body = await parseJsonOrThrow(response);
+            expect(Array.isArray(body)).toBe(true);
+            const availableIds = body.map((site: any) => site.id);
+            // S1 should be available
+            expect(availableIds).toContain(otherSite.id);
         });
     });
 

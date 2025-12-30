@@ -59,7 +59,7 @@ function createRateLimiter(requests: number, window: `${number}${'ms' | 's' | 'm
                 success: true,
                 limit: requests,
                 remaining: requests,
-                reset: Date.now() + 60000,
+                reset: Math.floor((Date.now() + 60000) / 1000),
                 pending: Promise.resolve(),
             }),
         };
@@ -118,7 +118,7 @@ export async function checkRateLimit(
             success: result.success,
             limit: result.limit,
             remaining: result.remaining,
-            reset: result.reset,
+            reset: Math.floor(result.reset / 1000),
         };
     } catch (err) {
         logger.error('Rate limit check failed:', err);
@@ -127,7 +127,7 @@ export async function checkRateLimit(
             success: true,
             limit: 0,
             remaining: 0,
-            reset: Date.now() + 60000,
+            reset: Math.floor((Date.now() + 60000) / 1000),
         };
     }
 }
