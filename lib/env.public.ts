@@ -62,7 +62,7 @@ export function validatePublicEnv(): PublicEnv {
     const result = publicEnvSchema.safeParse(env);
 
     if (!result.success) {
-        const errors = result.error.errors.map(err =>
+        const errors = result.error.issues.map(err =>
             `  ❌ ${err.path.join('.')}: ${err.message}`
         ).join('\n');
 
