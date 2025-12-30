@@ -43,24 +43,24 @@ export async function resetE2EData() {
   try {
     const { error } = await supabase.from("payment_transactions").delete().neq("id", "00000000-0000-0000-0000-000000000000");
     if (!error) console.log("✅ cleared: payment_transactions");
-  } catch (e: any) {
-    console.warn(`⚠️ skipping payment_transactions: ${e.message}`);
+  } catch (e) {
+    console.warn(`⚠️ skipping payment_transactions: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // Delete audit_logs first (before reservations)
   try {
     const { error } = await supabase.from("audit_logs").delete().eq("organization_id", organizationId);
     if (!error) console.log("✅ cleared: audit_logs");
-  } catch (e: any) {
-    console.warn(`⚠️ skipping audit_logs: ${e.message}`);
+  } catch (e) {
+    console.warn(`⚠️ skipping audit_logs: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // Delete blackout_dates
   try {
     const { error } = await supabase.from("blackout_dates").delete().eq("organization_id", organizationId);
     if (!error) console.log("✅ cleared: blackout_dates");
-  } catch (e: any) {
-    console.warn(`⚠️ skipping blackout_dates: ${e.message}`);
+  } catch (e) {
+    console.warn(`⚠️ skipping blackout_dates: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // Delete reservations (except the 3 seed ones we'll recreate)
@@ -70,8 +70,8 @@ export async function resetE2EData() {
       .delete()
       .eq("organization_id", organizationId);
     if (!error) console.log("✅ cleared: reservations");
-  } catch (e: any) {
-    console.warn(`⚠️ skipping reservations: ${e.message}`);
+  } catch (e) {
+    console.warn(`⚠️ skipping reservations: ${e instanceof Error ? e.message : String(e)}`);
   }
 
   // 3) Re-seed the 3 test reservations
