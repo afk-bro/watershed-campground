@@ -36,7 +36,8 @@ test.describe('Admin Reservation Management - Happy Path', () => {
                 // Ensure monetary fields are populated to satisfy NOT NULL constraints
                 total_amount: 200,
                 amount_paid: 0,
-                balance_due: 200
+                balance_due: 200,
+                organization_id: organizationId
             })
             .select()
             .single();

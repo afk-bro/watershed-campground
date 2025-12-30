@@ -81,7 +81,8 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
                 total_amount: 100,
                 payment_status: 'paid',
                 amount_paid: 100,
-                balance_due: 0
+                balance_due: 0,
+                organization_id: organizationId
             })
             .select()
             .single();
@@ -323,7 +324,11 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
                 camping_unit: 'RV / Trailer',
                 contact_method: 'Email',
                 status: 'confirmed',
-                campsite_id: testCampsiteId // Same campsite
+                campsite_id: testCampsiteId, // Same campsite
+                total_amount: 100,
+                amount_paid: 100,
+                balance_due: 0,
+                organization_id: organizationId
             })
             .select()
             .single();

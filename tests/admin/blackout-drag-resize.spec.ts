@@ -47,7 +47,8 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 start_date: format(startDate, 'yyyy-MM-dd'),
                 end_date: format(endDate, 'yyyy-MM-dd'),
                 campsite_id: testCampsiteId,
-                reason: 'Test Maintenance'
+                reason: 'Test Maintenance',
+                organization_id: organizationId
             })
             .select()
             .single();
@@ -385,7 +386,8 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     campsite_id: testCampsiteId,
                     total_amount: 300,
                     amount_paid: 0,
-                    balance_due: 300
+                    balance_due: 300,
+                    organization_id: organizationId
                 })
                 .select()
                 .single();
@@ -480,7 +482,8 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     start_date: format(conflictStart, 'yyyy-MM-dd'),
                     end_date: format(conflictEnd, 'yyyy-MM-dd'),
                     campsite_id: testCampsiteId,
-                    reason: 'Conflict Blackout'
+                    reason: 'Conflict Blackout',
+                    organization_id: organizationId
                 })
                 .select()
                 .single();
