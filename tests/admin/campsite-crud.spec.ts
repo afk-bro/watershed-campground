@@ -3,6 +3,7 @@ import { test, expect } from '@playwright/test';
 // Default test organization ID
 const organizationId = '00000000-0000-0000-0000-000000000001';
 import { supabaseAdmin } from '../helpers/test-supabase';
+import { createTestCampsite } from '../helpers/factories';
 
 /**
  * Admin: Campsite CRUD Operations
@@ -84,6 +85,7 @@ test.describe('Admin Campsite Management', () => {
                     isActive: true,
                     notes: 'E2E test campsite',
                     sortOrder: 100,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -120,6 +122,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 30.00,
                     isActive: true,
                     sortOrder: 101,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -143,6 +146,7 @@ test.describe('Admin Campsite Management', () => {
                     isActive: true,
                     notes: 'Test cabin with full amenities',
                     sortOrder: 102,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -166,6 +170,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 45.00,
                     isActive: true,
                     sortOrder: 103,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -183,6 +188,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 25.00,
                     isActive: true,
                     sortOrder: 104,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -203,6 +209,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 45.00,
                     isActive: true,
                     sortOrder: 105,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -219,6 +226,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 45.00,
                     isActive: true,
                     sortOrder: 106,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -236,6 +244,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 45.00,
                     isActive: true,
                     sortOrder: 107,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -251,6 +260,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 45.00,
                     isActive: true,
                     sortOrder: 108,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -267,6 +277,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 45.00,
                     isActive: true,
                     sortOrder: 109,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -315,23 +326,16 @@ test.describe('Admin Campsite Management', () => {
 
         test.beforeEach(async () => {
             // Create a test campsite for each update test
-            const code = `UPD${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-            const { data } = await supabaseAdmin
-                .from('campsites')
-                .insert({
-                    name: 'Update Test Site',
-                    code,
-                    type: 'rv',
-                    max_guests: 4,
-                    base_rate: 45.00,
-                    is_active: true,
-                    sort_order: 200,
-                    organization_id: organizationId,
-                })
-                .select()
-                .single();
+            const campsite = await createTestCampsite({
+                name: 'Update Test Site',
+                type: 'rv',
+                max_guests: 4,
+                base_rate: 45.00,
+                is_active: true,
+                organization_id: organizationId,
+            });
 
-            testCampsiteId = data!.id;
+            testCampsiteId = campsite.id;
         });
 
         test.afterEach(async () => {
@@ -346,6 +350,7 @@ test.describe('Admin Campsite Management', () => {
             const response = await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
                 data: {
                     name: 'Updated Site Name',
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -368,6 +373,7 @@ test.describe('Admin Campsite Management', () => {
             const response = await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
                 data: {
                     baseRate: 65.00,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -384,6 +390,7 @@ test.describe('Admin Campsite Management', () => {
                     baseRate: 75.00,
                     maxGuests: 6,
                     notes: 'Updated via test',
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -400,6 +407,7 @@ test.describe('Admin Campsite Management', () => {
             const response = await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
                 data: {
                     isActive: false,
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -421,12 +429,12 @@ test.describe('Admin Campsite Management', () => {
         test('should reactivate deactivated campsite', async ({ request }) => {
             // First deactivate
             await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
-                data: { isActive: false },
+                data: { isActive: false, organizationId: '00000000-0000-0000-0000-000000000001' },
             });
 
             // Then reactivate
             const response = await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
-                data: { isActive: true },
+                data: { isActive: true, organizationId: '00000000-0000-0000-0000-000000000001' },
             });
 
             expect(response.status()).toBe(200);
@@ -438,7 +446,7 @@ test.describe('Admin Campsite Management', () => {
         test('should reject update to duplicate code', async ({ request }) => {
             // Create another campsite
             const dupCode = `DUP${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-            const { data: otherSite } = await supabaseAdmin
+            const { data: otherSite, error: otherError } = await supabaseAdmin
                 .from('campsites')
                 .insert({
                     name: 'Other Site',
@@ -453,11 +461,16 @@ test.describe('Admin Campsite Management', () => {
                 .select()
                 .single();
 
+            if (otherError || !otherSite) {
+                throw new Error(`Failed to setup duplicate test campsite: ${otherError?.message}`);
+            }
+
             try {
                 // Try to update test campsite with duplicate code
                 const response = await request.patch(`/api/admin/campsites/${testCampsiteId}`, {
                     data: {
                         code: dupCode, // Duplicate
+                        organizationId: '00000000-0000-0000-0000-000000000001',
                     },
                 });
 
@@ -480,6 +493,7 @@ test.describe('Admin Campsite Management', () => {
             const response = await request.patch(`/api/admin/campsites/${fakeId}`, {
                 data: {
                     name: 'Should Fail',
+                    organizationId: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
@@ -491,23 +505,16 @@ test.describe('Admin Campsite Management', () => {
         let testCampsiteId: string;
 
         test.beforeEach(async () => {
-            const code = `DEL${Math.random().toString(36).slice(2, 8).toUpperCase()}`;
-            const { data } = await supabaseAdmin
-                .from('campsites')
-                .insert({
-                    name: 'Delete Test Site',
-                    code,
-                    type: 'rv',
-                    max_guests: 4,
-                    base_rate: 45.00,
-                    is_active: true,
-                    sort_order: 300,
-                    organization_id: organizationId,
-                })
-                .select()
-                .single();
+            const campsite = await createTestCampsite({
+                name: 'Delete Test Site',
+                type: 'rv',
+                max_guests: 4,
+                base_rate: 45.00,
+                is_active: true,
+                organization_id: organizationId,
+            });
 
-            testCampsiteId = data!.id;
+            testCampsiteId = campsite.id;
         });
 
         test.afterEach(async () => {

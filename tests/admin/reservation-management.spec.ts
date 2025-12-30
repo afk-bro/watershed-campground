@@ -1,8 +1,6 @@
 import { test, expect } from '@playwright/test';
 
-// Default test organization ID
-const organizationId = '00000000-0000-0000-0000-000000000001';
-import { supabaseAdmin } from '../helpers/test-supabase';
+import { createTestReservation, deleteTestReservation, DEFAULT_ORG_ID, supabaseAdmin } from '../helpers/test-supabase';
 import { format, addDays } from 'date-fns';
 
 /**
@@ -18,48 +16,36 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         const tomorrow = addDays(new Date(), 3);
         const checkOut = addDays(tomorrow, 2);
 
-        const { data, error } = await supabaseAdmin
-            .from('reservations')
-            .insert({
-                first_name: 'E2E',
-                last_name: 'TestUser',
-                email: 'e2e.admin.test@example.com',
-                phone: '555-0199',
-                address1: '123 Test St',
-                city: 'Test City',
-                postal_code: '12345',
-                check_in: format(tomorrow, 'yyyy-MM-dd'),
-                check_out: format(checkOut, 'yyyy-MM-dd'),
-                adults: 2,
-                children: 0,
-                rv_length: '25',
-                camping_unit: 'RV / Trailer',
-                contact_method: 'Email',
-                status: 'pending',
-                // Ensure monetary fields are populated to satisfy NOT NULL constraints
-                total_amount: 200,
-                amount_paid: 0,
-                balance_due: 200,
-                organization_id: organizationId
-            })
-            .select()
-            .single();
+        const reservation = await createTestReservation({
+            first_name: 'E2E',
+            last_name: 'TestUser',
+            email: 'e2e.admin.test@example.com',
+            phone: '555-0199',
+            address1: '123 Test St',
+            city: 'Test City',
+            postal_code: '12345',
+            check_in: format(tomorrow, 'yyyy-MM-dd'),
+            check_out: format(checkOut, 'yyyy-MM-dd'),
+            adults: 2,
+            children: 0,
+            rv_length: '25',
+            camping_unit: 'RV / Trailer',
+            contact_method: 'Email',
+            status: 'pending',
+            total_amount: 200,
+            amount_paid: 0,
+            balance_due: 200,
+            organization_id: DEFAULT_ORG_ID
+        });
 
-        if (error) {
-            throw new Error(`Failed to create test reservation: ${error.message}`);
-        }
-
-        testReservationId = data.id;
+        testReservationId = reservation.id;
         console.log('Created test reservation:', testReservationId);
     });
 
     // Clean up test reservation after tests
     test.afterAll(async () => {
         if (testReservationId) {
-            await supabaseAdmin
-                .from('reservations')
-                .delete()
-                .eq('id', testReservationId);
+            await deleteTestReservation(testReservationId);
             console.log('Cleaned up test reservation:', testReservationId);
         }
     });
@@ -80,7 +66,14 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // Find our test reservation by email
         const reservationRow = page.locator('tr', {
             has: page.locator('text=e2e.admin.test@example.com')
-        });
+        }).first();
+
+        // Debug logging
+        const rowCount = await page.locator('tr').count();
+        console.log(`Found ${rowCount} rows in table`);
+        const tableText = await page.locator('table').textContent();
+        console.log('Table content preview:', tableText?.slice(0, 500));
+
         await expect(reservationRow).toBeVisible({ timeout: 10000 });
 
         // Verify status is "pending"
@@ -127,7 +120,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // ==========================================
         // STEP 6: Verify Database State
         // ==========================================
-        const { data: dbReservation } = await supabaseAdmin
+        const { data: dbReservation } = await dbQuery('reservations')
             .from('reservations')
             .select('status, campsite_id')
             .eq('id', testReservationId)
@@ -178,7 +171,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         const reservationRow = page.locator('tr', {
             has: page.locator('text=e2e.admin.test@example.com')
-        });
+        }).first();
         await expect(reservationRow).toBeVisible({ timeout: 10000 });
 
         // ==========================================
@@ -227,7 +220,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // ==========================================
         const reservationRow = page.locator('tr', {
             has: page.locator('text=e2e.admin.test@example.com')
-        });
+        }).first();
         await expect(reservationRow).toBeVisible({ timeout: 10000 });
 
         // ==========================================
@@ -277,7 +270,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         const reservationRow = page.locator('tr', {
             has: page.locator('text=e2e.admin.test@example.com')
-        });
+        }).first();
 
         // ==========================================
         // 1. ASSIGN CAMPSITE

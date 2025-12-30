@@ -10,6 +10,9 @@ import { format, addDays } from 'date-fns';
  * If credentials are missing, rate limiting will be disabled (fail-open)
  */
 const hasUpstash = !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN;
+const rateLimitDisabled = process.env.RATE_LIMIT_DISABLED === 'true' || process.env.RATE_LIMIT_DISABLED === '1';
+const shouldRunRateLimitTests = hasUpstash && !rateLimitDisabled;
+const VERBOSE = process.env.VERBOSE_LOGGING === 'true';
 
 test.describe('Rate Limiting', () => {
     test.use({ storageState: { cookies: [], origins: [] } }); // Unauthenticated
@@ -17,7 +20,15 @@ test.describe('Rate Limiting', () => {
     test.beforeAll(() => {
         // Warn if Upstash is not configured
         if (!hasUpstash) {
-            console.warn('⚠️  Upstash Redis not configured. Some rate limiting tests will be skipped.');
+            console.warn('⚠️  Upstash Redis not configured. Rate limiting tests will be skipped.');
+        }
+
+        if (rateLimitDisabled) {
+            console.warn('⚠️  RATE_LIMIT_DISABLED is set. Rate limiting behavior is disabled in the web server env. Skipping rate-limit assertions.');
+        }
+
+        if (!shouldRunRateLimitTests) {
+            test.skip(true, 'Rate limit tests require UPSTASH_REDIS_REST_URL/UPSTASH_REDIS_REST_TOKEN and RATE_LIMIT_DISABLED=false');
         }
     });
 
@@ -35,8 +46,8 @@ test.describe('Rate Limiting', () => {
 
             const responses: number[] = [];
 
-            // Make 35 requests rapidly (limit is 30/minute)
-            for (let i = 0; i < 35; i++) {
+            // Make 32 requests rapidly (limit is 30/minute)
+            for (let i = 0; i < 32; i++) {
                 const response = await request.post('/api/availability/search?org=watershed-campground', {
                     data: payload,
                 });
@@ -46,11 +57,13 @@ test.describe('Rate Limiting', () => {
                 // Check for rate limit headers
                 const limit = response.headers()['x-ratelimit-limit'];
                 const remaining = response.headers()['x-ratelimit-remaining'];
-                const reset = response.headers()['x-ratelimit-reset'];
 
-                if (limit) {
+                if (limit && VERBOSE) {
                     console.log(`Request ${i + 1}: Status=${response.status()}, Limit=${limit}, Remaining=${remaining}`);
                 }
+
+                // Micro-delay to prevent CPU spikes
+                await new Promise(resolve => setTimeout(resolve, 20));
             }
 
             // Should have at least one 429 response (if Upstash is configured)
@@ -149,9 +162,9 @@ test.describe('Rate Limiting', () => {
 
             const responses: number[] = [];
 
-            // Make 10 requests rapidly (limit is 5/minute)
-            for (let i = 0; i < 10; i++) {
-                const response = await request.post('/api/create-payment-intent', {
+            // Make 8 requests rapidly (limit is 5/minute)
+            for (let i = 0; i < 8; i++) {
+                const response = await request.post('/api/create-payment-intent?org=watershed-campground', {
                     data: payload,
                 });
 
@@ -160,12 +173,12 @@ test.describe('Rate Limiting', () => {
                 const limit = response.headers()['x-ratelimit-limit'];
                 const remaining = response.headers()['x-ratelimit-remaining'];
 
-                if (limit) {
+                if (limit && VERBOSE) {
                     console.log(`Payment Intent ${i + 1}: Status=${response.status()}, Limit=${limit}, Remaining=${remaining}`);
                 }
 
-                // Small delay
-                await new Promise(resolve => setTimeout(resolve, 100));
+                // Small delay to prevent resource exhaustion
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
 
             // If Upstash is configured, should have rate-limited requests
@@ -177,14 +190,14 @@ test.describe('Rate Limiting', () => {
 
         test('should use tighter limit for payment endpoint than availability', async ({ request }) => {
             if (!hasUpstash) {
-                    test.skip();
-                }
+                test.skip();
+            }
 
             const tomorrow = addDays(new Date(), 1);
             const checkOut = addDays(tomorrow, 2);
 
             // Check payment endpoint limit
-            const paymentResponse = await request.post('/api/create-payment-intent', {
+            const paymentResponse = await request.post('/api/create-payment-intent?org=watershed-campground', {
                 data: {
                     checkIn: format(tomorrow, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -235,8 +248,8 @@ test.describe('Rate Limiting', () => {
             let wasRateLimited = false;
             let resetTime = 0;
 
-            for (let i = 0; i < 10; i++) {
-                const response = await request.post('/api/create-payment-intent', {
+            for (let i = 0; i < 7; i++) {
+                const response = await request.post('/api/create-payment-intent?org=watershed-campground', {
                     data: payload,
                 });
 
@@ -246,7 +259,7 @@ test.describe('Rate Limiting', () => {
                     break;
                 }
 
-                await new Promise(resolve => setTimeout(resolve, 100));
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
 
             if (wasRateLimited && resetTime) {
@@ -260,7 +273,7 @@ test.describe('Rate Limiting', () => {
                 await new Promise(resolve => setTimeout(resolve, Math.min(waitMs, 65000))); // Cap at 65s for test timeout
 
                 // Try again - should succeed
-                const response = await request.post('/api/create-payment-intent', {
+                const response = await request.post('/api/create-payment-intent?org=watershed-campground', {
                     data: payload,
                 });
 
@@ -282,9 +295,9 @@ test.describe('Rate Limiting', () => {
             const tomorrow = addDays(new Date(), 1);
             const checkOut = addDays(tomorrow, 2);
 
-            // Make 5 payment intent requests (should hit 5/min limit)
-            for (let i = 0; i < 5; i++) {
-                await request.post('/api/create-payment-intent', {
+            // Make 6 payment intent requests (should hit 5/min limit)
+            for (let i = 0; i < 6; i++) {
+                await request.post('/api/create-payment-intent?org=watershed-campground', {
                     data: {
                         checkIn: format(tomorrow, 'yyyy-MM-dd'),
                         checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -293,6 +306,7 @@ test.describe('Rate Limiting', () => {
                         campsiteId: '10000000-0000-0000-0000-000000000001',
                     },
                 });
+                await new Promise(resolve => setTimeout(resolve, 50));
             }
 
             // Availability endpoint should still work (different rate limit bucket)

@@ -21,11 +21,12 @@ function calculateTotal(baseRate: string, checkIn: string, checkOut: string): nu
 }
 
 export async function POST(request: Request) {
+    let rateLimit;
     try {
         // 0. Rate Limiting (5 attempts per minute per IP via Upstash Redis)
         const ip = getClientIp(request);
         const identifier = createIpIdentifier(ip, 'create-payment-intent');
-        const rateLimit = await checkRateLimit(identifier, rateLimiters.paymentIntent);
+        rateLimit = await checkRateLimit(identifier, rateLimiters.paymentIntent);
 
         if (!rateLimit.success) {
             return NextResponse.json(
@@ -203,7 +204,7 @@ export async function POST(request: Request) {
         logger.error("Internal Error:", error);
         return NextResponse.json(
             { error: `Internal Server Error: ${error instanceof Error ? error.message : String(error)}` },
-            { status: 500 }
+            { status: 500, headers: rateLimit ? getRateLimitHeaders(rateLimit) : {} }
         );
     }
 }

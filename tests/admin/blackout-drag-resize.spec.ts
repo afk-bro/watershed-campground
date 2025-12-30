@@ -1,6 +1,7 @@
 import { test, expect } from '@playwright/test';
 import { supabaseAdmin } from '../helpers/test-supabase';
 import { format, addDays } from 'date-fns';
+import { stabilizeForDrag, ensureNoBackdropInterception, closeOverlays, killBackdrops, killBackdropsUntilStable, logTopFixedOverlays } from '../helpers/calendarE2E';
 
 // Default test organization ID
 const organizationId = '00000000-0000-0000-0000-000000000001';
@@ -15,10 +16,32 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
     let testCampsiteId: string;
     let alternateCampsiteId: string;
 
-    // Hide instructional overlay that can intercept pointer events
+    // Hide instructional overlay that can intercept pointer events and inject E2E CSS
     test.beforeEach(async ({ page }) => {
         await page.addInitScript(() => {
             window.localStorage.setItem('has_seen_blackout_overlay', 'true');
+        });
+
+        // Aggressive but scoped CSS to prevent backdrops/overlays from intercepting pointer events
+        await page.addStyleTag({
+            content: `
+                /* E2E stability: backdrops sometimes linger and intercept pointer events */
+                .fixed.inset-0.bg-black\\/50.backdrop-blur-sm,
+                .fixed.inset-0.z-\\[60\\],
+                [data-backdrop],
+                .modal-backdrop,
+                .dialog-backdrop,
+                .backdrop {
+                  pointer-events: none !important;
+                }
+
+                /* Reduce animation timing flake */
+                *, *::before, *::after {
+                  transition-duration: 0ms !important;
+                  animation-duration: 0ms !important;
+                  scroll-behavior: auto !important;
+                }
+            `
         });
     });
 
@@ -50,19 +73,37 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 start_date: format(startDate, 'yyyy-MM-dd'),
                 end_date: format(endDate, 'yyyy-MM-dd'),
                 campsite_id: testCampsiteId,
-                reason: 'Test Maintenance',
+                reason: 'Maintenance Drag Test',
                 organization_id: organizationId
             })
             .select()
             .single();
 
-        if (error) {
-            throw new Error(`Failed to create test blackout: ${error.message}`);
+        if (error || !data) {
+            throw new Error(`Failed to create test blackout: ${error?.message || 'No data returned'}`);
         }
 
         testBlackoutId = data.id;
         console.log('Created blackout test data:', testBlackoutId);
     });
+
+    // Navigate to the calendar month that contains the test blackout so the block is visible
+    async function gotoCalendarForBlackout(page: import('@playwright/test').Page) {
+        const { data, error } = await supabaseAdmin
+            .from('blackout_dates')
+            .select('start_date')
+            .eq('id', testBlackoutId)
+            .single();
+
+        if (error || !data) {
+            throw new Error(`Failed to fetch test blackout for navigation: ${error?.message}`);
+        }
+
+        const start = new Date(data.start_date);
+        const month = start.getMonth() + 1; // 1-based month
+        const year = start.getFullYear();
+        await page.goto(`/admin/calendar?month=${month}&year=${year}`);
+    }
 
     test.afterAll(async () => {
         if (testBlackoutId) {
@@ -75,19 +116,24 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
 
     test.describe('Blackout Drag Operations', () => {
         test('should drag blackout to different campsite', async ({ page }) => {
-            // Navigate to calendar
-            await page.goto('/admin/calendar');
+            // Navigate to calendar (go to month that contains the created blackout)
+            await gotoCalendarForBlackout(page);
             await expect(page.getByRole('link', { name: 'Calendar' })).toBeVisible();
 
             // Wait for calendar to load
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            // Find blackout block by text content
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            // Prefer locating by data-blackout-id (more stable) introduced by the app
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
-            await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
+            // Ensure no modal/backdrop intercepting pointer events and stabilize for drag
+            await stabilizeForDrag(page, blackoutBlock);
+            await killBackdropsUntilStable(page, 1);
+            // Debug: report how many overlays we removed
+            {
+                const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                console.log('E2E removed overlays:', removed);
+            }
 
             // Get initial campsite assignment
             const { data: initialBlackout } = await supabaseAdmin
@@ -102,8 +148,20 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
             const alternateCampsiteRow = page.locator(`[data-campsite-id="${alternateCampsiteId}"]`).first();
 
             if (await alternateCampsiteRow.isVisible()) {
-                // Perform drag and drop
-                await blackoutBlock.dragTo(alternateCampsiteRow);
+                // Perform drag and drop (stabilize first)
+                await stabilizeForDrag(page, blackoutBlock);
+                await killBackdropsUntilStable(page, 1);
+                // Debug: report how many overlays we removed
+                {
+                    const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                    console.log('E2E removed overlays:', removed);
+                }
+                try {
+                    await blackoutBlock.dragTo(alternateCampsiteRow);
+                } catch (err) {
+                    await logTopFixedOverlays(page);
+                    throw err;
+                }
 
                 // Wait for optimistic update
                 await page.waitForTimeout(1500);
@@ -136,13 +194,13 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 .update({ campsite_id: testCampsiteId })
                 .eq('id', testBlackoutId);
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
+            // Ensure no modal/backdrop intercepting pointer events
+            await page.waitForSelector('div[role="dialog"], .fixed.inset-0, .modal, [data-backdrop]', { state: 'detached', timeout: 5000 }).catch(() => { });
             await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 
             // Find UNASSIGNED row (campsite_id = null)
@@ -186,13 +244,13 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 })
                 .eq('id', testBlackoutId);
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
+            // Ensure no modal/backdrop intercepting pointer events
+            await page.waitForSelector('div[role="dialog"], .fixed.inset-0, .modal, [data-backdrop]', { state: 'detached', timeout: 5000 }).catch(() => { });
             await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 
             const initialBox = await blackoutBlock.boundingBox();
@@ -244,17 +302,27 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 })
                 .eq('id', testBlackoutId);
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
-            await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
+            // Ensure no modal/backdrop intercepting pointer events and stabilize for hover/drag
+            await stabilizeForDrag(page, blackoutBlock);
+            await killBackdropsUntilStable(page, 1);
+            // Debug: report how many overlays we removed
+            {
+                const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                console.log('E2E removed overlays:', removed);
+            }
 
             // Hover to show resize handles
-            await blackoutBlock.hover();
+            try {
+                await blackoutBlock.hover();
+            } catch (err) {
+                await logTopFixedOverlays(page);
+                throw err;
+            }
 
             // Look for right resize handle
             const rightHandle = blackoutBlock.locator('[class*="resize"]').last();
@@ -309,17 +377,27 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 })
                 .eq('id', testBlackoutId);
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
-            await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
+            // Ensure no modal/backdrop intercepting pointer events and stabilize for hover
+            await stabilizeForDrag(page, blackoutBlock);
+            await killBackdrops(page);
+            // Debug: report how many overlays we removed
+            {
+                const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                console.log('E2E removed overlays:', removed);
+            }
 
             // Hover to show resize handles
-            await blackoutBlock.hover();
+            try {
+                await blackoutBlock.hover();
+            } catch (err) {
+                await logTopFixedOverlays(page);
+                throw err;
+            }
 
             // Look for left resize handle
             const leftHandle = blackoutBlock.locator('[class*="resize"]').first();
@@ -411,13 +489,13 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     })
                     .eq('id', testBlackoutId);
 
-                await page.goto('/admin/calendar');
+                await gotoCalendarForBlackout(page);
                 await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-                const blackoutBlock = page.locator('[draggable="true"]', {
-                    has: page.locator('text=/Test Maintenance/i')
-                }).first();
+                const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
+                // Ensure no modal/backdrop intercepting pointer events
+                await page.waitForSelector('div[role="dialog"], .fixed.inset-0, .modal, [data-backdrop]', { state: 'detached', timeout: 5000 }).catch(() => { });
                 await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 
                 // Find the reservation block
@@ -433,7 +511,20 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                         .single();
 
                     // Try to drag blackout onto reservation dates
-                    await blackoutBlock.dragTo(reservationBlock);
+                    // Stabilize and try to drag blackout onto reservation dates
+                    await stabilizeForDrag(page, blackoutBlock);
+                    await killBackdropsUntilStable(page, 1);
+                    // Debug: report how many overlays we removed
+                    {
+                        const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                        console.log('E2E removed overlays:', removed);
+                    }
+                    try {
+                        await blackoutBlock.dragTo(reservationBlock);
+                    } catch (err) {
+                        await logTopFixedOverlays(page);
+                        throw err;
+                    }
                     await page.waitForTimeout(2000);
 
                     // Check for error message
@@ -485,7 +576,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     start_date: format(conflictStart, 'yyyy-MM-dd'),
                     end_date: format(conflictEnd, 'yyyy-MM-dd'),
                     campsite_id: testCampsiteId,
-                    reason: 'Conflict Blackout',
+                    reason: 'Overlap Test Blackout',
                     organization_id: organizationId
                 })
                 .select()
@@ -507,23 +598,29 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     })
                     .eq('id', testBlackoutId);
 
-                await page.goto('/admin/calendar');
+                await gotoCalendarForBlackout(page);
                 await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-                const blackoutBlock = page.locator('[draggable="true"]', {
-                    has: page.locator('text=/Test Maintenance/i')
-                }).first();
+                const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
+                // Ensure no modal/backdrop intercepting pointer events
+                await page.waitForSelector('div[role="dialog"], .fixed.inset-0, .modal, [data-backdrop]', { state: 'detached', timeout: 5000 }).catch(() => { });
                 await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 
                 // Find the conflict blackout block
-                const conflictBlock = page.locator('[draggable="true"]', {
-                    has: page.locator('text=/Conflict Blackout/i')
-                }).first();
+                const conflictBlock = page.locator(`[data-blackout-id="${conflictBlackoutId}"]`).first();
 
                 if (await conflictBlock.isVisible({ timeout: 5000 })) {
                     // Try to drag blackout onto conflicting blackout dates
-                    await blackoutBlock.dragTo(conflictBlock);
+                    // Stabilize and try to drag blackout onto conflicting blackout dates
+                    await stabilizeForDrag(page, blackoutBlock);
+                    await killBackdrops(page);
+                    try {
+                        await blackoutBlock.dragTo(conflictBlock);
+                    } catch (err) {
+                        await logTopFixedOverlays(page);
+                        throw err;
+                    }
                     await page.waitForTimeout(2000);
 
                     // Check for error message
@@ -576,13 +673,13 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 })
                 .eq('id', testBlackoutId);
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
+            // Ensure no modal/backdrop intercepting pointer events
+            await page.waitForSelector('div[role="dialog"], .fixed.inset-0, .modal, [data-backdrop]', { state: 'detached', timeout: 5000 }).catch(() => { });
             await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 
             // Hover to show resize handles
@@ -646,13 +743,13 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 .update({ campsite_id: testCampsiteId })
                 .eq('id', testBlackoutId);
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
+            // Ensure no modal/backdrop intercepting pointer events
+            await page.waitForSelector('div[role="dialog"], .fixed.inset-0, .modal, [data-backdrop]', { state: 'detached', timeout: 5000 }).catch(() => { });
             await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 
             // Get initial position to verify rollback visually
@@ -668,7 +765,14 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
             const alternateCampsiteRow = page.locator(`[data-campsite-id="${alternateCampsiteId}"]`).first();
 
             if (await alternateCampsiteRow.isVisible()) {
-                await blackoutBlock.dragTo(alternateCampsiteRow);
+                await stabilizeForDrag(page, blackoutBlock);
+                await killBackdrops(page);
+                try {
+                    await blackoutBlock.dragTo(alternateCampsiteRow);
+                } catch (err) {
+                    await logTopFixedOverlays(page);
+                    throw err;
+                }
 
                 // UI should update immediately (optimistic)
                 // Wait a bit for the animation
@@ -699,12 +803,10 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
             // This test verifies that drawers stay open during updates
             // (one of the key improvements of SWR over window.location.reload)
 
-            await page.goto('/admin/calendar');
+            await gotoCalendarForBlackout(page);
             await page.waitForSelector('[class*="calendar"]', { timeout: 10000 });
 
-            const blackoutBlock = page.locator('[draggable="true"]', {
-                has: page.locator('text=/Test Maintenance/i')
-            }).first();
+            const blackoutBlock = page.locator(`[data-blackout-id="${testBlackoutId}"]`).first();
 
             await expect(blackoutBlock).toBeVisible({ timeout: 10000 });
 

@@ -71,6 +71,13 @@ export const blackoutFormSchema = z.object({
     end_date: z.string().min(1, "End date is required").regex(/^\d{4}-\d{2}-\d{2}$/, "Invalid date format"),
     campsite_id: z.string().nullable().optional(),
     reason: z.string().optional(),
+}).refine(data => {
+    const start = new Date(data.start_date);
+    const end = new Date(data.end_date);
+    return start <= end;
+}, {
+    message: "End date must be after or equal to start date",
+    path: ["end_date"]
 });
 
 export const reservationUpdateSchema = z.object({

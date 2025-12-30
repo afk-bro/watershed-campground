@@ -1,0 +1,212 @@
+[dotenv@17.2.3] injecting env (14) from .env.test -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+[1A[2K[2m[WebServer] [22m
+[2m[WebServer] [22m> watershed-campground@0.1.0 dev
+[2m[WebServer] [22m> next dev -H 0.0.0.0
+[2m[WebServer] [22m
+
+[1A[2K[2m[WebServer] [22m   [1m[38;2;173;127;168m▲ Next.js 16.0.10[39m[22m (Turbopack)
+
+[1A[2K[2m[WebServer] [22m   - Local:         http://localhost:3000
+
+[1A[2K[2m[WebServer] [22m   - Network:       http://0.0.0.0:3000
+[2m[WebServer] [22m   - Environments: .env.local, .env
+
+[1A[2K[2m[WebServer] [22m
+
+[1A[2K[2m[WebServer] [22m [32m[1m✓[22m[39m Starting...
+
+[1A[2K[2m[WebServer] [22m [32m[1m✓[22m[39m Ready in 1290ms
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 2.7s[2m (compile: 2.3s, proxy.ts: 184ms, render: 255ms)[22m
+
+🧹 Resetting E2E data for org: watershed-campground (00000000-0000-0000-0000-000000000001)
+✅ cleared: payment_transactions
+✅ cleared: audit_logs
+✅ cleared: blackout_dates
+📝 Re-seeding test reservations...
+✅ Re-seeded 3 test reservations
+🎉 E2E DB reset complete.
+
+Running 79 tests using 2 workers
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+[1A[2K[1/79] [setup] › tests/auth.setup.ts:7:6 › verify seed data exists
+[1A[2K[2/79] [setup] › tests/auth.setup.ts:45:6 › authenticate as admin
+[1A[2K[setup] › tests/auth.setup.ts:7:6 › verify seed data exists
+✓ Seed data verified:
+
+[1A[2K  - 7 campsites (S1-S5, C1-C2)
+
+[1A[2K  - 249 test reservations
+
+[1A[2K  - Admin auth will be verified in next setup step
+
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 909ms[2m (compile: 790ms, proxy.ts: 7ms, render: 111ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 837ms[2m (compile: 722ms, proxy.ts: 90ms, render: 24ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 117ms[2m (compile: 27ms, proxy.ts: 60ms, render: 30ms)[22m
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+[1A[2K[3/79] [admin] › tests/admin/auth.spec.ts:6:9 › Admin Authentication › successful login with correct credentials
+[1A[2K[4/79] [admin] › tests/admin/auth.spec.ts:21:9 › Admin Authentication › failed login with wrong password shows error
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 194ms[2m (compile: 10ms, proxy.ts: 7ms, render: 177ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 198ms[2m (compile: 51ms, proxy.ts: 10ms, render: 137ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 82ms[2m (compile: 3ms, proxy.ts: 61ms, render: 18ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 112ms[2m (compile: 35ms, proxy.ts: 56ms, render: 21ms)[22m
+
+[1A[2K[5/79] [admin] › tests/admin/auth.spec.ts:36:9 › Admin Authentication › failed login with non-existent email shows error
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 98ms[2m (compile: 37ms, proxy.ts: 7ms, render: 54ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 378ms[2m (compile: 4ms, proxy.ts: 54ms, render: 321ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 310ms[2m (compile: 3ms, proxy.ts: 52ms, render: 255ms)[22m
+
+[1A[2K[6/79] [admin] › tests/admin/auth.spec.ts:51:9 › Admin Authentication › login button is disabled while submitting
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 91ms[2m (compile: 21ms, proxy.ts: 6ms, render: 63ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 79ms[2m (compile: 4ms, proxy.ts: 50ms, render: 25ms)[22m
+
+[1A[2K[7/79] [admin] › tests/admin/blackout-dates.spec.ts:43:13 › Admin Blackout Dates › Create Blackout Dates › should create campground-wide blackout period
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 854ms[2m (compile: 590ms, proxy.ts: 48ms, render: 216ms)[22m
+
+[1A[2K[8/79] [admin] › tests/admin/blackout-dates.spec.ts:79:13 › Admin Blackout Dates › Create Blackout Dates › should create site-specific blackout period
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 314ms[2m (compile: 3ms, proxy.ts: 51ms, render: 259ms)[22m
+
+[1A[2K[9/79] [admin] › tests/admin/blackout-dates.spec.ts:114:13 › Admin Blackout Dates › Create Blackout Dates › should create single-day blackout
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 250ms[2m (compile: 4ms, proxy.ts: 48ms, render: 197ms)[22m
+
+[1A[2K[10/79] [admin] › tests/admin/blackout-dates.spec.ts:135:13 › Admin Blackout Dates › Create Blackout Dates › should create blackout with UNASSIGNED string for all sites
+[1A[2K[11/79] [admin] › tests/admin/blackout-dates.spec.ts:157:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout without start date
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 275ms[2m (compile: 4ms, proxy.ts: 54ms, render: 217ms)[22m
+
+[1A[2K[12/79] [admin] › tests/admin/blackout-dates.spec.ts:182:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout without end date
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 145ms[2m (compile: 3ms, proxy.ts: 48ms, render: 95ms)[22m
+
+[1A[2K[13/79] [admin] › tests/admin/blackout-dates.spec.ts:206:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout where end date is before start date
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 151ms[2m (compile: 3ms, proxy.ts: 51ms, render: 97ms)[22m
+
+[1A[2K[14/79] [admin] › tests/admin/blackout-dates.spec.ts:252:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should prevent availability during blackout period
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 172ms[2m (compile: 3ms, proxy.ts: 63ms, render: 106ms)[22m
+
+[1A[2K  1) [admin] › tests/admin/blackout-dates.spec.ts:206:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout where end date is before start date 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m500[39m
+    Received: [31m400[39m
+
+      218 |
+      219 |             // Database constraint should prevent this
+    > 220 |             expect(response.status()).toBe(500);
+          |                                       ^
+      221 |         });
+      222 |     });
+      223 |
+        at /home/x/dev/projects/watershed-campground/tests/admin/blackout-dates.spec.ts:220:39
+
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 841ms[2m (compile: 479ms, proxy.ts: 51ms, render: 311ms)[22m
+
+[1A[2K  2) [admin] › tests/admin/blackout-dates.spec.ts:252:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should prevent availability during blackout period 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mfalse[39m
+    Received: [31mundefined[39m
+
+      277 |
+      278 |             if (response.status() === 200) {
+    > 279 |                 expect(body.available).toBe(false);
+          |                                        ^
+      280 |             } else {
+      281 |                 expect(response.status()).toBe(400);
+      282 |                 expect(body.error).toBeDefined();
+        at /home/x/dev/projects/watershed-campground/tests/admin/blackout-dates.spec.ts:279:40
+
+
+[1A[2K[15/79] [admin] › tests/admin/blackout-dates.spec.ts:286:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should allow availability before blackout period
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 299ms[2m (compile: 3ms, proxy.ts: 59ms, render: 238ms)[22m
+
+[1A[2K[16/79] [admin] › tests/admin/blackout-dates.spec.ts:396:13 › Admin Blackout Dates › Site-Specific Blackout Impact › should prevent booking specific site during its blackout
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  specify custom .env file path with { path: '/custom/path/.env' }
+
+[1A[2K[17/79] [admin] › tests/admin/blackout-dates.spec.ts:317:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should allow availability after blackout period
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 279ms[2m (compile: 3ms, proxy.ts: 48ms, render: 229ms)[22m
+
+[1A[2K  3) [admin] › tests/admin/blackout-dates.spec.ts:396:13 › Admin Blackout Dates › Site-Specific Blackout Impact › should prevent booking specific site during its blackout 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32mfalse[39m
+    Received: [31mundefined[39m
+
+      419 |             const body = await parseJsonOrThrow(response);
+      420 |             if (response.status() === 200) {
+    > 421 |                 expect(body.available).toBe(false);
+          |                                        ^
+      422 |             }
+      423 |         });
+      424 |
+        at /home/x/dev/projects/watershed-campground/tests/admin/blackout-dates.spec.ts:421:40
+
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 308ms[2m (compile: 3ms, proxy.ts: 50ms, render: 256ms)[22m
+
+[1A[2K[18/79] [admin] › tests/admin/blackout-dates.spec.ts:511:13 › Admin Blackout Dates › List Blackout Dates › should fetch all blackout dates via database
+[1A[2K[19/79] [admin] › tests/admin/blackout-dates.spec.ts:530:13 › Admin Blackout Dates › List Blackout Dates › should filter blackout dates by date range
+[1A[2K[20/79] [admin] › tests/admin/blackout-dates.spec.ts:545:13 › Admin Blackout Dates › List Blackout Dates › should filter blackout dates by campsite
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🔑 add access controls to secrets: https://dotenvx.com/ops
+
+[1A[2K[21/79] [admin] › tests/admin/blackout-dates.spec.ts:425:13 › Admin Blackout Dates › Site-Specific Blackout Impact › should allow booking other sites during site-specific blackout
+[1A[2K[22/79] [admin] › tests/admin/blackout-drag-resize.spec.ts:118:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:118:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+Created blackout test data: e913abdf-c605-4a25-a10b-668558bfb4aa
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 264ms[2m (compile: 3ms, proxy.ts: 46ms, render: 216ms)[22m
+
+[1A[2K[23/79] [admin] › tests/admin/blackout-drag-resize.spec.ts:444:13 › Admin Calendar - Blackout Drag & Resize › Conflict Validation › should prevent blackout from overlapping with existing reservation
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:444:13 › Admin Calendar - Blackout Drag & Resize › Conflict Validation › should prevent blackout from overlapping with existing reservation
+Created blackout test data: 6955fb12-236b-434a-9756-b88bc26d4d7a
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=1&year=2026 [32m200[39m in 375ms[2m (compile: 149ms, proxy.ts: 45ms, render: 181ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=1&year=2026 [32m200[39m in 1196ms[2m (compile: 975ms, proxy.ts: 66ms, render: 156ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 173ms[2m (compile: 4ms, proxy.ts: 109ms, render: 59ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 162ms[2m (compile: 7ms, proxy.ts: 123ms, render: 31ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 157ms[2m (compile: 55ms, proxy.ts: 57ms, render: 44ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 186ms[2m (compile: 111ms, proxy.ts: 49ms, render: 25ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2026-01 [32m200[39m in 763ms[2m (compile: 394ms, proxy.ts: 62ms, render: 308ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2026-01 [32m200[39m in 800ms[2m (compile: 427ms, proxy.ts: 51ms, render: 321ms)[22m
+
+[1A[2K[24/79] [admin] › tests/admin/blackout-drag-resize.spec.ts:568:13 › Admin Calendar - Blackout Drag & Resize › Conflict Validation › should prevent blackout from overlapping with another blackout
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:118:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+E2E removed overlays: [33m0[39m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=1&year=2026 [32m200[39m in 99ms[2m (compile: 3ms, proxy.ts: 46ms, render: 50ms)[22m
+
+[1A[2KE2E removed overlays: [33m0[39m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 80ms[2m (compile: 3ms, proxy.ts: 54ms, render: 24ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 118ms[2m (compile: 42ms, proxy.ts: 57ms, render: 19ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2026-01 [32m200[39m in 325ms[2m (compile: 3ms, proxy.ts: 49ms, render: 273ms)[22m
+

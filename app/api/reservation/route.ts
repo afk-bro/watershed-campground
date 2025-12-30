@@ -37,10 +37,12 @@ export async function POST(request: Request) {
             );
         }
 
-        // 0.5. Org Resolution (CRITICAL - before any queries)
         const organizationId = await resolvePublicOrganizationId(request);
         if (!organizationId) {
-            return NextResponse.json({ error: "Not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Not found" },
+                { status: 404, headers: getRateLimitHeaders(rlResult) }
+            );
         }
 
         const baseUrl = getBaseUrl();
@@ -49,10 +51,9 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { paymentIntentId, paymentMethod, ...formDataRaw } = body;
 
-        // 1. Validation
         const result = reservationFormSchema.safeParse(formDataRaw);
         if (!result.success) {
-            return validationError(result.error);
+            return validationError(result.error, getRateLimitHeaders(rlResult));
         }
         const formData = result.data;
 
@@ -64,7 +65,7 @@ export async function POST(request: Request) {
                 // Explicit rejection: public users cannot use override flags
                 return NextResponse.json(
                     { error: "Unauthorized: admin-only parameters detected" },
-                    { status: 403 }
+                    { status: 403, headers: getRateLimitHeaders(rlResult) }
                 );
             }
         }
@@ -76,7 +77,10 @@ export async function POST(request: Request) {
         if (paymentIntentId) {
             const verification = await verifyPaymentIntent(paymentIntentId);
             if (!verification.success) {
-                return NextResponse.json({ error: verification.error || "Payment verification failed" }, { status: 400 });
+                return NextResponse.json(
+                    { error: verification.error || "Payment verification failed" },
+                    { status: 400, headers: getRateLimitHeaders(rlResult) }
+                );
             }
             paymentIntent = verification.paymentIntent;
             recommendedSiteId = verification.campsiteId!;
@@ -88,7 +92,7 @@ export async function POST(request: Request) {
                 if (!formData.campsiteId) {
                     return NextResponse.json(
                         { error: "Campsite ID required when using admin overrides" },
-                        { status: 400 }
+                        { status: 400, headers: getRateLimitHeaders(rlResult) }
                     );
                 }
                 recommendedSiteId = formData.campsiteId;
@@ -105,7 +109,7 @@ export async function POST(request: Request) {
                 if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
                     return NextResponse.json(
                         { error: availabilityResult.message || "Dates no longer available." },
-                        { status: 400 }
+                        { status: 400, headers: getRateLimitHeaders(rlResult) }
                     );
                 }
                 recommendedSiteId = availabilityResult.recommendedSiteId;
@@ -119,7 +123,10 @@ export async function POST(request: Request) {
             .eq("id", recommendedSiteId)
             .single();
 
-        if (!campsite) return NextResponse.json({ error: "Campsite not found" }, { status: 500 });
+        if (!campsite) return NextResponse.json(
+            { error: "Campsite not found" },
+            { status: 500, headers: getRateLimitHeaders(rlResult) }
+        );
 
         const siteTotal = calculateTotal(campsite.base_rate, formData.checkIn, formData.checkOut);
 
@@ -245,11 +252,13 @@ export async function POST(request: Request) {
             name: error instanceof Error ? error.name : undefined,
         });
 
-        // Return more helpful error message
         const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
         return NextResponse.json({
             error: "Failed to create reservation",
             details: process.env.NODE_ENV === 'production' ? undefined : errorMessage
-        }, { status: 500 });
+        }, {
+            status: 500,
+            headers: rlResult ? getRateLimitHeaders(rlResult) : {}
+        });
     }
 }

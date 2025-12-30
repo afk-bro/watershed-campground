@@ -59,7 +59,7 @@ export function successResponse<T>(data: T, status = 200) {
  * @param zodError - Zod validation error
  * @returns NextResponse with validation error details
  */
-export function validationError(zodError: ZodError) {
+export function validationError(zodError: ZodError, headers?: Record<string, string>) {
   return NextResponse.json(
     {
       error: "Validation failed",
@@ -69,6 +69,6 @@ export function validationError(zodError: ZodError) {
         message: i.message,
       })),
     },
-    { status: 400 }
+    { status: 400, ...(headers ? { headers } : {}) }
   );
 }

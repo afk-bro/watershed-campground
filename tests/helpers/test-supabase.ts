@@ -1,30 +1,26 @@
 /**
- * Test helper for Supabase admin client
- * This is a test-specific version that doesn't use 'server-only' package
- * Safe to use in Playwright tests
- *
- * Note: Environment variables are loaded by playwright.config.ts
+ * Test helper for Supabase operations
+ * 
+ * IMPORTANT: This module provides both factory functions for creating test data
+ * and a supabaseAdmin client for queries.
+ * 
+ * MULTI-TENANCY SAFETY RULES:
+ * - Use factory functions for ALL insertions (createTestCampsite, createTestReservation, createTestBlackout)
+ * - Use supabaseAdmin ONLY for queries (.select()) and updates/deletes that factories don't cover
+ * - NEVER use supabaseAdmin.from(...).insert() directly - use factories instead
  */
-import { createClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_SECRET_KEY;
+// Re-export all factory functions and helpers
+export {
+    DEFAULT_ORG_ID,
+    createTestCampsite,
+    deleteTestCampsite,
+    createTestReservation,
+    deleteTestReservation,
+    createTestBlackout,
+    deleteTestBlackout,
+} from './factories';
 
-if (!supabaseUrl || !supabaseServiceKey) {
-    // In test listing mode, provide dummy client
-    // Actual tests will fail gracefully if env vars are missing
-    console.warn("Warning: Test Supabase admin environment variables are missing. Tests may fail.");
-}
-
-// Admin client with secret key - bypasses RLS
-// For test use only
-export const supabaseAdmin = createClient(
-    supabaseUrl || 'http://localhost:54321',
-    supabaseServiceKey || 'dummy-key-for-listing',
-    {
-        auth: {
-            autoRefreshToken: false,
-            persistSession: false
-        }
-    }
-);
+// Export internal client for queries and updates
+// WARNING: Only use for .select(), .update(), .delete() - NOT for .insert()!
+export { supabaseAdminInternal as supabaseAdmin } from './factories';

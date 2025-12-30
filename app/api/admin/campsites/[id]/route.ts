@@ -26,6 +26,9 @@ export const PATCH = withAdminAuth(async ({ request, user, organizationId, param
 
     // Fetch existing for comparison/logging - use verifyOrgResource for 404 before validation
     const existingCampsite = await verifyOrgResource('campsites', id, organizationId);
+    if (!existingCampsite) {
+        return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
+    }
 
     const body = await request.json();
 
@@ -89,6 +92,9 @@ export const DELETE = withAdminAuth(async ({ user, organizationId, params }) => 
 
     // Fetch existing for logging - use verifyOrgResource for 404 before deletion
     const existingCampsite = await verifyOrgResource('campsites', id, organizationId);
+    if (!existingCampsite) {
+        return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
+    }
 
     // Delete the campsite record (org-scoped)
     const { error: deleteError } = await supabaseAdmin

@@ -75,6 +75,7 @@ const DashboardStats = memo(function DashboardStats({
                             ))}
                             <button
                                 onClick={() => setFilter('maintenance')}
+                                data-testid="maintenance-tab"
                                 className={`pb-2 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
                                     filter === 'maintenance'
                                         ? 'border-amber-500 text-amber-600 dark:text-amber-500'

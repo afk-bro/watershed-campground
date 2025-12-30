@@ -52,7 +52,7 @@ ALTER TABLE audit_logs ADD COLUMN IF NOT EXISTS organization_id UUID;
 
 -- Insert default organization (idempotent)
 INSERT INTO organizations (id, name, slug) 
-VALUES ('00000000-0000-0000-0000-000000000001', 'Watershed Campground', 'watershed')
+VALUES ('00000000-0000-0000-0000-000000000001', 'Watershed Campground', 'watershed-campground')
 ON CONFLICT (id) DO NOTHING;
 
 -- Backfill existing data with default organization

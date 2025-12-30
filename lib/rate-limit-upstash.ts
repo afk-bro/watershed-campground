@@ -10,7 +10,9 @@ import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
 import { logger } from "@/lib/logger";
 
-const isTestEnv = process.env.NODE_ENV === 'test' || process.env.RATE_LIMIT_DISABLED === 'true';
+// Use RATE_LIMIT_DISABLED to control bypass. 
+// We don't automatically disable in NODE_ENV=test because integration tests need to verify rate limiting.
+const isTestEnv = process.env.RATE_LIMIT_DISABLED === 'true';
 
 // Initialize Upstash Redis client
 // Falls back to null if env vars are missing (for local dev without Upstash)

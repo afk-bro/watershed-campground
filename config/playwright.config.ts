@@ -19,7 +19,7 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+    workers: process.env.CI ? 1 : 2,
     reporter: 'html',
     globalSetup: require.resolve('../tests/global-setup'),
     use: {
@@ -29,6 +29,8 @@ export default defineConfig({
         video: 'retain-on-failure',
         // Leak-proof settings to prevent zombie Chrome processes
         headless: true,
+        actionTimeout: 15000,
+        navigationTimeout: 15000,
         launchOptions: {
             args: [
                 '--disable-dev-shm-usage',
@@ -52,10 +54,10 @@ export default defineConfig({
         // Tests requiring admin authentication
         {
             name: 'admin',
-            testMatch: /tests\/admin\/.*\.spec\.ts/,
+            testMatch: /admin\/.*\.spec\.ts/,
             testIgnore: [
-                /tests\/admin\/mobile-.*\.spec\.ts/,
-                /tests\/admin\/responsive-reservations\.spec\.ts/
+                '**/admin/mobile-*.spec.ts',
+                '**/admin/responsive-reservations.spec.ts'
             ],
             use: {
                 ...devices['Desktop Chrome'],
@@ -70,7 +72,7 @@ export default defineConfig({
         // Public-facing tests (no auth required)
         {
             name: 'guest',
-            testMatch: /tests\/guest\/.*\.spec\.ts/,
+            testMatch: /guest\/.*\.spec\.ts/,
             use: {
                 ...devices['Desktop Chrome'],
                 storageState: { cookies: [], origins: [] }, // No auth state
@@ -84,8 +86,8 @@ export default defineConfig({
         {
             name: 'mobile-chrome',
             testMatch: [
-                /tests\/admin\/mobile-.*\.spec\.ts/,
-                /tests\/admin\/responsive-reservations\.spec\.ts/
+                '**/admin/mobile-*.spec.ts',
+                '**/admin/responsive-reservations.spec.ts'
             ],
             use: {
                 ...devices['Pixel 5'],
@@ -104,9 +106,9 @@ export default defineConfig({
         {
             name: 'shared',
             testMatch: [
-                /tests\/integration\/.*\.spec\.ts/,
-                /tests\/security\/.*\.spec\.ts/,
-                /tests\/unit\/.*\.spec\.ts/,
+                /integration\/.*\.spec\.ts/,
+                /security\/.*\.spec\.ts/,
+                /unit\/.*\.spec\.ts/,
             ],
             use: {
                 ...devices['Desktop Chrome'],
@@ -130,7 +132,7 @@ export default defineConfig({
             ),
             // Fast failsafe timeout for tests (500ms instead of 10s in production)
             // Disable rate limiting during E2E to prevent 429s
-            RATE_LIMIT_DISABLED: process.env.RATE_LIMIT_DISABLED || 'true',
+            RATE_LIMIT_DISABLED: 'false', // Enable for security tests, high limits used elsewhere.
             NEXT_PUBLIC_STUCK_SAVING_TIMEOUT_MS: '500',
         } as Record<string, string>,
     },
