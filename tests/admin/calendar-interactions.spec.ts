@@ -2,6 +2,9 @@ import { test, expect, Page } from '@playwright/test';
 import { supabaseAdmin } from '../helpers/test-supabase';
 import { format, addDays, differenceInMonths, startOfMonth } from 'date-fns';
 
+// Default test organization ID
+const organizationId = '00000000-0000-0000-0000-000000000001';
+
 /**
  * Admin Calendar - Drag & Drop Interactions
  * Tests the calendar's drag-and-drop functionality for managing reservations.

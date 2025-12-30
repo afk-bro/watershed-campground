@@ -142,7 +142,8 @@ test.describe('Reservation Service', () => {
             formData,
             "site_123",
             { siteTotal: 50, addonsTotal: 10, totalAmount: 60 },
-            { paymentStatus: 'paid', amountPaid: 60, balanceDue: 0, paymentType: 'full' }
+            { paymentStatus: 'paid', amountPaid: 60, balanceDue: 0, paymentType: 'full' },
+            '00000000-0000-0000-0000-000000000001'
         );
 
         expect(result.reservation.id).toBe("res_123");

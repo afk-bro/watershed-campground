@@ -53,6 +53,10 @@ export default defineConfig({
         {
             name: 'admin',
             testMatch: /tests\/admin\/.*\.spec\.ts/,
+            testIgnore: [
+                /tests\/admin\/mobile-.*\.spec\.ts/,
+                /tests\/admin\/responsive-reservations\.spec\.ts/
+            ],
             use: {
                 ...devices['Desktop Chrome'],
                 storageState: 'tests/.auth/admin.json', // Use authenticated state
@@ -71,6 +75,26 @@ export default defineConfig({
                 ...devices['Desktop Chrome'],
                 storageState: { cookies: [], origins: [] }, // No auth state
             },
+        },
+
+        // ============================================
+        // Mobile (touch) Project
+        // ============================================
+        // Runs mobile-specific tests with touch enabled
+        {
+            name: 'mobile-chrome',
+            testMatch: [
+                /tests\/admin\/mobile-.*\.spec\.ts/,
+                /tests\/admin\/responsive-reservations\.spec\.ts/
+            ],
+            use: {
+                ...devices['Pixel 5'],
+                hasTouch: true,
+                isMobile: true,
+                viewport: devices['Pixel 5'].viewport,
+                storageState: 'tests/.auth/admin.json',
+            },
+            dependencies: ['setup'],
         },
 
         // ============================================

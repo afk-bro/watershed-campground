@@ -9,13 +9,15 @@ import { format, addDays } from 'date-fns';
  * NOTE: This test requires Upstash Redis credentials in .env.test
  * If credentials are missing, rate limiting will be disabled (fail-open)
  */
+const hasUpstash = !!process.env.UPSTASH_REDIS_REST_URL && !!process.env.UPSTASH_REDIS_REST_TOKEN;
+
 test.describe('Rate Limiting', () => {
     test.use({ storageState: { cookies: [], origins: [] } }); // Unauthenticated
 
     test.beforeAll(() => {
         // Warn if Upstash is not configured
-        if (!process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) {
-            console.warn('⚠️  Upstash Redis not configured. Rate limiting tests will be limited.');
+        if (!hasUpstash) {
+            console.warn('⚠️  Upstash Redis not configured. Some rate limiting tests will be skipped.');
         }
     });
 
@@ -52,7 +54,7 @@ test.describe('Rate Limiting', () => {
             }
 
             // Should have at least one 429 response (if Upstash is configured)
-            if (process.env.UPSTASH_REDIS_REST_URL) {
+            if (hasUpstash) {
                 const rateLimitedRequests = responses.filter(status => status === 429);
                 expect(rateLimitedRequests.length).toBeGreaterThan(0);
             }
@@ -79,7 +81,7 @@ test.describe('Rate Limiting', () => {
             // Should include standard rate limit headers
             const headers = response.headers();
 
-            if (process.env.UPSTASH_REDIS_REST_URL) {
+            if (hasUpstash) {
                 expect(headers['x-ratelimit-limit']).toBeDefined();
                 expect(headers['x-ratelimit-remaining']).toBeDefined();
                 expect(headers['x-ratelimit-reset']).toBeDefined();
@@ -117,7 +119,7 @@ test.describe('Rate Limiting', () => {
             }
 
             // If Upstash is configured, we should have hit the limit
-            if (process.env.UPSTASH_REDIS_REST_URL && rateLimitedResponse) {
+            if (hasUpstash && rateLimitedResponse) {
                 expect(rateLimitedResponse.status()).toBe(429);
 
                 const body = await rateLimitedResponse.json();
@@ -167,16 +169,16 @@ test.describe('Rate Limiting', () => {
             }
 
             // If Upstash is configured, should have rate-limited requests
-            if (process.env.UPSTASH_REDIS_REST_URL) {
+            if (hasUpstash) {
                 const rateLimitedRequests = responses.filter(status => status === 429);
                 expect(rateLimitedRequests.length).toBeGreaterThan(0);
             }
         });
 
         test('should use tighter limit for payment endpoint than availability', async ({ request }) => {
-            if (!process.env.UPSTASH_REDIS_REST_URL) {
-                test.skip();
-            }
+            if (!hasUpstash) {
+                    test.skip();
+                }
 
             const tomorrow = addDays(new Date(), 1);
             const checkOut = addDays(tomorrow, 2);
@@ -214,7 +216,7 @@ test.describe('Rate Limiting', () => {
 
     test.describe('Rate Limit Recovery', () => {
         test('should allow requests again after window resets', async ({ request }) => {
-            if (!process.env.UPSTASH_REDIS_REST_URL) {
+            if (!hasUpstash) {
                 test.skip();
             }
 
@@ -273,7 +275,7 @@ test.describe('Rate Limiting', () => {
 
     test.describe('Rate Limit Identifier Isolation', () => {
         test('should isolate rate limits by endpoint', async ({ request }) => {
-            if (!process.env.UPSTASH_REDIS_REST_URL) {
+            if (!hasUpstash) {
                 test.skip();
             }
 

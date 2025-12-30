@@ -1,4 +1,7 @@
 import { test, expect } from '@playwright/test';
+
+// Default test organization ID
+const organizationId = '00000000-0000-0000-0000-000000000001';
 import { supabaseAdmin } from '../helpers/test-supabase';
 
 /**

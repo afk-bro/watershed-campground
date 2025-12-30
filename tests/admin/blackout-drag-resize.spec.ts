@@ -2,6 +2,9 @@ import { test, expect } from '@playwright/test';
 import { supabaseAdmin } from '../helpers/test-supabase';
 import { format, addDays } from 'date-fns';
 
+// Default test organization ID
+const organizationId = '00000000-0000-0000-0000-000000000001';
+
 /**
  * Admin Calendar - Blackout Dates Drag & Resize
  * Tests drag-and-drop and resize functionality for blackout dates

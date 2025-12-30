@@ -72,7 +72,7 @@ function toReservationInsert(
     organizationId: string,
     audit?: AuditContext
 ): ReservationInsert {
-    return {
+    const insertObj = {
         // Guest information
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -114,7 +114,7 @@ function toReservationInsert(
         // References
         campsite_id: campsiteId,
         public_edit_token_hash: tokenHash,
-        organization_id: organizationId,
+        organization_id: organizationId, // Added in multi-tenancy migration
 
         // Audit metadata for debugging, reconciliation, and dispute resolution
         metadata: {
@@ -141,6 +141,7 @@ function toReservationInsert(
             audit_version: 1,
         },
     };
+    return insertObj as unknown as ReservationInsert;
 }
 
 // Helper: Token Generation
