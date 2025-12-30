@@ -63,19 +63,31 @@ export async function resolvePublicOrganizationId(request: Request): Promise<str
         const clientIP = getClientIP(request);
         const ipHash = hashIP(clientIP);
 
-        // Fallback to default org in test/development environments
-        // This allows E2E tests to work without updating every test file
+        // Fallback strategy for missing org parameter
         const isTestEnv = process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development';
-        const DEFAULT_ORG_SLUG = 'watershed-campground';
 
         if (!orgSlug) {
             if (isTestEnv) {
-                // In test/dev, use default org instead of failing
-                logger.info('[Tenancy] Using default org (test/dev env)', {
+                // In test/dev: try NEXT_PUBLIC_ORG_SLUG, then hardcoded fallback
+                const envOrgSlug = process.env.NEXT_PUBLIC_ORG_SLUG;
+
+                if (!envOrgSlug) {
+                    // LOUD WARNING: Missing required environment variable
+                    logger.error('⚠️  CRITICAL: NEXT_PUBLIC_ORG_SLUG not set!', {
+                        endpoint,
+                        environment: process.env.NODE_ENV,
+                        message: 'Add NEXT_PUBLIC_ORG_SLUG to .env.local (dev) or .env.test (tests)',
+                        docs: 'See .env.example for required configuration'
+                    });
+                    // Fail closed - no unsafe fallback
+                    return null;
+                }
+
+                logger.info('[Tenancy] Using org from NEXT_PUBLIC_ORG_SLUG', {
                     endpoint,
-                    default_slug: DEFAULT_ORG_SLUG
+                    org_slug: envOrgSlug
                 });
-                orgSlug = DEFAULT_ORG_SLUG;
+                orgSlug = envOrgSlug;
             } else {
                 // In production, require explicit org parameter
                 logger.warn('[Tenancy] Org resolution failed: missing parameter', {

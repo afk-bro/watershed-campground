@@ -8,6 +8,8 @@
     "start": "next start",
     "type-check": "tsc --noEmit",
     "lint": "eslint . --ext .js,.jsx,.ts,.tsx --max-warnings=0",
+    "env:check": "node scripts/env-check.mjs",
+    "env:check:test": "node scripts/env-check.mjs --test",
     "test": "playwright test",
     "test:admin": "playwright test --project=admin",
     "test:guest": "playwright test --project=guest",
