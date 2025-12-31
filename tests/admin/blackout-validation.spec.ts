@@ -19,7 +19,7 @@ test.describe('Admin Blackout Date Validation', () => {
         expect(body.issues).toBeDefined();
 
         // Check for our specific refinement error
-        const rangeError = body.issues.find((i: unknown) => i.path === 'end_date');
+        const rangeError = body.issues.find((i: { path?: string }) => i.path === 'end_date');
         expect(rangeError).toBeDefined();
         expect(rangeError.message).toBe('End date must be after or equal to start date');
     });

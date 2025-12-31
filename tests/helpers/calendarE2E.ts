@@ -105,7 +105,7 @@ export async function killBackdrops(page: Page) {
     }
 
     // Store for debugging (optional)
-    (window as Window & Record<string, unknown>).__e2e_removed_overlays__ = removed;
+    window.__e2e_removed_overlays__ = removed;
   });
 }
 
@@ -126,7 +126,7 @@ export async function logTopFixedOverlays(page: Page) {
     }
 
     const overlays = await page.evaluate(() => {
-      const result: Array<{ id: string }> = [];
+      const result: Array<{ tag: string; className: string; zIndex: string; pointerEvents: string; opacity: string; display: string }> = [];
       const els = Array.from(document.querySelectorAll('body *')) as HTMLElement[];
       for (const e of els) {
         try {
@@ -152,7 +152,8 @@ export async function logTopFixedOverlays(page: Page) {
     });
     console.log('Top fixed overlays:', overlays);
   } catch (err: unknown) {
-    console.log('logTopFixedOverlays error (ignored):', err && err.message ? err.message : err);
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    console.log('logTopFixedOverlays error (ignored):', errorMessage);
   }
 }
 
@@ -247,7 +248,7 @@ export async function stabilizeForDrag(page: Page, block: Locator) {
 
 export async function installOverlayObserver(page: Page) {
   await page.evaluate(() => {
-    if ((window as Window & Record<string, unknown>).__e2e_overlay_observer_installed__) return;
+    if (window.__e2e_overlay_observer_installed__) return;
     const findAndRemove = (node: HTMLElement) => {
       try {
         const s = getComputedStyle(node);
@@ -273,7 +274,7 @@ export async function installOverlayObserver(page: Page) {
           return true;
         }
         // check descendants
-        if (node.querySelectorAll && Array.from(node.querySelectorAll('*')).some((el: unknown) => (el.innerText || '').includes('Add Blackout Dates'))) {
+        if (node.querySelectorAll && Array.from(node.querySelectorAll('*')).some((el) => ((el as HTMLElement).innerText || '').includes('Add Blackout Dates'))) {
           node.remove();
           return true;
         }
@@ -308,8 +309,8 @@ export async function installOverlayObserver(page: Page) {
       }
     };
     const interval = setInterval(scan, 50); // Aggressive 50ms scan
-    (window as Window & Record<string, unknown>).__e2e_overlay_scan_interval__ = interval;
-    (window as Window & Record<string, unknown>).__e2e_overlay_observer__ = obs;
-    (window as Window & Record<string, unknown>).__e2e_overlay_observer_installed__ = true;
+    window.__e2e_overlay_scan_interval__ = interval;
+    window.__e2e_overlay_observer__ = obs;
+    window.__e2e_overlay_observer_installed__ = true;
   });
 }

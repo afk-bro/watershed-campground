@@ -194,8 +194,8 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // Check campsite assignment in final poll result if needed, or just refresh
         const finalApiRes = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
         const finalJson = await finalApiRes.json();
-        reservation = finalJson.data.find((item: { id: string }) => item.id === testReservationId);
-        expect(reservation?.campsite_id).toBe(testCampsiteId);
+        const finalReservation = finalJson.data.find((item: { id: string }) => item.id === testReservationId);
+        expect(finalReservation?.campsite_id).toBe(testCampsiteId);
 
         // ==========================================
         // STEP 4: Verify Database State
