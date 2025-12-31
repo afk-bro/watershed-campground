@@ -140,9 +140,21 @@ export function getBlockPosition(
  */
 export function getDateFromPointer(clientX: number, clientY: number): string | null {
   const elements = document.elementsFromPoint(clientX, clientY);
-  const dayCell = elements.find(el => el.hasAttribute('data-date'));
-  if (dayCell) {
-    return dayCell.getAttribute('data-date');
+
+  // Filter out known non-interactive overlays if they appear (defensive)
+  // Note: pointer-events: none should prevent them appearing, but being explicit helps stability
+  const validElements = elements.filter(el => {
+    if (el.getAttribute('data-testid') === 'toast') return false;
+    if (el.hasAttribute('data-ghost-mode')) return false;
+    if (el.classList.contains('fixed') && el.classList.contains('inset-0')) return false; // Backdrops
+    return true;
+  });
+
+  for (const el of validElements) {
+    const cell = el.closest('[data-date]');
+    if (cell) {
+      return cell.getAttribute('data-date');
+    }
   }
   return null;
 }
@@ -177,15 +189,21 @@ export function calculateDragOffset(
  */
 export function getCampsiteFromPointer(clientX: number, clientY: number): string | null {
   const elements = document.elementsFromPoint(clientX, clientY);
-  
-  // Look for campsite row
-  const row = elements.find(el => el.hasAttribute('data-campsite-id'));
-  if (row) {
-    return row.getAttribute('data-campsite-id');
+
+  // Filter out known non-interactive overlays
+  const validElements = elements.filter(el => {
+    if (el.getAttribute('data-testid') === 'toast') return false;
+    if (el.hasAttribute('data-ghost-mode')) return false;
+    if (el.classList.contains('fixed') && el.classList.contains('inset-0')) return false;
+    return true;
+  });
+
+  for (const el of validElements) {
+    const row = el.closest('[data-campsite-id]');
+    if (row) {
+      return row.getAttribute('data-campsite-id');
+    }
   }
 
-  // Also check for individual cells which might have resourceId (less reliable if overlays exist but good backup)
-  // But strictly we should rely on the row or properly tagged elements
-  
   return null;
 }

@@ -59,9 +59,16 @@ export const POST = withAdminAuth(async ({ request, user, organizationId, params
     }
 
     // 4. Perform Assignment (org-scoped)
+    const updates: any = { campsite_id: campsiteId };
+
+    // Auto-confirm if currently pending
+    if (reservation.status === 'pending') {
+        updates.status = 'confirmed';
+    }
+
     const { error: updateError } = await supabaseAdmin
         .from('reservations')
-        .update({ campsite_id: campsiteId })
+        .update(updates)
         .eq('id', id)
         .eq('organization_id', organizationId);
 
@@ -73,8 +80,14 @@ export const POST = withAdminAuth(async ({ request, user, organizationId, params
     await logAudit({
         action: 'RESERVATION_UPDATE',
         reservationId: id,
-        oldData: { campsite_id: reservation.campsite_id },
-        newData: { campsite_id: campsiteId },
+        oldData: {
+            campsite_id: reservation.campsite_id,
+            status: reservation.status
+        },
+        newData: {
+            campsite_id: campsiteId,
+            status: updates.status || reservation.status
+        },
         changedBy: user.id,
         organizationId
     });

@@ -12,6 +12,8 @@ interface DashboardSearchProps {
     showArchived: boolean;
     setShowArchived: (show: boolean) => void;
     searchInputRef: React.RefObject<HTMLInputElement | null>;
+    totalFilteredResults?: number;
+    isFiltering?: boolean;
 }
 
 export default function DashboardSearch({
@@ -21,10 +23,13 @@ export default function DashboardSearch({
     setSortMode,
     showArchived,
     setShowArchived,
-    searchInputRef
+    searchInputRef,
+    totalFilteredResults,
+    isFiltering
 }: DashboardSearchProps) {
     return (
-        <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <div className="mb-6 flex flex-col gap-4">
+            <div className="flex flex-wrap items-center justify-between gap-3">
             <div className="min-w-[260px] flex-1 max-w-[520px]">
                 <div className="relative group">
                     <Search
@@ -82,6 +87,30 @@ export default function DashboardSearch({
                     <span>Calendar</span>
                 </Link>
             </div>
+            </div>
+
+            {/* Search Status Indicator */}
+            {searchQuery && (
+                <div className="flex items-center gap-2 text-sm">
+                    <span className="text-[var(--color-text-muted)]">
+                        {isFiltering ? 'Searching...' : (
+                            <>
+                                Showing {totalFilteredResults ?? 0} {totalFilteredResults === 1 ? 'result' : 'results'} for 
+                                <span className="font-semibold text-[var(--color-text-primary)] ml-1">"{searchQuery}"</span>
+                            </>
+                        )}
+                    </span>
+                    <button 
+                        onClick={() => {
+                            setSearchQuery('');
+                            if (searchInputRef.current) searchInputRef.current.focus();
+                        }}
+                        className="text-[var(--color-accent-gold)] hover:underline text-xs flex items-center gap-1 ml-1"
+                    >
+                        <X size={12} /> Clear search
+                    </button>
+                </div>
+            )}
         </div>
     );
 }

@@ -418,7 +418,10 @@ export default function CalendarGrid({
   // ============================================================================
 
   return (
-    <div className="flex flex-col admin-card relative select-none overflow-x-hidden">
+    <div 
+      className="flex flex-col admin-card relative select-none overflow-x-hidden"
+      data-drag-state={isDragging ? "dragging" : "idle"}
+    >
       <InstructionalOverlay />
       {campsites.length === 0 ? (
         <NoCampsitesCTA />

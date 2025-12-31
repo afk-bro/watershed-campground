@@ -95,9 +95,10 @@ class AdminAPIClient {
 
   /**
    * Get all reservations
+   * @param queryString - Optional query parameters (e.g., '?id=xxx' or '?q=search')
    */
-  async getReservations() {
-    return this.request<{ data: OverviewItem[] }>(API_ENDPOINTS.RESERVATIONS);
+  async getReservations(queryString = '') {
+    return this.request<{ data: OverviewItem[] }>(`${API_ENDPOINTS.RESERVATIONS}${queryString}`);
   }
 
   /**

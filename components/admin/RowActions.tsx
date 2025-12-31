@@ -43,6 +43,7 @@ function ActionButton({ onClick, icon: Icon, colorClass, title, disabled = false
                     onClick();
                 }}
                 disabled={disabled}
+                aria-label={title}
                 className={`p-2 rounded-full transition-colors cursor-pointer ${colorClass} ${
                     disabled ? 'opacity-50 cursor-not-allowed' : ''
                 }`}

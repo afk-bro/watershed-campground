@@ -152,6 +152,21 @@ tests/
 
 **Why This Matters:** Calendar conflicts can cause double-bookings. These tests prevent critical business errors.
 
+### Calendar Drag-and-Drop Strategy
+> [!IMPORTANT]
+> **Split Strategy:** We use a hybrid approach to test drag-and-drop to avoid flakiness.
+>
+> 1.  **UI Smoke Test (Visual):** `admin/blackout-drag-resize.spec.ts`
+>     -   **Goal:** Verify the *gesture* works (drag start, visual feedback, drag end).
+>     -   **Scope:** Single simple test case (e.g., drag blackout to new date).
+>     -   **Technique:** Uses custom `stabilizeForDrag` and `data-drag-state` attributes.
+> 2.  **Logic Verification (API):** `admin/blackout-api.spec.ts`
+>     -   **Goal:** Verify complex business logic, validation, and database updates.
+>     -   **Scope:** All edge cases (date math, invalid ranges, multi-tenancy, conflicts).
+>     -   **Technique:** Direct API calls (`PATCH /api/admin/blackout-dates/[id]`) bypassing the browser.
+>
+> **Do not add complex logic tests to the UI suite.** Use the API suite instead.
+
 ---
 
 ### Guest Manage Reservation (`guest/manage-reservation.spec.ts`) ✨ NEW

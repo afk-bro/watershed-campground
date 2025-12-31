@@ -69,7 +69,12 @@ export async function resetE2EData() {
       .from("reservations")
       .delete()
       .eq("organization_id", organizationId);
-    if (!error) console.log("✅ cleared: reservations");
+
+    if (error) {
+      console.error("❌ error clearing reservations:", error);
+    } else {
+      console.log("✅ cleared: reservations");
+    }
   } catch (e) {
     console.warn(`⚠️ skipping reservations: ${e instanceof Error ? e.message : String(e)}`);
   }

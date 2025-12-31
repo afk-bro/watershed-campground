@@ -160,7 +160,7 @@ test.describe('Rate Limiting', () => {
                 expect(rateLimitedResponse.status()).toBe(429);
 
                 const body = await rateLimitedResponse.json();
-                expect(body.error).toContain('Too many');
+                expect(body.error).toMatch(/Too many/i);
 
                 // Should have reset timestamp
                 const reset = rateLimitedResponse.headers()['x-ratelimit-reset'];

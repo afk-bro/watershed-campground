@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Addon, PaymentBreakdown, PaymentMethod, FormData } from "@/lib/booking/booking-types";
 
 interface UseReservationFlowProps {
@@ -134,7 +134,12 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
         return true;
     };
 
+    const isInitializingRef = useRef(false);
+
     const initializePayment = async () => {
+        if (isInitializingRef.current) return;
+        isInitializingRef.current = true;
+
         setIsInitializingPayment(true);
         setErrorMessage("");
 
@@ -197,6 +202,7 @@ export function useReservationFlow({ initialStep = 1 }: UseReservationFlowProps 
             return { error: err };
         } finally {
             setIsInitializingPayment(false);
+            isInitializingRef.current = false;
         }
     };
 

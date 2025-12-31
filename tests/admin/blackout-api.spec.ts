@@ -1,6 +1,6 @@
 
 import { test, expect } from '@playwright/test';
-import { supabaseAdmin } from '../helpers/test-supabase';
+import { supabaseAdmin, createTestCampsite, deleteTestCampsite, createTestBlackout, DEFAULT_ORG_ID } from '../helpers/test-supabase';
 import { format, addDays } from 'date-fns';
 
 test.describe('Blackout API Operations', () => {
@@ -8,38 +8,31 @@ test.describe('Blackout API Operations', () => {
     let alternateCampsiteId: string;
 
     test.beforeAll(async () => {
-        const { data: campsites } = await supabaseAdmin
-            .from('campsites')
-            .select('id')
-            .limit(2);
+        const campsite1 = await createTestCampsite({ name: 'API Test Source' });
+        const campsite2 = await createTestCampsite({ name: 'API Test Target' });
 
-        if (!campsites || campsites.length < 2) {
-            throw new Error('Need at least 2 campsites for testing');
-        }
+        testCampsiteId = campsite1.id;
+        alternateCampsiteId = campsite2.id;
+    });
 
-        testCampsiteId = campsites[0].id;
-        alternateCampsiteId = campsites[1].id;
+    test.afterAll(async () => {
+        if (testCampsiteId) await deleteTestCampsite(testCampsiteId);
+        if (alternateCampsiteId) await deleteTestCampsite(alternateCampsiteId);
     });
 
     test('should move blackout validation via API', async ({ request }) => {
-        // Setup: Create a blackout
+        // Setup: Create a blackout using factory
         const startDate = addDays(new Date(), 5);
         const endDate = addDays(startDate, 3);
 
-        const { data: blackout } = await supabaseAdmin
-            .from('blackout_dates')
-            .insert({
-                campsite_id: testCampsiteId,
-                start_date: format(startDate, 'yyyy-MM-dd'),
-                end_date: format(endDate, 'yyyy-MM-dd'),
-                reason: 'API Move Test',
-                organization_id: '00000000-0000-0000-0000-000000000001' // DEFAULT_ORG_ID
-            })
-            .select()
-            .single();
+        const blackout = await createTestBlackout({
+            campsite_id: testCampsiteId,
+            start_date: format(startDate, 'yyyy-MM-dd'),
+            end_date: format(endDate, 'yyyy-MM-dd'),
+            reason: 'API Move Test'
+        });
 
-        expect(blackout).not.toBeNull();
-        const blackoutId = blackout!.id;
+        const blackoutId = blackout.id;
 
         // 1. Move to different campsite
         const { data: update1, error: error1 } = await supabaseAdmin
@@ -53,8 +46,6 @@ test.describe('Blackout API Operations', () => {
         expect(update1?.campsite_id).toBe(alternateCampsiteId);
 
         // 2. Move dates on same campsite (Update via API endpoint to test validation logic/triggers)
-        // The UI uses PATCH /api/admin/blackout-dates/[id]
-
         const newStartDate = addDays(startDate, 10);
         const newEndDate = addDays(newStartDate, 3);
 
@@ -73,6 +64,7 @@ test.describe('Blackout API Operations', () => {
             .from('blackout_dates')
             .select()
             .eq('id', blackoutId)
+            .throwOnError()
             .single();
 
         expect(update2?.start_date).toBe(format(newStartDate, 'yyyy-MM-dd'));
@@ -82,20 +74,14 @@ test.describe('Blackout API Operations', () => {
         const startDate = addDays(new Date(), 20);
         const endDate = addDays(startDate, 3);
 
-        const { data: blackout } = await supabaseAdmin
-            .from('blackout_dates')
-            .insert({
-                campsite_id: testCampsiteId,
-                start_date: format(startDate, 'yyyy-MM-dd'),
-                end_date: format(endDate, 'yyyy-MM-dd'),
-                reason: 'API Resize Test',
-                organization_id: '00000000-0000-0000-0000-000000000001'
-            })
-            .select()
-            .single();
+        const blackout = await createTestBlackout({
+            campsite_id: testCampsiteId,
+            start_date: format(startDate, 'yyyy-MM-dd'),
+            end_date: format(endDate, 'yyyy-MM-dd'),
+            reason: 'API Resize Test'
+        });
 
-        expect(blackout).not.toBeNull();
-        const blackoutId = blackout!.id;
+        const blackoutId = blackout.id;
 
         // Extend end date by 2 days
         const newEndDate = addDays(endDate, 2);
@@ -114,6 +100,7 @@ test.describe('Blackout API Operations', () => {
             .from('blackout_dates')
             .select()
             .eq('id', blackoutId)
+            .throwOnError()
             .single();
 
         expect(update?.end_date).toBe(format(newEndDate, 'yyyy-MM-dd'));

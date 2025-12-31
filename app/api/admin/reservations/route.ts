@@ -9,10 +9,18 @@ import { logger } from "@/lib/logger";
  *
  * Fetches all reservations and blackout dates for the organization.
  * Used by the admin dashboard to display the reservations list.
+ * 
+ * Query parameters:
+ * - id: exact reservation ID match (returns single reservation)
+ * - q: fuzzy search across first_name, last_name, email, phone
  */
-export const GET = withAdminAuth(async ({ organizationId }) => {
-    // Fetch reservations with payment data (org-scoped)
-    const { data: reservations, error: reservationsError } = await supabaseAdmin
+export const GET = withAdminAuth(async ({ organizationId, request }) => {
+    const { searchParams } = new URL(request.url);
+    const idFilter = searchParams.get('id');
+    const searchQuery = searchParams.get('q');
+
+    // Base query: Always scoped to organization and non-archived
+    const baseQuery = supabaseAdmin
         .from('reservations')
         .select(`
             *,
@@ -22,8 +30,39 @@ export const GET = withAdminAuth(async ({ organizationId }) => {
         .eq('organization_id', organizationId)
         .is('archived_at', null);
 
+    let reservationQuery = baseQuery;
+
+    // Apply filters
+    if (idFilter) {
+        // Exact ID match - highest priority
+        reservationQuery = reservationQuery.eq('id', idFilter);
+    } else if (searchQuery) {
+        // Fuzzy search across multiple fields
+        const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(searchQuery);
+
+        // PostgREST: org_id=X AND (A OR B OR C)
+        reservationQuery = reservationQuery.or(
+            `first_name.ilike.%${searchQuery}%,` +
+            `last_name.ilike.%${searchQuery}%,` +
+            `email.ilike.%${searchQuery}%,` +
+            `phone.ilike.%${searchQuery}%` +
+            (isUUID ? `,id.eq.${searchQuery}` : '')
+        );
+    }
+
+    // Explicit ordering: Newest first is best for surfacing fresh test data
+    reservationQuery = reservationQuery
+        .order('created_at', { ascending: false })
+        .limit(5000);
+
+    const { data: reservations, error: reservationsError } = await reservationQuery;
+
     if (reservationsError) {
-        logger.error("Error fetching reservations:", reservationsError);
+        logger.error("[API] Error fetching reservations:", {
+            error: reservationsError,
+            org: organizationId,
+            query: { id: idFilter, q: searchQuery }
+        });
         return NextResponse.json(
             { error: "Failed to fetch reservations" },
             { status: 500 }
@@ -71,7 +110,9 @@ export const GET = withAdminAuth(async ({ organizationId }) => {
             organizationId,
             total: allItems.length,
             reservations: reservationItems.length,
-            blackouts: blackoutItems.length
+            blackouts: blackoutItems.length,
+            filtered: !!(idFilter || searchQuery),
+            filter: { id: idFilter, q: searchQuery }
         }
     });
 });

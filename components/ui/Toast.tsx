@@ -72,14 +72,14 @@ export function ToastProvider({ children }: ToastProviderProps) {
       {children}
 
       {/* Toast Container */}
-      <div className="fixed top-4 right-4 z-[100] space-y-2">
+      <div className="fixed top-4 right-4 z-[100] space-y-2 pointer-events-none">
         {toasts.map((toast) => (
           <div
             key={toast.id}
             data-testid="toast"
             data-variant={toast.type}
             data-message={toast.message}
-            className={`px-4 py-3 rounded-lg border shadow-lg flex items-center gap-2 min-w-[300px] max-w-md animate-slide-in ${getToastStyles(
+            className={`px-4 py-3 rounded-lg border shadow-lg flex items-center gap-2 min-w-[300px] max-w-md animate-slide-in pointer-events-auto ${getToastStyles(
               toast.type
             )}`}
           >

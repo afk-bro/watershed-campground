@@ -133,6 +133,7 @@ export default function AssignmentDialog({ reservation, isOpen, onClose, onAssig
                             {campsites.map(site => (
                                 <button
                                     key={site.id}
+                                    data-testid="campsite-option"
                                     onClick={() => handleAssign(site.id)}
                                     disabled={!!assigningId}
                                     className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand-primary hover:bg-brand-primary/5 dark:hover:bg-brand-primary/10 transition-all group text-left"

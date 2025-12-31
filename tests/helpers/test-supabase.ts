@@ -19,6 +19,7 @@ export {
     deleteTestReservation,
     createTestBlackout,
     deleteTestBlackout,
+    dbQuery,
 } from './factories';
 
 // Export internal client for queries and updates

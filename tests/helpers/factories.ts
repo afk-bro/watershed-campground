@@ -63,7 +63,7 @@ export async function createTestCampsite(overrides: Partial<{
     const data = {
         name: 'Test Site',
         code: `FACT${Math.random().toString(36).slice(2, 8).toUpperCase()}`,
-        type: 'rv' as const,
+        type: 'tent' as const,
         max_guests: 4,
         base_rate: 50.00,
         is_active: true,
@@ -79,7 +79,7 @@ export async function createTestCampsite(overrides: Partial<{
         .select()
         .single();
 
-    if (error) throw new Error(`Factory failed to create campsite: ${error.message}`);
+    if (error) throw new Error(`Factory failed to create campsite: ${error.message} \nPayload: ${JSON.stringify(data, null, 2)}`);
     if (!campsite) throw new Error('Factory failed to create campsite: No data returned from insert');
     return campsite;
 }
@@ -119,6 +119,12 @@ export async function createTestReservation(overrides: Partial<{
         first_name: 'Factory',
         last_name: 'User',
         email: `test-${Math.random().toString(36).slice(2, 6)}@example.com`,
+        phone: '+15555550123',
+        address1: '123 Test St',
+        city: 'Test City',
+        postal_code: '12345',
+        camping_unit: 'Tent',
+        contact_method: 'Email',
         check_in: format(tomorrow, 'yyyy-MM-dd'),
         check_out: format(addDays(tomorrow, 2), 'yyyy-MM-dd'),
         status: 'pending',
@@ -135,7 +141,7 @@ export async function createTestReservation(overrides: Partial<{
         .select()
         .single();
 
-    if (error) throw new Error(`Factory failed to create reservation: ${error.message}`);
+    if (error) throw new Error(`Factory failed to create reservation: ${error.message} \nPayload: ${JSON.stringify(data, null, 2)}`);
     if (!reservation) throw new Error('Factory failed to create reservation: No data returned from insert');
     return reservation;
 }
@@ -171,7 +177,7 @@ export async function createTestBlackout(overrides: Partial<{
         .select()
         .single();
 
-    if (error) throw new Error(`Factory failed to create blackout: ${error.message}`);
+    if (error) throw new Error(`Factory failed to create blackout: ${error.message} \nPayload: ${JSON.stringify(data, null, 2)}`);
     if (!blackout) throw new Error('Factory failed to create blackout: No data returned from insert');
     return blackout;
 }

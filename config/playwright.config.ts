@@ -109,6 +109,7 @@ export default defineConfig({
                 /integration\/.*\.spec\.ts/,
                 /security\/.*\.spec\.ts/,
                 /unit\/.*\.spec\.ts/,
+                /components\/.*\.spec\.ts/,
             ],
             use: {
                 ...devices['Desktop Chrome'],
