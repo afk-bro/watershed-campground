@@ -426,7 +426,7 @@ test.describe('Admin Blackout Dates', () => {
             const body = await parseJsonOrThrow(response);
             if (response.status() === 200) {
                 expect(Array.isArray(body)).toBe(true);
-                const availableIds = body.map((site: any) => site.id);
+                const availableIds = body.map((site: { id: string }) => site.id);
                 expect(availableIds).not.toContain(testCampsiteId);
             }
         });
@@ -470,7 +470,7 @@ test.describe('Admin Blackout Dates', () => {
             expect(response.status()).toBe(200);
             const body = await parseJsonOrThrow(response);
             expect(Array.isArray(body)).toBe(true);
-            const availableIds = body.map((site: any) => site.id);
+            const availableIds = body.map((site: { id: string }) => site.id);
             // S1 should be available
             expect(availableIds).toContain(otherSite.id);
         });
@@ -508,7 +508,7 @@ test.describe('Admin Blackout Dates', () => {
             }
 
             testBlackoutIds = data
-                .filter((b: any): b is { id: string } => {
+                .filter((b: unknown): b is { id: string } => {
                     return !!b && typeof b === 'object' && 'id' in b;
                 })
                 .map((b) => b.id);

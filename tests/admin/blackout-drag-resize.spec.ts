@@ -145,7 +145,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
             await killBackdropsUntilStable(page, 1);
             // Debug: report how many overlays we removed
             {
-                const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                const removed = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_removed_overlays__?.length ?? 0);
                 console.log('E2E removed overlays:', removed);
             }
 
@@ -168,7 +168,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                 await killBackdropsUntilStable(page, 1);
                 // Debug: report how many overlays we removed
                 {
-                    const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                    const removed = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_removed_overlays__?.length ?? 0);
                     console.log('E2E removed overlays:', removed);
                 }
 
@@ -391,7 +391,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
             await killBackdropsUntilStable(page, 1);
             // Debug: report how many overlays we removed
             {
-                const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                const removed = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_removed_overlays__?.length ?? 0);
                 console.log('E2E removed overlays:', removed);
             }
 
@@ -489,7 +489,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
             await killBackdrops(page);
             // Debug: report how many overlays we removed
             {
-                const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                const removed = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_removed_overlays__?.length ?? 0);
                 console.log('E2E removed overlays:', removed);
             }
 
@@ -643,7 +643,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
                     await killBackdropsUntilStable(page, 1);
                     // Debug: report how many overlays we removed
                     {
-                        const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+                        const removed = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_removed_overlays__?.length ?? 0);
                         console.log('E2E removed overlays:', removed);
                     }
                     try {

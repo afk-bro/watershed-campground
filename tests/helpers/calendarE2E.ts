@@ -105,7 +105,7 @@ export async function killBackdrops(page: Page) {
     }
 
     // Store for debugging (optional)
-    (window as any).__e2e_removed_overlays__ = removed;
+    (window as Window & Record<string, unknown>).__e2e_removed_overlays__ = removed;
   });
 }
 
@@ -126,7 +126,7 @@ export async function logTopFixedOverlays(page: Page) {
     }
 
     const overlays = await page.evaluate(() => {
-      const result: any[] = [];
+      const result: Array<{ id: string }> = [];
       const els = Array.from(document.querySelectorAll('body *')) as HTMLElement[];
       for (const e of els) {
         try {
@@ -151,7 +151,7 @@ export async function logTopFixedOverlays(page: Page) {
       return result.sort((a, b) => Number(b.zIndex) - Number(a.zIndex)).slice(0, 10);
     });
     console.log('Top fixed overlays:', overlays);
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.log('logTopFixedOverlays error (ignored):', err && err.message ? err.message : err);
   }
 }
@@ -226,7 +226,7 @@ export async function dragToWithOverlayDefense(
     try {
       await source.dragTo(target, { timeout: 15000 });
       return;
-    } catch (e: any) {
+    } catch (e: unknown) {
       // On any failure, nuke overlays again and retry
       await nukeAddBlackoutOverlay(page).catch(() => {});
       await page.waitForTimeout(100);
@@ -247,7 +247,7 @@ export async function stabilizeForDrag(page: Page, block: Locator) {
 
 export async function installOverlayObserver(page: Page) {
   await page.evaluate(() => {
-    if ((window as any).__e2e_overlay_observer_installed__) return;
+    if ((window as Window & Record<string, unknown>).__e2e_overlay_observer_installed__) return;
     const findAndRemove = (node: HTMLElement) => {
       try {
         const s = getComputedStyle(node);
@@ -273,7 +273,7 @@ export async function installOverlayObserver(page: Page) {
           return true;
         }
         // check descendants
-        if (node.querySelectorAll && Array.from(node.querySelectorAll('*')).some((el: any) => (el.innerText || '').includes('Add Blackout Dates'))) {
+        if (node.querySelectorAll && Array.from(node.querySelectorAll('*')).some((el: unknown) => (el.innerText || '').includes('Add Blackout Dates'))) {
           node.remove();
           return true;
         }
@@ -308,8 +308,8 @@ export async function installOverlayObserver(page: Page) {
       }
     };
     const interval = setInterval(scan, 50); // Aggressive 50ms scan
-    (window as any).__e2e_overlay_scan_interval__ = interval;
-    (window as any).__e2e_overlay_observer__ = obs;
-    (window as any).__e2e_overlay_observer_installed__ = true;
+    (window as Window & Record<string, unknown>).__e2e_overlay_scan_interval__ = interval;
+    (window as Window & Record<string, unknown>).__e2e_overlay_observer__ = obs;
+    (window as Window & Record<string, unknown>).__e2e_overlay_observer_installed__ = true;
   });
 }

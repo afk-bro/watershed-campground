@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestReservation, deleteTestReservation, DEFAULT_ORG_ID } from '../helpers/test-supabase';
+import { createTestReservation, deleteTestReservation, DEFAULT_ORG_ID, supabaseAdmin } from '../helpers/test-supabase';
 
 /**
  * API Search Guardrail
@@ -35,7 +35,7 @@ test.describe('Admin API Search Guardrail', () => {
         expect(Array.isArray(json.data)).toBeTruthy();
         expect(json.meta.organizationId).toBe(DEFAULT_ORG_ID);
 
-        const found = json.data.find((item: any) => item.id === testResId);
+        const found = json.data.find((item: { id: string; email: string }) => item.id === testResId);
         expect(found).toBeDefined();
         expect(found.email).toBe(testEmail);
         expect(json.meta.filtered).toBe(true);
@@ -71,7 +71,7 @@ test.describe('Admin API Search Guardrail', () => {
         expect(Array.isArray(json.data)).toBeTruthy();
         expect(json.data.length).toBeGreaterThan(0);
 
-        const found = json.data.find((item: any) => item.id === testResId);
+        const found = json.data.find((item: { id: string }) => item.id === testResId);
         expect(found).toBeDefined();
     });
 
@@ -104,7 +104,6 @@ test.describe('Admin API Search Guardrail', () => {
             // factories.ts uses DEFAULT_ORG_ID, let's use a workaround for the second org
 
             // Create the org if it doesn't exist
-            const { supabaseAdmin } = require('../helpers/test-supabase');
             await supabaseAdmin.from('organizations').upsert({
                 id: otherOrgId,
                 name: 'Leak Test Org',
@@ -137,7 +136,6 @@ test.describe('Admin API Search Guardrail', () => {
 
         } catch (err) {
             // Ensure cleanup even if test fails
-            const { supabaseAdmin } = require('../helpers/test-supabase');
             await supabaseAdmin.from('organizations').delete().eq('id', otherOrgId);
             throw err;
         }

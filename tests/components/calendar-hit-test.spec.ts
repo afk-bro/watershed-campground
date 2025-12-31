@@ -49,7 +49,7 @@ test.describe('Calendar Hit Testing (Unit-ish)', () => {
             // We simulate the hit test logic here by calling the function we injected
             // Note: In a real app we'd import the function, but for this "unit" test
             // we injected the source code or a simplified compatible version.
-            return (window as any).getDateFromPointer(centerX, centerY);
+            return (window as Window & Record<string, unknown>).getDateFromPointer(centerX, centerY);
         });
 
         expect(result).toBe('2025-01-01');
@@ -89,7 +89,7 @@ test.describe('Calendar Hit Testing (Unit-ish)', () => {
             const clickX = rect.left + 10;
             const clickY = rect.top + 10;
 
-            return (window as any).getCampsiteFromPointer(clickX, clickY);
+            return (window as Window & Record<string, unknown>).getCampsiteFromPointer(clickX, clickY);
         });
 
         expect(result).toBe('camp-123');

@@ -191,7 +191,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
             // Assert no dialog is visible before attempting drag
             await expect(page.getByRole('dialog')).toBeHidden().catch(() => { });
             // Debug: report how many overlays we removed
-            const removed = await page.evaluate(() => (window as any).__e2e_removed_overlays__?.length ?? 0);
+            const removed = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_removed_overlays__?.length ?? 0);
             console.log('E2E removed overlays:', removed);
             try {
                 // Extra safety: dismiss again immediately before drag
@@ -200,7 +200,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
                 await expect(page.getByRole('dialog')).toBeHidden();
                 // Snapshot top fixed overlays that cover the viewport (for debugging)
                 await page.evaluate(() => {
-                    const top: any[] = [];
+                    const top: unknown[] = [];
                     const els = Array.from(document.querySelectorAll('body *')) as HTMLElement[];
                     for (const e of els) {
                         try {
@@ -222,9 +222,9 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
                         }
                     }
                     top.sort((a, b) => Number(b.zIndex) - Number(a.zIndex));
-                    (window as any).__e2e_overlay_snapshot__ = top.slice(0, 10);
+                    (window as Window & Record<string, unknown>).__e2e_overlay_snapshot__ = top.slice(0, 10);
                 });
-                const snapshot = await page.evaluate(() => (window as any).__e2e_overlay_snapshot__ ?? []);
+                const snapshot = await page.evaluate(() => (window as Window & Record<string, unknown>).__e2e_overlay_snapshot__ ?? []);
                 console.log('E2E overlay snapshot:', snapshot);
                 // Use Playwright's drag with overlay defense (retries + nukes)
                 // Use manual mouse events: move to start center, down, move to target center, up
@@ -247,7 +247,7 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
                 // Wait for the UI to reflect the new campsite on the reservation element
                 let moved = false;
                 try {
-                    await page.waitForFunction((args: any) => {
+                    await page.waitForFunction((args: unknown) => {
                         const [id, expected] = args;
                         const el = document.querySelector(`[data-reservation-id="${id}"]`);
                         return !!el && el.getAttribute('data-campsite-id') === expected;

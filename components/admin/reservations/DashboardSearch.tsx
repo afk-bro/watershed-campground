@@ -95,8 +95,8 @@ export default function DashboardSearch({
                     <span className="text-[var(--color-text-muted)]">
                         {isFiltering ? 'Searching...' : (
                             <>
-                                Showing {totalFilteredResults ?? 0} {totalFilteredResults === 1 ? 'result' : 'results'} for 
-                                <span className="font-semibold text-[var(--color-text-primary)] ml-1">"{searchQuery}"</span>
+                                Showing {totalFilteredResults ?? 0} {totalFilteredResults === 1 ? 'result' : 'results'} for
+                                <span className="font-semibold text-[var(--color-text-primary)] ml-1">&ldquo;{searchQuery}&rdquo;</span>
                             </>
                         )}
                     </span>
