@@ -36,8 +36,10 @@ function checkRouteFile(filePath) {
     const content = fs.readFileSync(filePath, 'utf8');
     const relativePath = path.relative(ADMIN_API_DIR, filePath);
 
-    // Check if migrated (uses requireAdminWithOrg directly OR via withAdminAuth wrapper)
-    const isMigrated = content.includes('requireAdminWithOrg') || content.includes('withAdminAuth');
+    // Check if migrated (uses requireAdminWithOrg directly OR via withAdminAuth/withAdminMutation wrappers)
+    const isMigrated = content.includes('requireAdminWithOrg') ||
+                       content.includes('withAdminAuth') ||
+                       content.includes('withAdminMutation');
 
     // Check if guarded (uses migrationGate)
     const isGuarded = content.includes('migrationGate');
@@ -64,7 +66,7 @@ function main() {
     const guarded = results.filter(r => r.isGuarded);
     const unsafe = results.filter(r => !r.isSafe);
 
-    console.log(`✅ Migrated (requireAdminWithOrg / withAdminAuth): ${migrated.length}`);
+    console.log(`✅ Migrated (requireAdminWithOrg / withAdminAuth / withAdminMutation): ${migrated.length}`);
     migrated.forEach(r => console.log(`   - ${r.path}`));
 
     console.log(`\n🛡️  Guarded (migrationGate): ${guarded.length}`);
