@@ -1,8 +1,8 @@
 
-import { NextResponse } from "next/server";
 import { checkAvailability } from "@/lib/availability/engine";
 import { requireAdminWithOrg } from "@/lib/admin-auth";
 import { logger } from "@/lib/logger";
+import { errorResponse, successResponse } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
     try {
@@ -26,7 +26,7 @@ export async function POST(request: Request) {
         // Admin override logic (route layer)
         // If admin is forcing availability, skip engine check entirely
         if (forceConflict || overrideBlackout) {
-            return NextResponse.json({
+            return successResponse({
                 available: true,
                 message: "Admin override: availability check bypassed",
                 recommendedSiteId: campsiteId || null
@@ -40,7 +40,7 @@ export async function POST(request: Request) {
             today.setHours(0, 0, 0, 0);
 
             if (checkInDate < today) {
-                return NextResponse.json({
+                return successResponse({
                     available: false,
                     message: "Check-in date cannot be in the past"
                 });
@@ -56,13 +56,12 @@ export async function POST(request: Request) {
             organizationId: organizationId!
         });
 
-        return NextResponse.json(result);
+        return successResponse(result);
 
     } catch (error) {
         logger.error("Availability Check API Error:", error);
-        return NextResponse.json(
-            { available: false, message: "Server error checking availability" },
-            { status: 500 }
-        );
+        return errorResponse("Server error checking availability", 500, {
+            available: false
+        });
     }
 }

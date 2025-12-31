@@ -90,78 +90,47 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Setup Supabase CLI
-        uses: supabase/setup-cli@v1
-        with:
-          version: latest
-
-      - name: Start Supabase local instance
-        run: npx supabase start
-
-      - name: Load E2E test fixtures
+      - name: Assert required Supabase env vars are present
         run: |
-          echo "🔄 Loading E2E test fixtures (seed.local.sql)..."
-          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/seed.local.sql
-          psql "postgresql://postgres:postgres@127.0.0.1:54322/postgres" -f supabase/seed.sql
-          echo "✅ E2E fixtures loaded"
+          # CI should use hosted Supabase credentials stored in repository secrets.
+          test -n "${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" || (echo "❌ Missing secret NEXT_PUBLIC_SUPABASE_URL" && exit 1)
+          test -n "${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" || (echo "❌ Missing secret NEXT_PUBLIC_SUPABASE_ANON_KEY" && exit 1)
+          test -n "${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" || (echo "❌ Missing secret SUPABASE_SERVICE_ROLE_KEY" && exit 1)
+          echo "✅ Required Supabase secrets are present"
 
-      - name: Get Supabase credentials
+      - name: Create test environment file from secrets
         run: |
-          # Extract credentials from Supabase status using JSON output for reliability
-          STATUS_JSON=$(npx supabase status -o json)
-
-          # Extract values using correct field names (note: API URL, anon key, service_role key)
-          API_URL=$(echo "$STATUS_JSON" | jq -r '.["API URL"] // .API_URL')
-          ANON_KEY=$(echo "$STATUS_JSON" | jq -r '.["anon key"] // .ANON_KEY // .PUBLISHABLE_KEY')
-          SERVICE_KEY=$(echo "$STATUS_JSON" | jq -r '.["service_role key"] // .SERVICE_ROLE_KEY // .SECRET_KEY')
-
-          echo "NEXT_PUBLIC_SUPABASE_URL=$API_URL" >> $GITHUB_ENV
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=$ANON_KEY" >> $GITHUB_ENV
-          echo "SUPABASE_SERVICE_ROLE_KEY=$SERVICE_KEY" >> $GITHUB_ENV
-
-          # Debug: verify env vars are set (show yes/no, not values)
-          echo "NEXT_PUBLIC_SUPABASE_URL is set? -> $([ -n "$API_URL" ] && echo yes || echo no)"
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY is set? -> $([ -n "$ANON_KEY" ] && echo yes || echo no)"
-          echo "SUPABASE_SERVICE_ROLE_KEY is set? -> $([ -n "$SERVICE_KEY" ] && echo yes || echo no)"
-
-      - name: Create test environment file
-        run: |
-          echo "NEXT_PUBLIC_SUPABASE_URL=${{ env.NEXT_PUBLIC_SUPABASE_URL }}" > .env.test
-          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
-          echo "SUPABASE_SERVICE_ROLE_KEY=${{ env.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
           echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
           echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
           echo "ADMIN_EMAILS=admin@test.com" >> .env.test
+          echo "NEXT_PUBLIC_ORG_SLUG=watershed-campground" >> .env.test
+          echo "E2E_DB_RESET_ENABLED=true" >> .env.test
+          echo "E2E_ORG_SLUG=watershed-campground" >> .env.test
 
-      - name: Verify .env.test file
+      - name: Verify .env.test file (masked)
         run: |
           echo "Contents of .env.test (with secrets masked):"
-          cat .env.test | sed 's/=.*/=***MASKED***/'
+          sed 's/=.*/=***MASKED***/' .env.test
 
-      - name: Assert required env vars are present
+      - name: Run Playwright smoke tests
         run: |
-          test -n "${{ env.NEXT_PUBLIC_SUPABASE_URL }}" || (echo "❌ Missing NEXT_PUBLIC_SUPABASE_URL" && exit 1)
-          test -n "${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" || (echo "❌ Missing NEXT_PUBLIC_SUPABASE_ANON_KEY" && exit 1)
-          test -n "${{ env.SUPABASE_SERVICE_ROLE_KEY }}" || (echo "❌ Missing SUPABASE_SERVICE_ROLE_KEY" && exit 1)
-          echo "✅ All required env vars are present"
-
-      - name: Run Playwright tests
-        run: |
-          if [ "${{ github.event_name }}" = "push" ]; then
-            echo "Running smoke tests only (push event)"
-            npx playwright test tests/admin/smoke.spec.ts
-          else
-            echo "Running all E2E tests (pull request event)"
-            npx playwright test
-          fi
+          # Run a small deterministic smoke suite on every push/PR to keep CI fast.
+          echo "Running Playwright smoke tests"
+          npx playwright test tests/admin/smoke.spec.ts
         env:
           CI: true
-          # Pass Supabase credentials to Playwright/Next.js webServer
-          NEXT_PUBLIC_SUPABASE_URL: ${{ env.NEXT_PUBLIC_SUPABASE_URL }}
-          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ env.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
-          SUPABASE_SERVICE_ROLE_KEY: ${{ env.SUPABASE_SERVICE_ROLE_KEY }}
+          # Pass Supabase credentials to Playwright/Next.js webServer from secrets
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           TEST_ADMIN_EMAIL: admin@test.com
           TEST_ADMIN_PASSWORD: testpass123
+          ADMIN_EMAILS: admin@test.com
+          NEXT_PUBLIC_ORG_SLUG: watershed-campground
+          E2E_DB_RESET_ENABLED: true
 
       - name: Upload Playwright report
         if: always()
@@ -179,11 +148,79 @@ jobs:
           path: test-results/
           retention-days: 30
 
-      - name: Stop Supabase
-        if: always()
-        run: npx supabase stop
+      # No local Supabase to stop in hosted CI workflow
 
-  # Job 3: Build Check
+  # Job 3: Stripe E2E Tests (Separate job to avoid blocking main CI)
+  stripe-e2e-tests:
+    name: Stripe E2E Tests
+    runs-on: ubuntu-latest
+
+    # Only run on main branch or manual trigger (not on every PR)
+    if: github.ref == 'refs/heads/main' || github.event_name == 'workflow_dispatch'
+
+    needs: lint-and-typecheck
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: Create test environment with Stripe credentials
+        run: |
+          echo "NEXT_PUBLIC_SUPABASE_URL=${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}" > .env.test
+          echo "NEXT_PUBLIC_SUPABASE_ANON_KEY=${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}" >> .env.test
+          echo "SUPABASE_SERVICE_ROLE_KEY=${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}" >> .env.test
+          echo "TEST_ADMIN_EMAIL=admin@test.com" >> .env.test
+          echo "TEST_ADMIN_PASSWORD=testpass123" >> .env.test
+          echo "ADMIN_EMAILS=admin@test.com" >> .env.test
+          echo "NEXT_PUBLIC_ORG_SLUG=watershed-campground" >> .env.test
+          echo "E2E_DB_RESET_ENABLED=true" >> .env.test
+          echo "E2E_ORG_SLUG=watershed-campground" >> .env.test
+
+          # Stripe test keys (enable payment tests)
+          echo "STRIPE_TESTS_ENABLED=true" >> .env.test
+          echo "STRIPE_SECRET_KEY=${{ secrets.STRIPE_TEST_SECRET_KEY }}" >> .env.test
+          echo "NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}" >> .env.test
+          echo "STRIPE_WEBHOOK_SECRET=${{ secrets.STRIPE_WEBHOOK_SECRET }}" >> .env.test
+
+      - name: Run Stripe-enabled E2E tests
+        run: |
+          echo "Running E2E tests with Stripe payment flow enabled"
+          npx playwright test
+        env:
+          CI: true
+          NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
+          NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+          SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+          TEST_ADMIN_EMAIL: admin@test.com
+          TEST_ADMIN_PASSWORD: testpass123
+          ADMIN_EMAILS: admin@test.com
+          NEXT_PUBLIC_ORG_SLUG: watershed-campground
+          E2E_DB_RESET_ENABLED: true
+          STRIPE_TESTS_ENABLED: true
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.STRIPE_TEST_PUBLISHABLE_KEY }}
+
+      - name: Upload Stripe test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stripe-playwright-report
+          path: playwright-report/
+          retention-days: 30
+
+  # Job 4: Build Check
   build:
     name: Build Check
     runs-on: ubuntu-latest
@@ -206,43 +243,14 @@ jobs:
       - name: Build application
         run: npm run build
         env:
-          # Provide dummy env vars for build
+          # Provide required env vars for build
           NEXT_PUBLIC_SUPABASE_URL: http://localhost:54321
           NEXT_PUBLIC_SUPABASE_ANON_KEY: dummy-key-for-build
           SUPABASE_SERVICE_ROLE_KEY: dummy-key-for-build
+          ADMIN_EMAILS: admin@test.com
+          NEXT_PUBLIC_ORG_SLUG: watershed-campground
 
-  # Job 4: Lighthouse Performance (only on PRs to main)
-  lighthouse:
-    name: Lighthouse Performance
-    runs-on: ubuntu-latest
-
-    # Only run on PRs to main branch
-    if: github.event_name == 'pull_request' && github.base_ref == 'main'
-
-    needs: [lint-and-typecheck, build]
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Wait for Vercel Preview Deployment
-        uses: patrickedqvist/wait-for-vercel-preview@v1.3.1
-        id: vercel-preview
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
-          max_timeout: 300
-          check_interval: 10
-
-      - name: Run Lighthouse
-        uses: treosh/lighthouse-ci-action@v10
-        with:
-          urls: |
-            ${{ steps.vercel-preview.outputs.url }}
-            ${{ steps.vercel-preview.outputs.url }}/gallery
-            ${{ steps.vercel-preview.outputs.url }}/rates
-          uploadArtifacts: true
-          temporaryPublicStorage: true
-          runs: 3
+  # Note: Lighthouse moved to a separate, scheduled/manual workflow to avoid flaky blocking on pushes.
 
   # Summary job - requires all jobs to pass
   ci-success:

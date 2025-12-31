@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { supabaseAdmin } from '../helpers/test-supabase';
+import { createTestBlackout } from '../helpers/factories';
 import { format, addDays } from 'date-fns';
 
 /**
@@ -8,6 +9,21 @@ import { format, addDays } from 'date-fns';
  * Critical for preventing bookings during maintenance, holidays, or off-seasons
  */
 test.describe('Admin Blackout Dates', () => {
+    // Helper: safely parse JSON responses and produce helpful errors when HTML/other is returned
+    async function parseJsonOrThrow(response: import('@playwright/test').APIResponse) {
+        const headers = response.headers();
+        const ct = (headers['content-type'] || headers['Content-Type'] || '').toLowerCase();
+        if (!ct.includes('application/json')) {
+            const text = await response.text();
+            throw new Error(`Expected JSON response but got status ${response.status()} with content-type '${ct}' and body: ${text.slice(0, 500)}`);
+        }
+        try {
+            return await response.json();
+        } catch (err) {
+            const text = await response.text();
+            throw new Error(`Failed to parse JSON (status ${response.status()}): ${String(err)}\nBody: ${text.slice(0, 500)}`);
+        }
+    }
     // Tests use authenticated admin state from auth.setup.ts
 
     test.describe('Create Blackout Dates', () => {
@@ -34,12 +50,13 @@ test.describe('Admin Blackout Dates', () => {
                     end_date: format(endDate, 'yyyy-MM-dd'),
                     campsite_id: null, // null = all sites
                     reason: 'Annual winter closure',
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
             expect(response.status()).toBe(200);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             expect(body.id).toBeDefined();
             expect(body.start_date).toBe(format(startDate, 'yyyy-MM-dd'));
             expect(body.end_date).toBe(format(endDate, 'yyyy-MM-dd'));
@@ -81,12 +98,13 @@ test.describe('Admin Blackout Dates', () => {
                     end_date: format(endDate, 'yyyy-MM-dd'),
                     campsite_id: campsite.id,
                     reason: 'Site maintenance - S1',
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
             expect(response.status()).toBe(200);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             expect(body.campsite_id).toBe(campsite.id);
             expect(body.reason).toContain('S1');
 
@@ -102,12 +120,13 @@ test.describe('Admin Blackout Dates', () => {
                     end_date: format(blackoutDate, 'yyyy-MM-dd'), // Same day
                     campsite_id: null,
                     reason: 'Holiday - New Years Day',
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
             expect(response.status()).toBe(200);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             expect(body.start_date).toBe(body.end_date);
 
             createdBlackoutIds.push(body.id);
@@ -123,12 +142,13 @@ test.describe('Admin Blackout Dates', () => {
                     end_date: format(endDate, 'yyyy-MM-dd'),
                     campsite_id: 'UNASSIGNED', // Special value meaning all sites
                     reason: 'Thanksgiving week',
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                 },
             });
 
             expect(response.status()).toBe(200);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             expect(body.campsite_id).toBeNull(); // UNASSIGNED converted to null
 
             createdBlackoutIds.push(body.id);
@@ -147,10 +167,16 @@ test.describe('Admin Blackout Dates', () => {
 
             expect(response.status()).toBe(400);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             expect(body.error).toBe('Validation failed');
             expect(body.details.start_date).toBeDefined();
-            expect(body.details.start_date[0]).toContain('required');
+            // Accept either array messages or single string message formats
+            const sd = body.details.start_date;
+            if (Array.isArray(sd)) {
+                expect(String(sd[0]).toLowerCase()).toMatch(/required|expected/);
+            } else {
+                expect(String(sd).toLowerCase()).toMatch(/required|expected/);
+            }
         });
 
         test('should reject blackout without end date', async ({ request }) => {
@@ -166,10 +192,15 @@ test.describe('Admin Blackout Dates', () => {
 
             expect(response.status()).toBe(400);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             expect(body.error).toBe('Validation failed');
             expect(body.details.end_date).toBeDefined();
-            expect(body.details.end_date[0]).toContain('required');
+            const ed = body.details.end_date;
+            if (Array.isArray(ed)) {
+                expect(String(ed[0]).toLowerCase()).toMatch(/required|expected/);
+            } else {
+                expect(String(ed).toLowerCase()).toMatch(/required|expected/);
+            }
         });
 
         test('should reject blackout where end date is before start date', async ({ request }) => {
@@ -186,7 +217,8 @@ test.describe('Admin Blackout Dates', () => {
             });
 
             // Database constraint should prevent this
-            expect(response.status()).toBe(500);
+            // Schema validation should prevent this (400 Bad Request)
+            expect(response.status()).toBe(400);
         });
     });
 
@@ -198,18 +230,15 @@ test.describe('Admin Blackout Dates', () => {
             const startDate = addDays(new Date(), 120);
             const endDate = addDays(startDate, 4);
 
-            const { data } = await supabaseAdmin
-                .from('blackout_dates')
-                .insert({
-                    start_date: format(startDate, 'yyyy-MM-dd'),
-                    end_date: format(endDate, 'yyyy-MM-dd'),
-                    campsite_id: null, // All sites
-                    reason: 'Test blackout for availability',
-                })
-                .select()
-                .single();
+            const blackout = await createTestBlackout({
+                organization_id: '00000000-0000-0000-0000-000000000001',
+                start_date: format(startDate, 'yyyy-MM-dd'),
+                end_date: format(endDate, 'yyyy-MM-dd'),
+                campsite_id: null, // All sites
+                reason: 'Test blackout for availability',
+            });
 
-            blackoutId = data!.id;
+            blackoutId = blackout.id;
         });
 
         test.afterEach(async () => {
@@ -235,7 +264,7 @@ test.describe('Admin Blackout Dates', () => {
             }
 
             // Try to check availability during blackout period
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: blackout.start_date,
                     checkOut: blackout.end_date,
@@ -244,10 +273,13 @@ test.describe('Admin Blackout Dates', () => {
             });
 
             // Should return no availability or empty results
-            const body = await response.json();
+            // Parse JSON with guard; if non-JSON is returned this will throw with helpful context
+            const body = await parseJsonOrThrow(response);
 
             if (response.status() === 200) {
-                expect(body.available).toBe(false);
+                // Should return empty array
+                expect(Array.isArray(body)).toBe(true);
+                expect(body.length).toBe(0);
             } else {
                 expect(response.status()).toBe(400);
                 expect(body.error).toBeDefined();
@@ -270,7 +302,7 @@ test.describe('Admin Blackout Dates', () => {
             const checkIn = addDays(new Date(blackout.start_date), -10);
             const checkOut = addDays(checkIn, 2);
 
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: format(checkIn, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -280,9 +312,11 @@ test.describe('Admin Blackout Dates', () => {
 
             expect(response.status()).toBe(200);
 
-            const body = await response.json();
+            const body = await parseJsonOrThrow(response);
             // Should have availability (unless all sites are booked for other reasons)
-            expect(body).toBeDefined();
+            // Should have availability
+            expect(Array.isArray(body)).toBe(true);
+            expect(body.length).toBeGreaterThan(0);
         });
 
         test('should allow availability after blackout period', async ({ request }) => {
@@ -301,7 +335,7 @@ test.describe('Admin Blackout Dates', () => {
             const checkIn = addDays(new Date(blackout.end_date), 5);
             const checkOut = addDays(checkIn, 2);
 
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: format(checkIn, 'yyyy-MM-dd'),
                     checkOut: format(checkOut, 'yyyy-MM-dd'),
@@ -336,9 +370,10 @@ test.describe('Admin Blackout Dates', () => {
             const startDate = addDays(new Date(), 130);
             const endDate = addDays(startDate, 3);
 
-            const { data: blackout } = await supabaseAdmin
+            const { data: blackout, error } = await supabaseAdmin
                 .from('blackout_dates')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(startDate, 'yyyy-MM-dd'),
                     end_date: format(endDate, 'yyyy-MM-dd'),
                     campsite_id: testCampsiteId, // Only S2
@@ -347,7 +382,11 @@ test.describe('Admin Blackout Dates', () => {
                 .select()
                 .single();
 
-            blackoutId = blackout!.id;
+            if (error || !blackout) {
+                throw new Error(`Failed to setup site-specific test blackout: ${error?.message}`);
+            }
+
+            blackoutId = blackout.id;
         });
 
         test.afterEach(async () => {
@@ -372,7 +411,7 @@ test.describe('Admin Blackout Dates', () => {
             }
 
             // Try to check availability specifically for the blacked-out site
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: blackout.start_date,
                     checkOut: blackout.end_date,
@@ -381,10 +420,14 @@ test.describe('Admin Blackout Dates', () => {
                 },
             });
 
-            // Should not be available
-            const body = await response.json();
+            // Parse response with guard to avoid silent HTML parse errors
+            // The API ignores campsiteId in search, but returns ALL available sites.
+            // We verify that our specific site is NOT in the list.
+            const body = await parseJsonOrThrow(response);
             if (response.status() === 200) {
-                expect(body.available).toBe(false);
+                expect(Array.isArray(body)).toBe(true);
+                const availableIds = body.map((site: { id: string }) => site.id);
+                expect(availableIds).not.toContain(testCampsiteId);
             }
         });
 
@@ -413,7 +456,7 @@ test.describe('Admin Blackout Dates', () => {
             }
 
             // Check availability for different site during S2's blackout
-            const response = await request.post('/api/availability', {
+            const response = await request.post('/api/availability/search?org=watershed-campground', {
                 data: {
                     checkIn: blackout.start_date,
                     checkOut: blackout.end_date,
@@ -423,7 +466,13 @@ test.describe('Admin Blackout Dates', () => {
             });
 
             // Other site should be available (unless it has its own blackout)
+            // Other site should be available
             expect(response.status()).toBe(200);
+            const body = await parseJsonOrThrow(response);
+            expect(Array.isArray(body)).toBe(true);
+            const availableIds = body.map((site: { id: string }) => site.id);
+            // S1 should be available
+            expect(availableIds).toContain(otherSite.id);
         });
     });
 
@@ -434,12 +483,14 @@ test.describe('Admin Blackout Dates', () => {
             // Create multiple blackout dates for listing tests
             const blackouts = [
                 {
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(addDays(new Date(), 140), 'yyyy-MM-dd'),
                     end_date: format(addDays(new Date(), 145), 'yyyy-MM-dd'),
                     campsite_id: null,
                     reason: 'Test blackout 1',
                 },
                 {
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(addDays(new Date(), 150), 'yyyy-MM-dd'),
                     end_date: format(addDays(new Date(), 152), 'yyyy-MM-dd'),
                     campsite_id: null,
@@ -447,14 +498,18 @@ test.describe('Admin Blackout Dates', () => {
                 },
             ];
 
-            const { data } = await supabaseAdmin
+            const { data, error } = await supabaseAdmin
                 .from('blackout_dates')
                 .insert(blackouts)
                 .select();
 
-            testBlackoutIds = data!
+            if (error || !data) {
+                throw new Error(`Failed to setup listing test blackouts: ${error?.message}`);
+            }
+
+            testBlackoutIds = data
                 .filter((b: unknown): b is { id: string } => {
-                    return !!b && typeof b === 'object' && 'id' in (b as Record<string, unknown>) && typeof (b as Record<string, unknown>).id === 'string';
+                    return !!b && typeof b === 'object' && 'id' in b;
                 })
                 .map((b) => b.id);
         });
@@ -518,6 +573,7 @@ test.describe('Admin Blackout Dates', () => {
             const { data: siteBlackout } = await supabaseAdmin
                 .from('blackout_dates')
                 .insert({
+                    organization_id: '00000000-0000-0000-0000-000000000001',
                     start_date: format(addDays(new Date(), 160), 'yyyy-MM-dd'),
                     end_date: format(addDays(new Date(), 162), 'yyyy-MM-dd'),
                     campsite_id: campsite.id,

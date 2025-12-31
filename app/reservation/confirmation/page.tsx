@@ -4,6 +4,7 @@ import Link from "next/link";
 import ReservationSuccess from "@/components/booking/ReservationSuccess";
 import { PaymentMethod, FormData } from "@/lib/booking/booking-types";
 import { databaseReservationSchema } from "@/lib/reservation/validation";
+import { logger } from "@/lib/logger";
 
 // Admin client to fetch reservation details (bypassing RLS)
 const supabaseAdmin = createClient(
@@ -29,16 +30,17 @@ export default async function ConfirmationPage({ searchParams }: PageProps) {
     .single();
 
   if (error || !reservation) {
-    console.error(`Confirmation fetch error for ID ${id}:`, error);
+    logger.error(`Confirmation fetch error for ID ${id}:`, error);
     return notFound();
   }
 
   // Validate reservation data for integrity
   const validationResult = databaseReservationSchema.safeParse(reservation);
   if (!validationResult.success) {
-    console.error(`Data validation failed for reservation ${id}:`);
-    console.error('Validation errors:', JSON.stringify(validationResult.error.issues, null, 2));
-    console.error('Raw reservation data:', JSON.stringify(reservation, null, 2));
+    logger.error(`Data validation failed for reservation ${id}:`, undefined, {
+      validationIssues: validationResult.error.issues,
+      reservation,
+    });
     return (
       <main>
         <div className="py-12 px-4">

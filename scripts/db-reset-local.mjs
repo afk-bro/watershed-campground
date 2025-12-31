@@ -8,12 +8,21 @@
 import { spawn } from 'child_process';
 import { platform } from 'os';
 
+// Safety: require explicit opt-in via env var to run destructive local reset
+if (process.env.LOCAL_SUPABASE !== '1') {
+  console.error('LOCAL_SUPABASE=1 required for local reset. Skipping.');
+  console.error('To run a local reset, set LOCAL_SUPABASE=1 and re-run this script.');
+  process.exit(0);
+}
+
 const DB_URL = 'postgresql://postgres:postgres@127.0.0.1:54322/postgres';
 const isWindows = platform() === 'win32';
 
 /**
  * Run a command and stream output
  */
+// Hard-coded commands, no user input, local-only script; lint suppression for child_process warning is intentional.
+// eslint-disable-next-line security/detect-child-process, security/detect-non-literal-require
 function run(command, args = [], options = {}) {
   return new Promise((resolve, reject) => {
     const proc = spawn(command, args, {
@@ -50,21 +59,15 @@ async function main() {
     console.log('  → Running migrations and safe seed...');
     await run('npx', ['supabase', 'db', 'reset']);
 
-    // Step 3: Run destructive local seed (truncate + reload)
-    console.log('\n  → Running local destructive seed (truncate + reload)...');
+    // Step 3: Run safe dev seed
+    console.log('\n  → Running dev seed...');
 
     const psqlCommand = isWindows ? 'psql.exe' : 'psql';
 
-    // Run seed.local.sql
+    // Run the dev seed
     await run(psqlCommand, [
       DB_URL,
-      '-f', 'supabase/seed.local.sql'
-    ]);
-
-    // Run seed.sql again
-    await run(psqlCommand, [
-      DB_URL,
-      '-f', 'supabase/seed.sql'
+      '-f', 'supabase/seeds/dev_seed.sql'
     ]);
 
     console.log('\n✅ Database reset complete!\n');

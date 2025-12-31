@@ -27,7 +27,7 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
     const fetchAvailability = useCallback(async () => {
         setLoading(true);
         try {
-            const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+            const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed-campground';
             const res = await fetch(`/api/availability/calendar?month=${format(currentMonth, 'yyyy-MM')}&org=${orgSlug}`);
             if (res.ok) {
                 const data = await res.json();
@@ -71,7 +71,7 @@ export default function DateStep({ checkIn, checkOut, onSelectRange }: DateStepP
     };
 
     return (
-        <div className="space-y-6 animate-in fade-in duration-500">
+        <div className="space-y-6 animate-in fade-in duration-500" data-testid="availability-calendar">
             <div className="text-center">
                 <h2 className="text-2xl font-bold text-[var(--color-accent-gold)]">When would you like to stay?</h2>
                 <p className="text-[var(--color-text-beige)]/70">Select your check-in and check-out dates.</p>

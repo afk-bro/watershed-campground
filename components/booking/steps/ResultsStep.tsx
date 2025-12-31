@@ -18,7 +18,7 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
         const search = async () => {
              setLoading(true);
              try {
-                 const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+                 const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed-campground';
                  const res = await fetch(`/api/availability/search?org=${orgSlug}`, {
                      method: 'POST',
                      headers: { 'Content-Type': 'application/json' },
@@ -69,7 +69,7 @@ export default function ResultsStep({ searchParams, onSelectSite }: ResultsStepP
 
             <div className="grid gap-4">
                 {sites.map(site => (
-                    <div key={site.id} className="bg-[var(--color-surface-elevated)] p-6 rounded-xl border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] transition-all flex flex-col sm:flex-row items-center gap-6 group">
+                    <div key={site.id} data-testid={`campsite-${site.id}`} className="bg-[var(--color-surface-elevated)] p-6 rounded-xl border border-[var(--color-border-subtle)] hover:border-[var(--color-accent-gold)] transition-all flex flex-col sm:flex-row items-center gap-6 group">
                          {/* Site Code Badge */}
                          <div className="w-16 h-16 rounded-full bg-[var(--color-brand-forest-light)]/20 flex items-center justify-center text-[var(--color-accent-gold)] text-xl font-bold flex-shrink-0">
                              {site.code}

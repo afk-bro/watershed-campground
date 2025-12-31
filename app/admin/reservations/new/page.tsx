@@ -167,7 +167,7 @@ function ReservationForm() {
             const yesterday = new Date(today);
             yesterday.setDate(yesterday.getDate() - 1);
 
-            console.log('[DEBUG] Date Validation:', {
+            logger.debug("[DEBUG] Date Validation:", {
                 checkInStr: formData.checkIn,
                 checkInDate: checkInDate.toString(),
                 today: today.toString(),

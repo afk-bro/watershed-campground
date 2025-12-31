@@ -52,12 +52,27 @@ interface UseReservationFiltersReturn {
  * } = useReservationFilters(items);
  * ```
  */
+interface UseReservationFiltersOptions {
+  searchQuery?: string;
+  setSearchQuery?: (query: string) => void;
+}
+
 export function useReservationFilters(
-  items: OverviewItem[]
+  items: OverviewItem[],
+  options: UseReservationFiltersOptions = {}
 ): UseReservationFiltersReturn {
-  const [filter, setFilter] = useState<FilterType>("all");
-  const [sortMode, setSortMode] = useState<SortMode>("start_date");
-  const [searchQuery, setSearchQuery] = useState("");
+  const [internalFilter, setInternalFilter] = useState<FilterType>("all");
+  const [internalSortMode, setInternalSortMode] = useState<SortMode>("start_date");
+  const [internalSearchQuery, setInternalSearchQuery] = useState("");
+
+  // Use external state if provided, otherwise fallback to internal
+  const searchQuery = options.searchQuery !== undefined ? options.searchQuery : internalSearchQuery;
+  const setSearchQuery = options.setSearchQuery || setInternalSearchQuery;
+
+  const filter = internalFilter;
+  const setFilter = setInternalFilter;
+  const sortMode = internalSortMode;
+  const setSortMode = setInternalSortMode;
 
   // Filter by status (all, pending, confirmed, etc.)
   const statusFilteredItems = useMemo(() => {

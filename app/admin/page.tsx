@@ -41,22 +41,33 @@ export default function AdminPage() {
     const [assigningReservation, setAssigningReservation] = useState<Reservation | null>(null);
     const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
     const [showArchived, setShowArchived] = useState(false);
+    const [searchQuery, setSearchQuery] = useState("");
+    const [debouncedSearchQuery, setDebouncedSearchQuery] = useState("");
     const searchInputRef = useRef<HTMLInputElement>(null);
     const [isSubmitting, setIsSubmitting] = useState(false);
 
-    // Data fetching hook
-    const { items, loading, error, refetch } = useReservationData({ showArchived });
+    // Debounce search query for server-side fetching
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchQuery(searchQuery);
+        }, 500); // 500ms debounce
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
 
-    // Filtering and sorting hook
+    // Data fetching hook - uses debounced search for server-side filtering
+    const { items, loading, error, refetch } = useReservationData({ 
+        showArchived, 
+        searchQuery: debouncedSearchQuery 
+    });
+
+    // Filtering and sorting hook - uses immediate search for UI responsiveness
     const {
         filter,
         setFilter,
         sortMode,
         setSortMode,
-        searchQuery,
-        setSearchQuery,
         sortedItems,
-    } = useReservationFilters(items);
+    } = useReservationFilters(items, { searchQuery, setSearchQuery });
 
     // Bulk actions hook
     const bulkActions = useBulkActions({
@@ -181,6 +192,8 @@ export default function AdminPage() {
                     showArchived={showArchived}
                     setShowArchived={setShowArchived}
                     searchInputRef={searchInputRef}
+                    totalFilteredResults={sortedItems.length}
+                    isFiltering={loading && searchQuery !== debouncedSearchQuery}
                 />
 
                 {/* Mobile Card View */}

@@ -24,7 +24,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
         // ==========================================
         // STEP 2: Select Dates (Wizard Step 1)
         // ==========================================
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
         const checkInDay = format(tomorrow, 'd');
         const checkOutDay = format(checkOutDate, 'd');
@@ -73,70 +73,61 @@ test.describe('Guest Booking - Complete Happy Path', () => {
         await page.getByRole('button', { name: /Continue to Add-ons/i }).click();
 
         // ==========================================
-        // Network Monitoring - Set up EARLY to capture payment intent creation
+        // Network Monitoring - Optimized to reduce resource overhead
         // ==========================================
-        console.log("Setting up network and console monitoring...");
-
+        const VERBOSE = process.env.VERBOSE_LOGGING === 'true';
         const apiResponses: Record<string, { status: number; body?: unknown; error?: string }> = {};
         const consoleLogs: string[] = [];
 
-        // Capture browser console logs
+        // Capture browser console logs (conditional)
         page.on('console', (msg) => {
             const text = msg.text();
-            consoleLogs.push(`[${msg.type()}] ${text}`);
-            console.log(`🖥️  Browser Console [${msg.type()}]: ${text}`);
+            if (msg.type() === 'error' || VERBOSE) {
+                consoleLogs.push(`[${msg.type()}] ${text}`);
+                if (VERBOSE) console.log(`🖥️  Browser Console [${msg.type()}]: ${text}`);
+            }
         });
 
         // Capture page errors
         page.on('pageerror', (error) => {
+            consoleLogs.push(`[PAGE ERROR] ${error.message}\n${error.stack}`);
             console.log(`💥 Page Error: ${error.message}`);
-            consoleLogs.push(`[ERROR] ${error.message}\n${error.stack}`);
         });
 
+        // Consolidated response listener
         page.on('response', async (response) => {
             const url = response.url();
+            const status = response.status();
 
-            if (url.includes('/api/create-payment-intent')) {
-                console.log(`📍 Payment Intent API Response: ${response.status()}`);
+            // Capture 500 errors always
+            if (status === 500) {
+                console.log(`💥 500 ERROR from: ${url}`);
                 try {
-                    const body = await response.json();
-                    console.log('📍 Payment Intent Body:', JSON.stringify(body, null, 2));
-                    apiResponses.paymentIntent = { status: response.status(), body };
-                } catch (e) {
-                    console.log('📍 Could not parse payment intent response');
-                    apiResponses.paymentIntent = { status: response.status(), error: 'Parse failed' };
-                }
-            }
-
-            if (url.includes('/api/reservation')) {
-                console.log(`📍 Reservation API Response: ${response.status()}`);
-                try {
-                    const body = await response.json();
-                    console.log('📍 Reservation Response Body:', JSON.stringify(body, null, 2));
-                    apiResponses.reservation = { status: response.status(), body };
-                } catch (e) {
-                    console.log('📍 Could not parse reservation response');
-                    apiResponses.reservation = { status: response.status(), error: 'Parse failed' };
-                }
-            }
-        });
-
-        page.on('response', async (response2) => {
-            // Capture all 500 errors
-            if (response2.status() === 500) {
-                console.log(`💥 500 ERROR from: ${response2.url()}`);
-                try {
-                    const errorBody = await response2.text();
+                    const errorBody = await response.text();
                     console.log(`   Error body: ${errorBody.substring(0, 500)}`);
+                } catch (e) { }
+            }
+
+            // Capture specific payment APIs
+            if (url.includes('/api/create-payment-intent') || url.includes('/api/reservation')) {
+                const key = url.includes('/api/create-payment-intent') ? 'paymentIntent' : 'reservation';
+                if (VERBOSE) console.log(`📍 ${key} API Response: ${status}`);
+
+                try {
+                    const body = await response.json();
+                    apiResponses[key] = { status, body };
+                    if (VERBOSE) console.log(`📍 ${key} Body:`, JSON.stringify(body, null, 2));
                 } catch (e) {
-                    console.log(`   Could not read error body`);
+                    apiResponses[key] = { status, error: 'Parse failed' };
                 }
             }
         });
 
         page.on('requestfailed', (request) => {
-            console.log(`❌ Request Failed: ${request.url()}`);
-            console.log(`   Failure: ${request.failure()?.errorText}`);
+            if (VERBOSE) {
+                console.log(`❌ Request Failed: ${request.url()}`);
+                console.log(`   Failure: ${request.failure()?.errorText}`);
+            }
         });
 
         // ==========================================
@@ -369,7 +360,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
     // ... (Keep existing tests)
     test('should handle validation errors correctly', async ({ page }) => {
         await page.goto('/make-a-reservation');
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
         const checkInDay = format(tomorrow, 'd');
         const checkOutDay = format(checkOutDate, 'd');
@@ -400,7 +391,7 @@ test.describe('Guest Booking - Complete Happy Path', () => {
 
     test('should allow changing dates from personal info form', async ({ page }) => {
         await page.goto('/make-a-reservation');
-        const tomorrow = addDays(new Date(), 1);
+        const tomorrow = addDays(new Date(), 10);
         const checkOutDate = addDays(tomorrow, 2);
         const checkInDay = format(tomorrow, 'd');
         const checkOutDay = format(checkOutDate, 'd');

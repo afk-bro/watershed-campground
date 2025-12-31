@@ -1,34 +1,28 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
-import Stripe from "stripe";
 import { checkAvailability } from "@/lib/availability/engine";
 import { calculateTotal } from "@/lib/pricing";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { reservationFormSchema } from "@/lib/reservation/validation";
-import { createReservationRecord, PaymentContext, AuditContext } from "@/lib/reservation/reservation-service";
+import { createReservationRecord, type AuditContext } from "@/lib/reservation/reservation-service";
 import { generateAdminNotificationHtml, generateGuestConfirmationHtml } from "@/lib/email/templates";
 import { requireAdmin } from "@/lib/admin-auth";
 import { getBaseUrl } from "@/lib/url-utils";
 import { checkRateLimit, rateLimiters, getClientIp, createIpIdentifier, getRateLimitHeaders } from "@/lib/rate-limit-upstash";
 import { resolvePublicOrganizationId } from "@/lib/tenancy/resolve-public-org";
 import { logger } from "@/lib/logger";
-
-// Lazy initialization to avoid build-time errors
-let stripeClient: Stripe | null = null;
-function getStripeClient() {
-    if (!stripeClient) {
-        stripeClient = new Stripe(process.env.STRIPE_SECRET_KEY as string, {
-            apiVersion: "2025-11-17.clover" as const,
-        });
-    }
-    return stripeClient;
-}
+import {
+    verifyPaymentIntent,
+    determinePaymentStatus
+} from "@/lib/services/payment.service";
+import { validationError } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
+    let rlResult;
     try {
         // 0. Rate Limiting
         const ip = getClientIp(request);
-        const rlResult = await checkRateLimit(
+        rlResult = await checkRateLimit(
             createIpIdentifier(ip, 'reservation_create'),
             rateLimiters.reservationCreate
         );
@@ -44,10 +38,12 @@ export async function POST(request: Request) {
             );
         }
 
-        // 0.5. Org Resolution (CRITICAL - before any queries)
         const organizationId = await resolvePublicOrganizationId(request);
         if (!organizationId) {
-            return NextResponse.json({ error: "Not found" }, { status: 404 });
+            return NextResponse.json(
+                { error: "Not found" },
+                { status: 404, headers: getRateLimitHeaders(rlResult) }
+            );
         }
 
         const baseUrl = getBaseUrl();
@@ -56,13 +52,9 @@ export async function POST(request: Request) {
         const body = await request.json();
         const { paymentIntentId, paymentMethod, ...formDataRaw } = body;
 
-        // 1. Validation
         const result = reservationFormSchema.safeParse(formDataRaw);
         if (!result.success) {
-            return NextResponse.json(
-                { error: "Validation failed", details: result.error.flatten() },
-                { status: 400 }
-            );
+            return validationError(result.error, getRateLimitHeaders(rlResult));
         }
         const formData = result.data;
 
@@ -74,25 +66,25 @@ export async function POST(request: Request) {
                 // Explicit rejection: public users cannot use override flags
                 return NextResponse.json(
                     { error: "Unauthorized: admin-only parameters detected" },
-                    { status: 403 }
+                    { status: 403, headers: getRateLimitHeaders(rlResult) }
                 );
             }
         }
 
         // 2. Retrieve Payment Intent & Campsite
-        let paymentIntent: Stripe.PaymentIntent | null = null;
+        let paymentIntent: Awaited<ReturnType<typeof verifyPaymentIntent>>["paymentIntent"] | undefined;
         let recommendedSiteId: string;
 
         if (paymentIntentId) {
-            const stripe = getStripeClient();
-            paymentIntent = await stripe.paymentIntents.retrieve(paymentIntentId);
-            if (paymentIntent.status !== 'succeeded') {
-                return NextResponse.json({ error: "Payment not verified" }, { status: 400 });
+            const verification = await verifyPaymentIntent(paymentIntentId);
+            if (!verification.success) {
+                return NextResponse.json(
+                    { error: verification.error || "Payment verification failed" },
+                    { status: 400, headers: getRateLimitHeaders(rlResult) }
+                );
             }
-            if (!paymentIntent.metadata.campsiteId) {
-                return NextResponse.json({ error: "Invalid payment: missing campsite information" }, { status: 400 });
-            }
-            recommendedSiteId = paymentIntent.metadata.campsiteId;
+            paymentIntent = verification.paymentIntent;
+            recommendedSiteId = verification.campsiteId!;
         } else {
             // Check availability for non-prepaid bookings
             // Admin overrides handled at route layer (already guarded above)
@@ -101,7 +93,7 @@ export async function POST(request: Request) {
                 if (!formData.campsiteId) {
                     return NextResponse.json(
                         { error: "Campsite ID required when using admin overrides" },
-                        { status: 400 }
+                        { status: 400, headers: getRateLimitHeaders(rlResult) }
                     );
                 }
                 recommendedSiteId = formData.campsiteId;
@@ -118,7 +110,7 @@ export async function POST(request: Request) {
                 if (!availabilityResult.available || !availabilityResult.recommendedSiteId) {
                     return NextResponse.json(
                         { error: availabilityResult.message || "Dates no longer available." },
-                        { status: 400 }
+                        { status: 400, headers: getRateLimitHeaders(rlResult) }
                     );
                 }
                 recommendedSiteId = availabilityResult.recommendedSiteId;
@@ -132,7 +124,10 @@ export async function POST(request: Request) {
             .eq("id", recommendedSiteId)
             .single();
 
-        if (!campsite) return NextResponse.json({ error: "Campsite not found" }, { status: 500 });
+        if (!campsite) return NextResponse.json(
+            { error: "Campsite not found" },
+            { status: 500, headers: getRateLimitHeaders(rlResult) }
+        );
 
         const siteTotal = calculateTotal(campsite.base_rate, formData.checkIn, formData.checkOut);
 
@@ -170,49 +165,17 @@ export async function POST(request: Request) {
         const totalAmount = siteTotal + addonsTotal;
 
         // 4. Determine Payment Status
-        const paymentContext: PaymentContext = {
-            paymentStatus: 'pending',
-            amountPaid: 0,
-            balanceDue: 0,
-            paymentType: 'full',
-            paymentIntentId,
-        };
+        const paymentContext = await determinePaymentStatus({
+            paymentIntent,
+            paymentMethod,
+            totalAmount,
+            checkIn: formData.checkIn,
+            isOffline: formData.isOffline
+        });
 
-        if (paymentIntent) {
-            paymentContext.paymentStatus = 'paid';
-            paymentContext.amountPaid = (paymentIntent.amount_received || 0) / 100;
-
-            // Check for Deposit
-            if (paymentIntent.metadata.policyId) {
-                const { data: policy } = await supabaseAdmin.from('payment_policies').select('*').eq('id', paymentIntent.metadata.policyId).single();
-                if (policy?.policy_type === 'deposit') {
-                    paymentContext.paymentStatus = 'deposit_paid';
-                    paymentContext.paymentType = 'deposit';
-                    paymentContext.policySnapshot = policy;
-                    if (policy.due_days_before_checkin) {
-                        const due = new Date(formData.checkIn);
-                        due.setDate(due.getDate() - policy.due_days_before_checkin);
-                        paymentContext.remainderDueAt = due.toISOString();
-                    }
-                }
-            }
-            // Balance Calc
-            if (paymentContext.paymentType === 'full' && Math.abs(totalAmount - paymentContext.amountPaid) < 0.50) {
-                paymentContext.balanceDue = 0;
-            } else {
-                paymentContext.balanceDue = Math.max(0, totalAmount - paymentContext.amountPaid);
-            }
-        } else if (paymentMethod === 'in-person' || formData.isOffline) {
-            paymentContext.paymentStatus = formData.isOffline ? 'paid' : 'pay_on_arrival';
-            paymentContext.paymentType = 'cash'; // Defaulting to cash/external for manual bookings
-            if (formData.isOffline) {
-                paymentContext.amountPaid = totalAmount;
-                paymentContext.balanceDue = 0;
-            } else {
-                paymentContext.balanceDue = totalAmount;
-            }
-        } else {
-            return NextResponse.json({ error: "Payment method required" }, { status: 400 });
+        // Add payment intent ID to context
+        if (paymentIntentId) {
+            paymentContext.paymentIntentId = paymentIntentId;
         }
 
         // 5. Create Reservation with audit context
@@ -228,6 +191,7 @@ export async function POST(request: Request) {
             recommendedSiteId,
             { siteTotal, addonsTotal, totalAmount },
             paymentContext,
+            organizationId,
             auditContext
         );
 
@@ -283,13 +247,19 @@ export async function POST(request: Request) {
         });
 
     } catch (error) {
-        logger.error("Reservation API Error:", error);
+        logger.error("Reservation API Error:", error, {
+            message: error instanceof Error ? error.message : String(error),
+            stack: error instanceof Error ? error.stack : undefined,
+            name: error instanceof Error ? error.name : undefined,
+        });
 
-        // Return more helpful error message
         const errorMessage = error instanceof Error ? error.message : "Internal Server Error";
         return NextResponse.json({
             error: "Failed to create reservation",
             details: process.env.NODE_ENV === 'production' ? undefined : errorMessage
-        }, { status: 500 });
+        }, {
+            status: 500,
+            headers: rlResult ? getRateLimitHeaders(rlResult) : {}
+        });
     }
 }

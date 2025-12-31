@@ -4,6 +4,20 @@
 
 The Watershed Campground uses GitHub Actions for continuous integration and deployment. Every pull request and push to `main`/`dev` branches triggers automated checks to ensure code quality, functionality, and performance.
 
+## Quick Start: Run CI Checks Locally
+
+Before pushing, run the same quality gates that CI will check:
+
+```bash
+npm run quality:gates
+```
+
+This runs:
+- ✅ Skip detection (no undocumented test.skip() or #TBD placeholders)
+- ✅ Campsite selector check (no 409-causing .first() patterns)
+
+**Make it muscle memory:** Run before every commit to catch issues early.
+
 ## Pipeline Jobs
 
 ### 1. Lint & Type Check ✨
@@ -35,7 +49,7 @@ npm run lint -- app/**/*.tsx
 **Purpose:** Verify critical user flows work end-to-end
 
 **What it does:**
-- Starts local Supabase instance with Docker
+- Uses hosted Supabase credentials stored in CI secrets (no local Docker)
 - Installs Playwright browsers (Chromium)
 - Runs all 24 E2E tests:
   - ✅ Guest booking flow (3 tests)
@@ -50,12 +64,12 @@ npm run lint -- app/**/*.tsx
 - **Retries:** 2 (in CI mode)
 - **Workers:** 1 (sequential to avoid DB conflicts)
 
-**Run locally:**
-```bash
-# Start local Supabase
-npx supabase start
+**Run locally (developer recommended):**
+1. Obtain hosted test project credentials from the team and create `.env.test` with `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, and `SUPABASE_SERVICE_ROLE_KEY`.
+2. Run tests against the hosted test project:
 
-# Run all tests
+```bash
+# Run all tests against hosted test project
 npx playwright test
 
 # Run specific suite
@@ -64,6 +78,8 @@ npx playwright test tests/guest-booking-complete.spec.ts
 # Debug mode
 npx playwright test --debug
 ```
+
+If you prefer an isolated DB for local testing, consider using GitHub Actions `services: postgres` or a local ephemeral Postgres instance and apply migrations; avoid running the Supabase Docker stack unless necessary.
 
 **View reports:**
 - **In CI:** Download artifact from GitHub Actions run
@@ -339,10 +355,9 @@ npm run type-check
 echo "🏗️ Running Build Check..."
 npm run build
 
-echo "🎭 Running E2E Tests..."
-npx supabase start
-npx playwright test
-npx supabase stop
+echo "🎭 Running E2E Tests (smoke suite)..."
+# CI runs a small deterministic Playwright smoke suite on every push/PR. Full Lighthouse runs are nightly/manual.
+npx playwright test tests/admin/smoke.spec.ts
 
 echo "✅ Local CI Passed!"
 ```
@@ -376,6 +391,74 @@ When adding new E2E tests:
    - Duration
    - Which jobs passed/failed
    - Logs for debugging
+
+### Track Test Skip Count
+
+**Why it matters:** Skipped tests can accumulate unnoticed and reduce test coverage.
+
+**Current acceptable skips:**
+- `blackout-drag-resize.spec.ts` - 1 test (TODO(E2E-DRAG) (#TBD) - awaiting UX decision)
+- Rate limiting tests - Skip when `UPSTASH_REDIS_REST_URL` not configured
+
+**How to monitor:**
+1. Check Playwright output summary at end of CI run:
+   ```
+   5 failed, 22 skipped, 268 passed
+   ```
+2. If skip count increases unexpectedly:
+   - Search codebase for `test.skip(` to find new skips
+   - Verify skips are documented with TODO comments
+   - Add skip reason to this list
+
+**Best practices:**
+- Document skip reason with searchable tag (e.g., `TODO(E2E-DRAG)`)
+- Link skip to GitHub issue for tracking (e.g., `#123`)
+- Review skipped tests quarterly
+- Never skip core booking flow or auth tests
+
+**Search for skips:**
+```bash
+# Find all test.skip() calls
+grep -r "test.skip" tests/
+
+# Find all TODO tags in test files
+grep -r "TODO" tests/ | grep -E "\.(spec|test)\."
+```
+
+### CI Quality Gates (Test Patterns)
+
+**Automated checks to prevent test anti-patterns:**
+
+**1. New Skip Detection** (`scripts/check-test-skips.sh`):
+```bash
+# Run in CI on every PR
+./scripts/check-test-skips.sh main
+
+# Fails if new test.skip() without TODO tag
+# Required format: test.skip(true, 'TODO(ISSUE-ID): Reason');
+```
+
+**2. Campsite .first() Detection** (`scripts/check-campsite-selectors.sh`):
+```bash
+# Prevents 409 conflicts from parallel test collision
+./scripts/check-campsite-selectors.sh
+
+# Fails if: page.locator('campsite...').first()
+# Requires: createDedicatedCampsite() + select by code
+```
+
+**Add to CI workflow** (`.github/workflows/ci.yml`):
+```yaml
+- name: Check Test Quality Gates
+  run: |
+    ./scripts/check-test-skips.sh ${{ github.base_ref || 'main' }}
+    ./scripts/check-campsite-selectors.sh
+```
+
+**Why these matter:**
+- Skip detection prevents accidental test disabling without documentation
+- Campsite .first() check prevents 409 conflicts that are hard to debug
+- Both checks run in <1s and fail fast before expensive E2E runs
 
 ### CI Status Badge
 

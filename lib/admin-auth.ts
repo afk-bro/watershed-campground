@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { getUserOrganization } from '@/lib/organization';
+import { logger } from '@/lib/logger';
 
 /**
  * Checks if the current user is an admin based on ADMIN_EMAILS environment variable.
@@ -85,7 +86,7 @@ export async function requireAdminWithOrg() {
             response: null
         };
     } catch (error) {
-        console.error('[requireAdminWithOrg] Error getting organization:', error);
+        logger.error('[requireAdminWithOrg] Error getting organization:', error);
         return {
             authorized: false,
             user,
@@ -130,7 +131,7 @@ export function migrationGate(
 
     if (isDevelopment) {
         // In dev, allow legacy behavior but log warning
-        console.warn(`[MIGRATION_GATE] ${route} - NOT MIGRATED (allowed in dev)`, {
+        logger.warn(`[MIGRATION_GATE] ${route} - NOT MIGRATED (allowed in dev)`, {
             reason: reason || 'not migrated to multi-tenancy',
             replacement: replacementEndpoint
         });
@@ -139,7 +140,7 @@ export function migrationGate(
 
     // In preview/production, fail closed with consistent payload
     // Use structured logging with clear tag for monitoring
-    console.error(`[MIGRATION_GATE] ${route} - BLOCKED`, {
+    logger.error(`[MIGRATION_GATE] ${route} - BLOCKED`, undefined, {
         route,
         reason: reason || 'not migrated to multi-tenancy',
         replacement: replacementEndpoint,
@@ -180,6 +181,6 @@ export function assertTenantMigrated(endpointName: string): void {
     // This is primarily for documentation and future runtime checks
     // Could be extended to verify organization_id is present in queries
     if (process.env.NODE_ENV === 'development') {
-        console.log(`[Tenant Check] ${endpointName} - MIGRATED ✓`);
+        logger.info(`[Tenant Check] ${endpointName} - MIGRATED ✓`);
     }
 }

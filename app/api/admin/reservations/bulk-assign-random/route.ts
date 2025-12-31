@@ -1,84 +1,74 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase-admin";
 import { searchCampsites } from "@/lib/availability/engine";
-import { requireAdminWithOrg } from '@/lib/admin-auth';
-import { logAudit } from "@/lib/audit/audit-service";
-import { logger } from "@/lib/logger";
+import { logBulkReservationOperation } from "@/lib/audit/audit-service";
+import { withAdminAuth } from '@/lib/admin/api-wrapper';
 
-export async function POST(request: Request) {
-    try {
-        // 1. Authorization
-        const { authorized, user, organizationId, response: authResponse } = await requireAdminWithOrg();
-        if (!authorized) return authResponse!;
+export const POST = withAdminAuth(async ({ request, user, organizationId }) => {
+    const { reservationIds } = await request.json();
 
-        const { reservationIds } = await request.json();
+    if (!reservationIds || !Array.isArray(reservationIds)) {
+        return NextResponse.json({ error: "reservationIds array required" }, { status: 400 });
+    }
 
-        if (!reservationIds || !Array.isArray(reservationIds)) {
-            return NextResponse.json({ error: "reservationIds array required" }, { status: 400 });
+    const results: { id: string; success: boolean; campsiteId?: string; reason?: string }[] = [];
+
+    // Process sequentially to safely handle race conditions
+    for (const id of reservationIds) {
+        const { data: reservation } = await supabaseAdmin
+            .from('reservations')
+            .select('*')
+            .eq('id', id)
+            .eq('organization_id', organizationId)
+            .single();
+
+        if (!reservation) {
+            results.push({ id, success: false, reason: "Reservation not found" });
+            continue;
         }
 
-        const results: { id: string; success: boolean; campsiteId?: string; reason?: string }[] = [];
-
-        // Process sequentially to safely handle race conditions
-        for (const id of reservationIds) {
-            const { data: reservation } = await supabaseAdmin
-                .from('reservations')
-                .select('*')
-                .eq('id', id)
-                .eq('organization_id', organizationId!)
-                .single();
-
-            if (!reservation) {
-                results.push({ id, success: false, reason: "Reservation not found" });
-                continue;
-            }
-
-            if (reservation.campsite_id) {
-                results.push({ id, success: false, reason: "Already assigned" });
-                continue;
-            }
-
-            const availableSites = await searchCampsites({
-                checkIn: reservation.check_in,
-                checkOut: reservation.check_out,
-                guestCount: (reservation.adults || 0) + (reservation.children || 0),
-                rvLength: reservation.rv_length ? parseInt(reservation.rv_length) : undefined,
-                unitType: reservation.camping_unit,
-                organizationId: organizationId! // Ensure campsites are org-scoped
-            });
-
-            if (availableSites.length === 0) {
-                results.push({ id, success: false, reason: "No available campsites" });
-                continue;
-            }
-
-            const targetSite = availableSites[0];
-
-            const { error: assignError } = await supabaseAdmin
-                .from('reservations')
-                .update({ campsite_id: targetSite.id })
-                .eq('id', id)
-                .eq('organization_id', organizationId!);
-
-            if (assignError) {
-                results.push({ id, success: false, reason: "Database update failed" });
-            } else {
-                results.push({ id, success: true, campsiteId: targetSite.id });
-            }
+        if (reservation.campsite_id) {
+            results.push({ id, success: false, reason: "Already assigned" });
+            continue;
         }
 
-        // 2. Audit Logging
-        await logAudit({
-            action: 'RESERVATION_UPDATE', // Batch assign is effectively multiple updates
-            newData: { reservationIds, results },
-            changedBy: user!.id,
-            organizationId: organizationId!
+        const availableSites = await searchCampsites({
+            checkIn: reservation.check_in,
+            checkOut: reservation.check_out,
+            guestCount: (reservation.adults || 0) + (reservation.children || 0),
+            rvLength: reservation.rv_length ? parseInt(reservation.rv_length) : undefined,
+            unitType: reservation.camping_unit,
+            organizationId
         });
 
-        return NextResponse.json({ results });
+        if (availableSites.length === 0) {
+            results.push({ id, success: false, reason: "No available campsites" });
+            continue;
+        }
 
-    } catch (error) {
-        logger.error("Bulk Assign Random Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        const targetSite = availableSites[0];
+
+        const { error: assignError } = await supabaseAdmin
+            .from('reservations')
+            .update({ campsite_id: targetSite.id })
+            .eq('id', id)
+            .eq('organization_id', organizationId);
+
+        if (assignError) {
+            results.push({ id, success: false, reason: "Database update failed" });
+        } else {
+            results.push({ id, success: true, campsiteId: targetSite.id });
+        }
     }
-}
+
+    // Audit Logging
+    await logBulkReservationOperation({
+        action: 'RESERVATION_BULK_UPDATE',
+        reservationIds,
+        changes: { results },
+        userId: user.id,
+        organizationId
+    });
+
+    return NextResponse.json({ results });
+});

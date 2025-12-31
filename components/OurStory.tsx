@@ -73,15 +73,17 @@ export default function OurStory() {
 
           {/* Right Column - Image (40%) - Aligned with "A Family Legacy" heading */}
           <FadeInSection delay={200}>
-            <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] rounded-lg overflow-hidden border border-accent-gold/20 shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(200,167,90,0.4)] transition-shadow duration-500 will-change-shadow lg:sticky lg:top-24 lg:mt-[140px]">
-            <Image
-              src="/gallery/landing_page.avif"
-              alt="The Watershed Campground on Kootenay Lake"
-              fill
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
-              className="object-cover"
-              priority
-            />
+            <div className="lg:sticky lg:top-24 lg:mt-[140px]">
+              <div className="relative h-[250px] sm:h-[350px] md:h-[450px] lg:h-[500px] rounded-lg overflow-hidden border border-accent-gold/20 shadow-2xl hover:shadow-[0_25px_50px_-12px_rgba(200,167,90,0.4)] transition-shadow duration-500 will-change-shadow">
+                <Image
+                  src="/gallery/landing_page.avif"
+                  alt="The Watershed Campground on Kootenay Lake"
+                  fill
+                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 40vw"
+                  className="object-cover"
+                  priority
+                />
+              </div>
             </div>
           </FadeInSection>
         </div>

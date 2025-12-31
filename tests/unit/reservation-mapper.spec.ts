@@ -100,6 +100,7 @@ test.describe('Reservation Mapper Regression Tests', () => {
       remainder_due_at: payment.remainderDueAt || null,
       campsite_id: campsiteId,
       public_edit_token_hash: tokenHash,
+      organization_id: '00000000-0000-0000-0000-000000000001', // Default org ID
     };
 
     // Check that all keys in the insert object are allowed

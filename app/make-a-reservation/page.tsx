@@ -10,12 +10,13 @@ import GuestDetailsForm from "@/components/booking/GuestDetailsForm";
 import AddOnSelection from "@/components/booking/AddOnSelection";
 import PaymentReview from "@/components/booking/PaymentReview";
 import ReservationSuccess from "@/components/booking/ReservationSuccess";
+import { logger } from "@/lib/logger";
 
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
 const stripePromise = stripeKey ? loadStripe(stripeKey) : Promise.resolve(null);
 
 if (!stripeKey) {
-  console.error("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in environment variables.");
+  logger.warn("Missing NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY in environment variables.");
 }
 
 export default function ReservationPage() {

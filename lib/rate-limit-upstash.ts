@@ -8,6 +8,11 @@
 
 import { Redis } from '@upstash/redis';
 import { Ratelimit } from '@upstash/ratelimit';
+import { logger } from "@/lib/logger";
+
+// Use RATE_LIMIT_DISABLED to control bypass. 
+// We don't automatically disable in NODE_ENV=test because integration tests need to verify rate limiting.
+const isTestEnv = process.env.RATE_LIMIT_DISABLED === 'true';
 
 // Initialize Upstash Redis client
 // Falls back to null if env vars are missing (for local dev without Upstash)
@@ -19,11 +24,12 @@ try {
             url: process.env.UPSTASH_REDIS_REST_URL,
             token: process.env.UPSTASH_REDIS_REST_TOKEN,
         });
+        logger.debug('[RATE LIMIT] Upstash Redis initialized successfully');
     } else {
-        console.warn('Upstash Redis credentials not found. Rate limiting will be disabled.');
+        logger.warn('Upstash Redis credentials not found. Rate limiting will be disabled.');
     }
 } catch (err) {
-    console.error('Failed to initialize Upstash Redis:', err);
+    logger.error('Failed to initialize Upstash Redis:', err);
 }
 
 /**
@@ -44,14 +50,17 @@ export interface RateLimitResult {
  * @returns Ratelimit instance
  */
 function createRateLimiter(requests: number, window: `${number}${'ms' | 's' | 'm' | 'h' | 'd'}`) {
-    if (!redis) {
-        // Return a no-op rate limiter for local development
+    if (isTestEnv || !redis) {
+        // Return a no-op rate limiter for tests/local development
+        if (isTestEnv) {
+            logger.debug('Rate limiting disabled in test environment');
+        }
         return {
             limit: async () => ({
                 success: true,
                 limit: requests,
                 remaining: requests,
-                reset: Date.now() + 60000,
+                reset: Math.floor((Date.now() + 60000) / 1000),
                 pending: Promise.resolve(),
             }),
         };
@@ -110,16 +119,16 @@ export async function checkRateLimit(
             success: result.success,
             limit: result.limit,
             remaining: result.remaining,
-            reset: result.reset,
+            reset: Math.floor(result.reset / 1000),
         };
     } catch (err) {
-        console.error('Rate limit check failed:', err);
+        logger.error('Rate limit check failed:', err);
         // Fail open - allow request if rate limiter is down
         return {
             success: true,
             limit: 0,
             remaining: 0,
-            reset: Date.now() + 60000,
+            reset: Math.floor((Date.now() + 60000) / 1000),
         };
     }
 }
@@ -148,6 +157,15 @@ export function getRateLimitHeaders(result: RateLimitResult): Record<string, str
  * Handles various proxy headers
  */
 export function getClientIp(request: Request): string {
+    // In test/dev: allow per-test unique identifiers via header
+    if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
+        const testKey = request.headers.get('x-test-rate-limit-key');
+        if (testKey) {
+            logger.debug(`[RATE LIMIT] Using test key: ${testKey}`);
+            return testKey;
+        }
+    }
+
     // Try various headers in order of preference
     const forwardedFor = request.headers.get('x-forwarded-for');
     if (forwardedFor) {

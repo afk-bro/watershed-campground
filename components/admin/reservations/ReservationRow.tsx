@@ -71,6 +71,7 @@ const ReservationRow = memo(function ReservationRow({
 
     return (
         <tr
+            data-testid={`reservation-row-${reservation.id}`}
             className={rowClass}
             onClick={() => onClick(reservation)}
         >
@@ -156,7 +157,9 @@ const ReservationRow = memo(function ReservationRow({
 
             <td className="px-5 py-4 align-middle text-center border-l border-[var(--color-border-default)]/20">
                  <div className="inline-flex justify-center items-center min-h-[28px]">
-                    <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
+                    <span 
+                        data-testid="reservation-status"
+                        className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium border ${
                         reservation.status === 'confirmed' ? 'bg-green-100 text-green-800 border-green-200' :
                         reservation.status === 'pending' ? 'bg-amber-100 text-amber-800 border-amber-200' :
                         reservation.status === 'checked_in' ? 'bg-blue-100 text-blue-800 border-blue-200' :

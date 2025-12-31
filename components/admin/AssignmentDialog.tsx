@@ -52,7 +52,7 @@ export default function AssignmentDialog({ reservation, isOpen, onClose, onAssig
                 // We could pass rvLength if we had it parsed from camping_unit or separate field
             };
 
-            const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed';
+            const orgSlug = process.env.NEXT_PUBLIC_ORG_SLUG || 'watershed-campground';
             const res = await fetch(`/api/availability/search?org=${orgSlug}`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -133,6 +133,7 @@ export default function AssignmentDialog({ reservation, isOpen, onClose, onAssig
                             {campsites.map(site => (
                                 <button
                                     key={site.id}
+                                    data-testid="campsite-option"
                                     onClick={() => handleAssign(site.id)}
                                     disabled={!!assigningId}
                                     className="flex items-center justify-between p-3 rounded-lg border border-gray-200 dark:border-gray-700 hover:border-brand-primary hover:bg-brand-primary/5 dark:hover:bg-brand-primary/10 transition-all group text-left"

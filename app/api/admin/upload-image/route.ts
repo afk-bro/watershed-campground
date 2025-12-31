@@ -45,10 +45,9 @@ async function uploadImageToSupabase(file: File): Promise<string> {
     return publicUrlData.publicUrl;
 }
 
-import { requireAdminWithOrg } from '@/lib/admin-auth';
-import { logger } from "@/lib/logger";
+import { withAdminAuth } from '@/lib/admin/api-wrapper';
 
-export async function POST(request: NextRequest) {
+export const POST = withAdminAuth(async ({ request }) => {
     // HARD FAIL-CLOSED: This endpoint is NOT multi-tenant safe
     // Clients MUST migrate to /api/admin/campsites/[id]/images
     const gateResponse = migrationGate(
@@ -58,31 +57,20 @@ export async function POST(request: NextRequest) {
     );
     if (gateResponse) return gateResponse;
 
-    try {
-        const { authorized, organizationId, response: authResponse } = await requireAdminWithOrg();
-        if (!authorized) return authResponse!;
-        const formData = await request.formData();
-        const file = formData.get('file') as File;
-        const name = formData.get('name') as string;
+    const formData = await request.formData();
+    const file = formData.get('file') as File;
 
-        if (!file) {
-            return NextResponse.json(
-                { error: 'No file provided' },
-                { status: 400 }
-            );
-        }
-
-        const url = await uploadImageToSupabase(file);
-
+    if (!file) {
         return NextResponse.json(
-            { url, name: file.name },
-            { status: 200 }
-        );
-    } catch (error: unknown) {
-        logger.error('Image upload error:', error);
-        return NextResponse.json(
-            { error: error instanceof Error ? error.message : 'Failed to upload image' },
-            { status: 500 }
+            { error: 'No file provided' },
+            { status: 400 }
         );
     }
-}
+
+    const url = await uploadImageToSupabase(file);
+
+    return NextResponse.json(
+        { url, name: file.name },
+        { status: 200 }
+    );
+});

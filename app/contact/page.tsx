@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Container from "../../components/Container";
 import TaskHero from "../../components/TaskHero";
+import { logger } from "@/lib/logger";
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({
@@ -35,7 +36,7 @@ export default function ContactPage() {
       setStatus("success");
       setFormData({ firstName: "", lastName: "", email: "", message: "" });
     } catch (error) {
-      console.error("Submission error:", error);
+      logger.error("Contact form submission error", error);
       setStatus("error");
       setErrorMessage(error instanceof Error ? error.message : "Failed to send message");
     }

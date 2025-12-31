@@ -2,6 +2,7 @@ import { ReservationFormData } from "./validation";
 import crypto from 'crypto';
 import { SupabaseClient } from "@supabase/supabase-js";
 import type { Database, Json } from "@/lib/database.types";
+import { logger } from "@/lib/logger";
 
 // Use Supabase-generated types - TypeScript will enforce alignment with actual DB schema
 type ReservationInsert = Database["public"]["Tables"]["reservations"]["Insert"];
@@ -18,7 +19,7 @@ const ALLOWED_RESERVATION_COLUMNS = [
     'status',
     'total_amount', 'stripe_payment_intent_id', 'payment_status',
     'amount_paid', 'balance_due', 'payment_policy_snapshot', 'remainder_due_at',
-    'campsite_id', 'public_edit_token_hash',
+    'campsite_id', 'public_edit_token_hash', 'organization_id',
     'email_sent_at', 'archived_at', 'metadata'
 ] as const;
 
@@ -68,9 +69,10 @@ function toReservationInsert(
     tokenHash: string,
     pricing: ReservationPricing,
     payment: PaymentContext,
+    organizationId: string,
     audit?: AuditContext
 ): ReservationInsert {
-    return {
+    const insertObj = {
         // Guest information
         first_name: formData.firstName,
         last_name: formData.lastName,
@@ -112,6 +114,7 @@ function toReservationInsert(
         // References
         campsite_id: campsiteId,
         public_edit_token_hash: tokenHash,
+        organization_id: organizationId, // Added in multi-tenancy migration
 
         // Audit metadata for debugging, reconciliation, and dispute resolution
         metadata: {
@@ -138,6 +141,7 @@ function toReservationInsert(
             audit_version: 1,
         },
     };
+    return insertObj as unknown as ReservationInsert;
 }
 
 // Helper: Token Generation
@@ -159,13 +163,14 @@ export async function createReservationRecord(
     campsiteId: string,
     pricing: ReservationPricing,
     payment: PaymentContext,
+    organizationId: string,
     audit?: AuditContext
 ) {
     const rawToken = generateToken();
     const tokenHash = hashToken(rawToken);
 
     // 1. Map to DB-safe insert object (single source of truth)
-    const reservationInsert = toReservationInsert(formData, campsiteId, tokenHash, pricing, payment, audit);
+    const reservationInsert = toReservationInsert(formData, campsiteId, tokenHash, pricing, payment, organizationId, audit);
 
     // 2. Runtime assertion: fail loudly if extra keys leak through
     assertOnlyDbKeys(reservationInsert as Record<string, unknown>, ALLOWED_RESERVATION_COLUMNS);
@@ -199,7 +204,7 @@ export async function createReservationRecord(
             .insert(addonsToInsert);
 
         if (addonError) {
-            console.error("Error saving addons:", addonError);
+            logger.error("Error saving addons:", addonError);
             // We don't throw here to avoid failing the whole reservation if just addons fail, 
             // but strictly speaking transactions should be atomic. 
             // Supabase doesn't support multi-table transactions easily via JS client without RPC.
@@ -219,7 +224,7 @@ export async function createReservationRecord(
         }]);
 
         if (trxError) {
-            console.error("Failed to insert transaction ledger:", trxError);
+            logger.error("Failed to insert transaction ledger:", trxError);
         }
     }
 

@@ -3,6 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { logger } from "@/lib/logger";
 
 /**
  * Client-side auth callback page
@@ -21,7 +22,7 @@ export default function AuthCallbackPage() {
       const error = params.get("error");
 
       if (error) {
-        console.error("Auth error:", error);
+        logger.error("Auth callback error", error);
         router.replace(`/admin/login?error=${encodeURIComponent(error)}`);
         return;
       }
@@ -40,7 +41,7 @@ export default function AuthCallbackPage() {
         });
 
         if (sessionError) {
-          console.error("Session error:", sessionError);
+          logger.error("Auth callback session error", sessionError);
           router.replace(`/admin/login?error=${encodeURIComponent("Failed to authenticate")}`);
           return;
         }
@@ -65,7 +66,7 @@ export default function AuthCallbackPage() {
         const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
 
         if (exchangeError) {
-          console.error("Code exchange error:", exchangeError);
+          logger.error("Auth callback code exchange error", exchangeError);
           router.replace(`/admin/login?error=${encodeURIComponent("Failed to authenticate")}`);
           return;
         }

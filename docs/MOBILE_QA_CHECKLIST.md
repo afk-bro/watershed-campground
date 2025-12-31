@@ -1341,7 +1341,7 @@ document.addEventListener('touchstart', (e) => {
 
 ### For Automated Testing
 
-See `/tests/.env.test` for test credentials and `/supabase/seed.sql` for test data generation.
+See `/tests/.env.test` for test credentials and `/supabase/seeds/dev_seed.sql` for test data generation.
 
 ---
 

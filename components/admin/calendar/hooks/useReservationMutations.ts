@@ -81,7 +81,7 @@ export function useReservationMutations({ onDataMutate }: UseReservationMutation
       // Convert 'UNASSIGNED' to null for API
       const campsiteId = params.newCampsiteId === 'UNASSIGNED' ? null : params.newCampsiteId;
 
-      console.log('[RESCHEDULE] Optimistic update', {
+      logger.debug('[RESCHEDULE] Optimistic update', {
         reservationId: params.reservation.id,
         from: {
           campsite: params.reservation.campsite_id,

@@ -7,6 +7,7 @@
 
 import type { Reservation, ReservationStatus, Campsite, BlackoutDate, OverviewItem } from "@/lib/supabase";
 import { API_ENDPOINTS, ERROR_MESSAGES } from "./constants";
+import { logger } from "@/lib/logger";
 
 /**
  * Custom error class for API errors
@@ -78,7 +79,7 @@ class AdminAPIClient {
       }
 
       // Wrap other errors (network errors, etc.)
-      console.error(`[AdminAPIClient] Request failed: ${url}`, error);
+      logger.error(`[AdminAPIClient] Request failed: ${url}`, error);
       throw new APIError(
         error instanceof Error ? error.message : ERROR_MESSAGES.NETWORK_ERROR,
         undefined,
@@ -94,9 +95,10 @@ class AdminAPIClient {
 
   /**
    * Get all reservations
+   * @param queryString - Optional query parameters (e.g., '?id=xxx' or '?q=search')
    */
-  async getReservations() {
-    return this.request<{ data: OverviewItem[] }>(API_ENDPOINTS.RESERVATIONS);
+  async getReservations(queryString = '') {
+    return this.request<{ data: OverviewItem[] }>(`${API_ENDPOINTS.RESERVATIONS}${queryString}`);
   }
 
   /**

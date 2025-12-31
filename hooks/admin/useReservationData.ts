@@ -7,6 +7,7 @@ import { ERROR_MESSAGES } from "@/lib/admin/constants";
 
 interface UseReservationDataOptions {
   showArchived?: boolean;
+  searchQuery?: string;
 }
 
 interface UseReservationDataReturn {
@@ -20,22 +21,25 @@ interface UseReservationDataReturn {
  * useReservationData - Custom hook for fetching and managing reservation data
  *
  * Handles data fetching, loading states, and error management for the admin
- * reservations list. Automatically refetches when showArchived changes.
+ * reservations list. Automatically refetches when showArchived or searchQuery changes.
  *
  * @param options - Configuration options
  * @param options.showArchived - Whether to show archived reservations only
+ * @param options.searchQuery - Server-side search query (optional)
  *
  * @returns Reservation data, loading state, error state, and refetch function
  *
  * @example
  * ```tsx
  * const { items, loading, error, refetch } = useReservationData({
- *   showArchived: false
+ *   showArchived: false,
+ *   searchQuery: 'john@example.com'
  * });
  * ```
  */
 export function useReservationData({
   showArchived = false,
+  searchQuery = '',
 }: UseReservationDataOptions = {}): UseReservationDataReturn {
   const [items, setItems] = useState<OverviewItem[]>([]);
   const [loading, setLoading] = useState(true);
@@ -46,19 +50,26 @@ export function useReservationData({
     setError(null);
 
     try {
-      const { data } = await adminAPI.getReservations();
+      // Build query params for server-side filtering
+      const params = new URLSearchParams();
+      if (searchQuery?.trim()) {
+        params.set('q', searchQuery.trim());
+      }
+      const queryString = params.toString() ? `?${params.toString()}` : '';
 
-      // Filter based on archived status
+      const { data } = await adminAPI.getReservations(queryString);
+
+      // Filter based on archived status (client-side post-filter)
       const filtered = showArchived
         ? (data || []).filter(
-            (item: OverviewItem) =>
-              item.type === "reservation" &&
-              "archived_at" in item &&
-              item.archived_at != null
-          )
+          (item: OverviewItem) =>
+            item.type === "reservation" &&
+            "archived_at" in item &&
+            item.archived_at != null
+        )
         : Array.isArray(data)
-        ? data
-        : [];
+          ? data
+          : [];
 
       setItems(filtered);
     } catch (err) {
@@ -71,9 +82,9 @@ export function useReservationData({
     } finally {
       setLoading(false);
     }
-  }, [showArchived]);
+  }, [showArchived, searchQuery]);
 
-  // Auto-fetch on mount and when showArchived changes
+  // Auto-fetch on mount and when showArchived or searchQuery changes
   useEffect(() => {
     void fetchReservations();
   }, [fetchReservations]);

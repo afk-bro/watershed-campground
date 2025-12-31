@@ -1,0 +1,74 @@
+[dotenv@17.2.3] injecting env (14) from .env.test -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+🧹 Resetting E2E data for org: watershed-campground (00000000-0000-0000-0000-000000000001)
+✅ cleared: payment_transactions
+✅ cleared: audit_logs
+✅ cleared: blackout_dates
+📝 Re-seeding test reservations...
+✅ Re-seeded 3 test reservations
+🎉 E2E DB reset complete.
+
+Running 25 tests using 2 workers
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+
+[1A[2K[1/25] [setup] › tests/auth.setup.ts:7:6 › verify seed data exists
+[1A[2K[2/25] [setup] › tests/auth.setup.ts:45:6 › authenticate as admin
+[1A[2K[setup] › tests/auth.setup.ts:7:6 › verify seed data exists
+✓ Seed data verified:
+
+[1A[2K  - 7 campsites (S1-S5, C1-C2)
+
+[1A[2K  - 246 test reservations
+
+[1A[2K  - Admin auth will be verified in next setup step
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  enable debug logging with { debug: true }
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🔄 add secrets lifecycle management: https://dotenvx.com/ops
+
+[1A[2K[3/25] [admin] › tests/admin/campsite-crud.spec.ts:30:13 › Admin Campsite Management › List Campsites › should filter campsites by type
+[1A[2K[4/25] [admin] › tests/admin/campsite-crud.spec.ts:17:13 › Admin Campsite Management › List Campsites › should display all active campsites
+[1A[2K[5/25] [admin] › tests/admin/campsite-crud.spec.ts:47:13 › Admin Campsite Management › List Campsites › should toggle show inactive campsites
+[1A[2K[6/25] [admin] › tests/admin/campsite-crud.spec.ts:76:13 › Admin Campsite Management › Create Campsite › should create a new RV campsite via API
+[1A[2K[7/25] [admin] › tests/admin/campsite-crud.spec.ts:114:13 › Admin Campsite Management › Create Campsite › should create a tent campsite
+[1A[2K[8/25] [admin] › tests/admin/campsite-crud.spec.ts:137:13 › Admin Campsite Management › Create Campsite › should create a cabin
+[1A[2K[9/25] [admin] › tests/admin/campsite-crud.spec.ts:162:13 › Admin Campsite Management › Create Campsite › should reject duplicate campsite code
+[1A[2K[10/25] [admin] › tests/admin/campsite-crud.spec.ts:202:13 › Admin Campsite Management › Create Campsite › should validate required fields
+[1A[2K[11/25] [admin] › tests/admin/campsite-crud.spec.ts:236:13 › Admin Campsite Management › Create Campsite › should validate guest capacity limits
+[1A[2K[12/25] [admin] › tests/admin/campsite-crud.spec.ts:270:13 › Admin Campsite Management › Create Campsite › should validate campsite type enum
+[1A[2K[13/25] [admin] › tests/admin/campsite-crud.spec.ts:289:13 › Admin Campsite Management › Read Campsite › should fetch single campsite by ID via API
+[1A[2K[14/25] [admin] › tests/admin/campsite-crud.spec.ts:312:13 › Admin Campsite Management › Read Campsite › should return 404 for non-existent campsite
+[1A[2K[15/25] [admin] › tests/admin/campsite-crud.spec.ts:349:13 › Admin Campsite Management › Update Campsite › should update campsite name
+[1A[2K[16/25] [admin] › tests/admin/campsite-crud.spec.ts:372:13 › Admin Campsite Management › Update Campsite › should update base rate
+[1A[2K[17/25] [admin] › tests/admin/campsite-crud.spec.ts:386:13 › Admin Campsite Management › Update Campsite › should update multiple fields at once
+[1A[2K[18/25] [admin] › tests/admin/campsite-crud.spec.ts:406:13 › Admin Campsite Management › Update Campsite › should deactivate campsite
+[1A[2K[19/25] [admin] › tests/admin/campsite-crud.spec.ts:429:13 › Admin Campsite Management › Update Campsite › should reactivate deactivated campsite
+[1A[2K[20/25] [admin] › tests/admin/campsite-crud.spec.ts:446:13 › Admin Campsite Management › Update Campsite › should reject update to duplicate code
+[1A[2K[21/25] [admin] › tests/admin/campsite-crud.spec.ts:490:13 › Admin Campsite Management › Update Campsite › should return 404 when updating non-existent campsite
+[1A[2K[22/25] [admin] › tests/admin/campsite-crud.spec.ts:528:13 › Admin Campsite Management › Delete Campsite (Soft Delete) › should soft delete campsite (set is_active to false)
+[1A[2K[23/25] [admin] › tests/admin/campsite-crud.spec.ts:548:13 › Admin Campsite Management › Delete Campsite (Soft Delete) › should return 404 when deleting non-existent campsite
+[1A[2K  1) [admin] › tests/admin/campsite-crud.spec.ts:528:13 › Admin Campsite Management › Delete Campsite (Soft Delete) › should soft delete campsite (set is_active to false) 
+
+    TypeError: Cannot read properties of undefined (reading 'is_active')
+
+      532 |
+      533 |             const body = await response.json();
+    > 534 |             expect(body.data.is_active).toBe(false);
+          |                              ^
+      535 |             expect(body.message).toContain('deactivated');
+      536 |
+      537 |             // Verify campsite still exists but is inactive
+        at /home/x/dev/projects/watershed-campground/tests/admin/campsite-crud.spec.ts:534:30
+
+
+[1A[2K[24/25] [admin] › tests/admin/campsite-crud.spec.ts:569:13 › Admin Campsite Management › UI Integration › should show add campsite button
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K[25/25] [admin] › tests/admin/campsite-crud.spec.ts:558:13 › Admin Campsite Management › UI Integration › should navigate to campsite list
+[1A[2K  1 failed
+    [admin] › tests/admin/campsite-crud.spec.ts:528:13 › Admin Campsite Management › Delete Campsite (Soft Delete) › should soft delete campsite (set is_active to false) 
+  24 passed (19.7s)
+
+[36m  Serving HTML report at http://localhost:46001. Press Ctrl+C to quit.[39m

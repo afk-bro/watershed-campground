@@ -1,8 +1,8 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 
-// Load .env.test for E2E tests (local Supabase credentials)
-// This ensures tests use the local Supabase instance, not production
+// Load .env.test for E2E tests (test project credentials)
+// This loads credentials for the hosted test project or local overrides if you opt into them
 dotenv.config({ path: '.env.test' });
 
 // Debug: Verify env vars are present (for CI troubleshooting)
@@ -19,13 +19,24 @@ export default defineConfig({
     fullyParallel: true,
     forbidOnly: !!process.env.CI,
     retries: process.env.CI ? 2 : 0,
-    workers: process.env.CI ? 1 : undefined,
+    workers: process.env.CI ? 1 : 2,
     reporter: 'html',
+    globalSetup: require.resolve('../tests/global-setup'),
     use: {
         baseURL: 'http://localhost:3000',
         trace: 'on-first-retry',
         screenshot: 'only-on-failure',
         video: 'retain-on-failure',
+        // Leak-proof settings to prevent zombie Chrome processes
+        headless: true,
+        actionTimeout: 15000,
+        navigationTimeout: 15000,
+        launchOptions: {
+            args: [
+                '--disable-dev-shm-usage',
+                '--no-sandbox',
+            ],
+        },
     },
     projects: [
         // ============================================
@@ -43,7 +54,11 @@ export default defineConfig({
         // Tests requiring admin authentication
         {
             name: 'admin',
-            testMatch: /tests\/admin\/.*\.spec\.ts/,
+            testMatch: /admin\/.*\.spec\.ts/,
+            testIgnore: [
+                '**/admin/mobile-*.spec.ts',
+                '**/admin/responsive-reservations.spec.ts'
+            ],
             use: {
                 ...devices['Desktop Chrome'],
                 storageState: 'tests/.auth/admin.json', // Use authenticated state
@@ -57,11 +72,31 @@ export default defineConfig({
         // Public-facing tests (no auth required)
         {
             name: 'guest',
-            testMatch: /tests\/guest\/.*\.spec\.ts/,
+            testMatch: /guest\/.*\.spec\.ts/,
             use: {
                 ...devices['Desktop Chrome'],
                 storageState: { cookies: [], origins: [] }, // No auth state
             },
+        },
+
+        // ============================================
+        // Mobile (touch) Project
+        // ============================================
+        // Runs mobile-specific tests with touch enabled
+        {
+            name: 'mobile-chrome',
+            testMatch: [
+                '**/admin/mobile-*.spec.ts',
+                '**/admin/responsive-reservations.spec.ts'
+            ],
+            use: {
+                ...devices['Pixel 5'],
+                hasTouch: true,
+                isMobile: true,
+                viewport: devices['Pixel 5'].viewport,
+                storageState: 'tests/.auth/admin.json',
+            },
+            dependencies: ['setup'],
         },
 
         // ============================================
@@ -71,9 +106,10 @@ export default defineConfig({
         {
             name: 'shared',
             testMatch: [
-                /tests\/integration\/.*\.spec\.ts/,
-                /tests\/security\/.*\.spec\.ts/,
-                /tests\/unit\/.*\.spec\.ts/,
+                /integration\/.*\.spec\.ts/,
+                /security\/.*\.spec\.ts/,
+                /unit\/.*\.spec\.ts/,
+                /components\/.*\.spec\.ts/,
             ],
             use: {
                 ...devices['Desktop Chrome'],
@@ -96,6 +132,8 @@ export default defineConfig({
                 Object.entries(process.env).filter(([, v]) => v !== undefined)
             ),
             // Fast failsafe timeout for tests (500ms instead of 10s in production)
+            // Disable rate limiting during E2E to prevent 429s
+            RATE_LIMIT_DISABLED: 'false', // Enable for security tests, high limits used elsewhere.
             NEXT_PUBLIC_STUCK_SAVING_TIMEOUT_MS: '500',
         } as Record<string, string>,
     },
