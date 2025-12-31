@@ -104,7 +104,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         expect(apiRes.ok()).toBeTruthy();
         const apiJson = await apiRes.json();
 
-        const foundInAPI = apiJson.data.some((item: any) => item.id === testReservationId);
+        const foundInAPI = apiJson.data.some((item: { id: string }) => item.id === testReservationId);
 
         console.log('🌐 API verification (filtered by ID):', {
             meta_org: apiJson.meta?.organizationId,
@@ -117,7 +117,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         if (!foundInAPI) {
             console.error('❌ API filter failed: Reservation exists in DB but NOT returned by API even with ID filter');
-            console.log('Returned items:', apiJson.data.map((x: any) => ({ id: x.id, org: x.organization_id })));
+            console.log('Returned items:', apiJson.data.map((x: { id: string; organization_id: string }) => ({ id: x.id, org: x.organization_id })));
             throw new Error(
                 `API did not return test reservation even with id=${testReservationId} filter!\n` +
                 `Expected org: ${DEFAULT_ORG_ID}\n` +
@@ -152,10 +152,10 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // ==========================================
         // STEP 1: Verify initial state
         // ==========================================
-        let apiRes = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
+        const apiRes = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
         expect(apiRes.ok()).toBeTruthy();
-        let apiJson = await apiRes.json();
-        let reservation = apiJson.data.find((item: any) => item.id === testReservationId);
+        const apiJson = await apiRes.json();
+        const reservation = apiJson.data.find((item: { id: string }) => item.id === testReservationId);
 
         console.log('Initial API state:', { status: reservation?.status, campsite_id: reservation?.campsite_id });
         expect(reservation?.status).toBe('pending');
@@ -184,7 +184,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         await expect.poll(async () => {
             const res = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
             const json = await res.json();
-            const resData = json.data.find((item: any) => item.id === testReservationId);
+            const resData = json.data.find((item: { id: string; status?: string }) => item.id === testReservationId);
             return resData?.status;
         }, {
             message: `Reservation ${testReservationId} should be confirmed after assignment`,
@@ -194,7 +194,7 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // Check campsite assignment in final poll result if needed, or just refresh
         const finalApiRes = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
         const finalJson = await finalApiRes.json();
-        reservation = finalJson.data.find((item: any) => item.id === testReservationId);
+        reservation = finalJson.data.find((item: { id: string }) => item.id === testReservationId);
         expect(reservation?.campsite_id).toBe(testCampsiteId);
 
         // ==========================================

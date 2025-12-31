@@ -155,7 +155,7 @@ export async function createTestReservation(overrides: Partial<{
     amount_paid?: number;
     balance_due?: number;
     organization_id: string;
-    [key: string]: any;
+    [key: string]: unknown;
 }> = {}) {
     const tomorrow = addDays(new Date(), 1);
     const data = {
@@ -260,7 +260,7 @@ export function dbUpdate(table: 'campsites' | 'reservations' | 'blackout_dates')
  *   }
  * );
  */
-export async function withCleanup<T extends { cleanup: () => Promise<any> }>(
+export async function withCleanup<T extends { cleanup: () => Promise<unknown> }>(
     resource: Promise<T>,
     fn: (resource: Omit<T, 'cleanup'>) => Promise<void>
 ): Promise<void> {
