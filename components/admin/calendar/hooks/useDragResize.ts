@@ -103,6 +103,13 @@ export function useDragResize({
   const resizeStateRef = useRef<ResizeState | null>(null);
   const dragOffsetDaysRef = useRef<number>(0);
 
+  // Stable refs for throttled callbacks to avoid stale closure issues
+  // When dependencies change, these refs are updated, but throttled function remains stable
+  const configRef = useRef({ monthStart, monthEnd, campsites, reservations, blackoutDates });
+  useEffect(() => {
+    configRef.current = { monthStart, monthEnd, campsites, reservations, blackoutDates };
+  }, [monthStart, monthEnd, campsites, reservations, blackoutDates]);
+
   // Persistent Throttlers
   const throttledDragRef = useRef<ThrottledFn<[PointerEvent]> | null>(null);
   const throttledResizeRef = useRef<ThrottledFn<[PointerEvent]> | null>(null);
@@ -142,6 +149,7 @@ export function useDragResize({
   }, [stopAutoScroll, updateDraggedItem, updateDragPreview, updateResizeState, updateValidationError]);
 
   // Logic: Drag Preview Computation
+  // Uses configRef to avoid stale closures when throttled
   const computeAndSetDragPreview = useCallback((e: PointerEvent) => {
     const item = draggedItemRef.current;
     if (!item) return;
@@ -154,6 +162,9 @@ export function useDragResize({
       updateValidationError(null);
       return;
     }
+
+    // Read current config from ref to avoid stale closure
+    const { monthStart, monthEnd, campsites, reservations, blackoutDates } = configRef.current;
 
     const { startDate, endDate, isValid, error } = computeDragDates(
       item,
@@ -175,15 +186,19 @@ export function useDragResize({
     const validation = validateCandidate(item, campsiteId, startDate, endDate, campsites, reservations, blackoutDates);
     updateDragPreview(preview);
     updateValidationError(validation.valid ? null : validation.error);
-  }, [monthStart, monthEnd, campsites, reservations, blackoutDates, updateDragPreview, updateValidationError]);
+  }, [updateDragPreview, updateValidationError]); // Reduced dependencies - config comes from ref
 
   // Logic: Resize Preview Computation
+  // Uses configRef to avoid stale closures when throttled
   const computeAndSetResizePreview = useCallback((e: PointerEvent) => {
     const state = resizeStateRef.current;
     if (!state) return;
 
     const hoveredDate = getDateFromPointer(e.clientX, e.clientY);
     if (!hoveredDate) return;
+
+    // Read current config from ref to avoid stale closure
+    const { monthStart, monthEnd, campsites, reservations, blackoutDates } = configRef.current;
 
     const result = computeResizeDates(
       state.originalStartDate,
@@ -209,7 +224,7 @@ export function useDragResize({
     const campsiteId = 'campsite_id' in state.item ? (state.item.campsite_id || 'UNASSIGNED') : 'UNASSIGNED';
     const validation = validateCandidate(state.item, campsiteId, result.newStartDate, result.newEndDate, campsites, reservations, blackoutDates);
     updateValidationError(validation.valid ? null : validation.error);
-  }, [monthStart, monthEnd, campsites, reservations, blackoutDates, updateResizeState, updateValidationError]);
+  }, [updateResizeState, updateValidationError]); // Reduced dependencies - config comes from ref
 
   // Initialize Throttlers
   useEffect(() => {

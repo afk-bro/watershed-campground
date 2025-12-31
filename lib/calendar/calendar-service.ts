@@ -21,8 +21,21 @@ export interface CreateBlackoutParams {
   reason: string;
 }
 
+/**
+ * Helper to check if signal is already aborted and throw early
+ * This prevents race conditions where signal is aborted between check and fetch
+ */
+function throwIfAborted(signal?: AbortSignal): void {
+  if (signal?.aborted) {
+    throw new DOMException('The operation was aborted.', 'AbortError');
+  }
+}
+
 export const calendarService = {
   async updateReservation(id: string, params: UpdateReservationParams, signal?: AbortSignal): Promise<{ reservation: Reservation; emailSent: boolean; emailError?: string | null }> {
+    // Fail fast if already aborted
+    throwIfAborted(signal);
+
     const response = await fetch(`/api/admin/reservations/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -39,6 +52,9 @@ export const calendarService = {
   },
 
   async updateBlackoutDate(id: string, params: UpdateBlackoutParams, signal?: AbortSignal): Promise<BlackoutDate> {
+    // Fail fast if already aborted
+    throwIfAborted(signal);
+
     const response = await fetch(`/api/admin/blackout-dates/${id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
@@ -55,6 +71,9 @@ export const calendarService = {
   },
 
   async createBlackoutDate(params: CreateBlackoutParams, signal?: AbortSignal): Promise<BlackoutDate> {
+    // Fail fast if already aborted
+    throwIfAborted(signal);
+
     const response = await fetch("/api/admin/blackout-dates", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -69,7 +88,11 @@ export const calendarService = {
 
     return response.json();
   },
+
   async deleteBlackoutDate(id: string, signal?: AbortSignal): Promise<void> {
+    // Fail fast if already aborted
+    throwIfAborted(signal);
+
     const response = await fetch(`/api/admin/blackout-dates/${id}`, {
       method: "DELETE",
       signal,

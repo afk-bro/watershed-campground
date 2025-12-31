@@ -95,7 +95,7 @@ export function useCalendarSelection(
   }, [isCreating, creationStart, creationEnd, enabled]);
 
   const handleCellPointerDown = useCallback((e: React.PointerEvent, campsiteId: string, dateStr: string) => {
-    const { isCreating, creationStart, enabled } = stateRef.current;
+    const { enabled } = stateRef.current;
 
     // Only handle left button (primary pointer button)
     if (e.button !== 0) return;
@@ -112,11 +112,20 @@ export function useCalendarSelection(
       return;
     }
 
-    // If already creating, this click is the "End" click
-    if (isCreating && creationStart && campsiteId === creationStart.campsiteId) {
+    // Use anchorRef as source of truth (synchronous) to prevent anchor flip on fast clicks
+    // stateRef.current.isCreating may be stale if React hasn't re-rendered yet
+    const anchor = anchorRef.current;
+
+    // If anchor exists and on same campsite, this click is the "End" click
+    if (anchor && campsiteId === anchor.campsiteId) {
       setIsCreating(false);
       setCreationEnd({ campsiteId, date: dateStr });
       activeRef.current = { campsiteId, date: dateStr };
+      return;
+    }
+
+    // If anchor exists but different campsite, ignore (selection must stay on same row)
+    if (anchor && campsiteId !== anchor.campsiteId) {
       return;
     }
 
