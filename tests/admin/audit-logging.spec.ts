@@ -25,6 +25,9 @@ import {
 } from '../helpers/test-supabase';
 import { format, addDays } from 'date-fns';
 
+// Run tests serially so testBlackoutId is available for deletion test
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Admin Audit Logging', () => {
     let testReservationId: string;
     let testCampsiteId: string;
@@ -327,7 +330,6 @@ test.describe('Admin Audit Logging', () => {
                 },
                 data: {
                     status: 'confirmed',
-                    notes: 'Updated via E2E audit test',
                 },
             }
         );
