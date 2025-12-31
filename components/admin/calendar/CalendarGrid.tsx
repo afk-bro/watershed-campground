@@ -303,6 +303,7 @@ export default function CalendarGrid({
     handleResizeStart,
     getGhost,
     getDragState,
+    cancelOperation,
   } = useDragResize({
     monthStart,
     monthEnd,
@@ -314,6 +315,25 @@ export default function CalendarGrid({
     updateScrollDirection,
     stopAutoScroll,
   });
+
+  // Cancel active drag/resize if dragged item gets filtered out
+  useEffect(() => {
+    if (!isDragging && !resizeState) return;
+
+    const activeItem = draggedItem || resizeState?.item;
+    if (!activeItem) return;
+
+    // Check if the active item is still visible after filtering
+    const isReservation = 'check_in' in activeItem;
+    const stillVisible = isReservation
+      ? filteredReservations.some(r => r.id === activeItem.id)
+      : visibleBlackoutDates.some(b => b.id === activeItem.id);
+
+    if (!stillVisible) {
+      logger.debug('[CALENDAR] Canceling drag - item filtered out', { itemId: activeItem.id });
+      cancelOperation();
+    }
+  }, [isDragging, resizeState, draggedItem, filteredReservations, visibleBlackoutDates, cancelOperation]);
 
   // Creation Workflow (selection, dialog, and blackout creation)
   const {

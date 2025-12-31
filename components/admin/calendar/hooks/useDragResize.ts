@@ -52,6 +52,8 @@ export interface UseDragResizeReturn {
     dragPreview: DragPreview | null;
     validationError: string | null;
   };
+  /** Cancel any active drag or resize operation */
+  cancelOperation: () => void;
 }
 
 export interface UseDragResizeConfig {
@@ -221,6 +223,11 @@ export function useDragResize({
 
   // Handlers
   const handleDragPointerDown = useCallback((e: React.PointerEvent, item: DragResizeItem) => {
+    // Guard: Prevent starting a new drag if another operation is in progress
+    if (isDragging || resizeState) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -229,9 +236,14 @@ export function useDragResize({
 
     setIsDragging(true);
     updateDraggedItem(item);
-  }, [updateDraggedItem]);
+  }, [isDragging, resizeState, updateDraggedItem]);
 
   const handleResizeStart = useCallback((item: DragResizeItem, side: ResizeSide) => {
+    // Guard: Prevent starting resize if another operation is in progress
+    if (isDragging || resizeState) {
+      return;
+    }
+
     const startDate = getStartDate(item);
     const endDate = getEndDate(item);
     updateResizeState({
@@ -242,7 +254,7 @@ export function useDragResize({
       newStartDate: startDate,
       newEndDate: endDate,
     });
-  }, [updateResizeState]);
+  }, [isDragging, resizeState, updateResizeState]);
 
   // Global Listeners for active operations
   useEffect(() => {
@@ -295,17 +307,21 @@ export function useDragResize({
       }
     };
 
+    // Prevent context menu during drag/resize operations
+    const onContextMenu = (e: Event) => e.preventDefault();
+
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onEnd);
     window.addEventListener('pointercancel', onEnd);
     window.addEventListener('keydown', onKey, { capture: true });
-    window.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('contextmenu', onContextMenu);
 
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onEnd);
       window.removeEventListener('pointercancel', onEnd);
       window.removeEventListener('keydown', onKey, { capture: true });
+      window.removeEventListener('contextmenu', onContextMenu);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging, !!resizeState, updateScrollDirection, clearOperationState, onReservationMoveRequested, onBlackoutMoveRequested]);
@@ -334,5 +350,6 @@ export function useDragResize({
     handleResizeStart,
     getGhost,
     getDragState: () => ({ draggedItem: draggedItemRef.current, dragPreview: dragPreviewRef.current, validationError: validationErrorRef.current }),
+    cancelOperation: clearOperationState,
   };
 }
