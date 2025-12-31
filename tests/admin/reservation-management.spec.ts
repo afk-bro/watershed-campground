@@ -253,7 +253,8 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         // Search for the specific test reservation ID
         await page.getByPlaceholder('Search name, email, phone, ref...').fill(testReservationEmail);
-        await page.waitForTimeout(1000);
+        // Wait for search debounce and API response
+        await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200, { timeout: 5000 });
 
         // Wait for table to filter
         // await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 10000 });
@@ -309,10 +310,8 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         // Search for the specific test reservation to ensure it's visible
         await page.getByPlaceholder('Search name, email, phone, ref...').fill(testReservationEmail);
-        await page.waitForTimeout(1000);
-
-        // Wait for table to filter
-        // await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 10000 });
+        // Wait for search debounce and API response
+        await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200, { timeout: 5000 });
 
         // ==========================================
         // STEP 2: Find Test Reservation
@@ -368,12 +367,9 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         // Search for the specific test reservation
         await page.getByPlaceholder('Search name, email, phone, ref...').fill(testReservationEmail);
-        await page.waitForTimeout(1000);
+        // Wait for search debounce and API response
+        await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200, { timeout: 5000 });
 
-        // Wait for table to filter
-        // await expect(page.locator('tbody tr')).toHaveCount(1, { timeout: 10000 });
-
-        // Refresh row reference after filter
         // Find reservation by stable ID
         let reservationRow = page.getByTestId(`reservation-row-${testReservationId}`);
         await expect(reservationRow).toBeVisible();
