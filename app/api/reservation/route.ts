@@ -18,10 +18,11 @@ import {
 import { validationError } from "@/lib/api-helpers";
 
 export async function POST(request: Request) {
+    let rlResult;
     try {
         // 0. Rate Limiting
         const ip = getClientIp(request);
-        const rlResult = await checkRateLimit(
+        rlResult = await checkRateLimit(
             createIpIdentifier(ip, 'reservation_create'),
             rateLimiters.reservationCreate
         );
