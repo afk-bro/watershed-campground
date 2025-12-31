@@ -107,7 +107,7 @@ test.describe('Admin Calendar - Blackout Drag & Resize', () => {
 
     // P0: Re-enabled UI smoke test with hardened DnD targeting + dedicated campsites
     test.describe('Blackout Drag Operations', () => {
-        test.skip(true, 'TODO(E2E-DRAG) (#TBD): implement Option A (commit move) or Option B (drag handles + cell ids) - Create GitHub issue to track');
+        test.skip(true, 'TODO(E2E-DRAG) (#49): implement Option A (commit move) or Option B (drag handles + cell ids)');
         test('should drag blackout to different campsite', async ({ page }) => {
             // ⚠️ SKIPPED: Playwright drag physics unreliable for complex interactive UIs
             //
