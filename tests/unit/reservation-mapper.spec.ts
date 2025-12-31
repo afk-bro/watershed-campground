@@ -21,6 +21,7 @@ const ALLOWED_RESERVATION_KEYS: readonly AllowedKeys[] = [
   'total_amount', 'stripe_payment_intent_id', 'payment_status',
   'amount_paid', 'balance_due', 'payment_policy_snapshot', 'remainder_due_at',
   'campsite_id', 'public_edit_token_hash',
+  'organization_id',
   'email_sent_at', 'archived_at', 'metadata'
 ] as const;
 

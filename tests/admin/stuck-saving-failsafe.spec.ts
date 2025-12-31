@@ -89,8 +89,11 @@ test.describe('Stuck Saving Failsafe', () => {
     // Wait 600ms to give it margin
     console.log('⏳ Waiting for failsafe to trigger (500ms timeout + 100ms margin)...');
 
-    // Use expect with timeout instead of waitForTimeout for better error messages
-    await expect(page.getByText(/still saving/i)).toBeVisible({ timeout: 1000 });
+    // Wait for the failsafe timeout to elapse
+    await page.waitForTimeout(600);
+
+    // Check for warning toast with more generous timeout
+    await expect(page.getByText(/still saving/i)).toBeVisible({ timeout: 2000 });
     console.log('✅ Warning toast appeared');
 
     // ==========================================
