@@ -15,11 +15,13 @@ export {
     DEFAULT_ORG_ID,
     createTestCampsite,
     deleteTestCampsite,
+    createDedicatedCampsite,
     createTestReservation,
     deleteTestReservation,
     createTestBlackout,
     deleteTestBlackout,
     dbQuery,
+    withCleanup,
 } from './factories';
 
 // Export internal client for queries and updates

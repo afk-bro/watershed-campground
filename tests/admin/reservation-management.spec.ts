@@ -179,15 +179,22 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         console.log('Assigned dedicated campsite:', testCampsiteCode);
 
         // ==========================================
-        // STEP 3: Verify state change via API
+        // STEP 3: Verify state change via API (Hardened with poll)
         // ==========================================
-        apiRes = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
-        expect(apiRes.ok()).toBeTruthy();
-        apiJson = await apiRes.json();
-        reservation = apiJson.data.find((item: any) => item.id === testReservationId);
+        await expect.poll(async () => {
+            const res = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
+            const json = await res.json();
+            const resData = json.data.find((item: any) => item.id === testReservationId);
+            return resData?.status;
+        }, {
+            message: `Reservation ${testReservationId} should be confirmed after assignment`,
+            timeout: 5000,
+        }).toBe('confirmed');
 
-        console.log('After assignment API state:', { status: reservation?.status, campsite_id: reservation?.campsite_id });
-        expect(reservation?.status).toBe('confirmed');
+        // Check campsite assignment in final poll result if needed, or just refresh
+        const finalApiRes = await apiPage.request.get(`http://localhost:3000/api/admin/reservations?id=${testReservationId}`);
+        const finalJson = await finalApiRes.json();
+        reservation = finalJson.data.find((item: any) => item.id === testReservationId);
         expect(reservation?.campsite_id).toBe(testCampsiteId);
 
         // ==========================================
@@ -266,9 +273,14 @@ test.describe('Admin Reservation Management - Happy Path', () => {
         // ==========================================
         // STEP 4: Verify UI Update
         // ==========================================
-        // Re-query row and check status
+        // Re-query row and check status (Hardened with poll)
         const updatedRow = page.getByTestId(`reservation-row-${testReservationId}`);
-        await expect(updatedRow.getByTestId('reservation-status')).toHaveText(/checked.in/i);
+        await expect.poll(async () => {
+            return await updatedRow.getByTestId('reservation-status').textContent();
+        }, {
+            message: 'UI status should update to checked-in',
+            timeout: 5000,
+        }).toMatch(/checked.in/i);
 
         // ==========================================
         // STEP 5: Verify Database State
@@ -372,37 +384,73 @@ test.describe('Admin Reservation Management - Happy Path', () => {
 
         const campsiteOptions = page.locator('[data-testid="campsite-option"]');
         await expect(campsiteOptions.first()).toBeVisible({ timeout: 5000 });
-        await campsiteOptions.first().click();
 
-        // Wait for refetch
-        await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200);
+        // Select our dedicated test campsite (not .first() to avoid 409 conflicts)
+        const dedicatedCampsiteOption = campsiteOptions.filter({ hasText: testCampsiteCode });
+        await expect(dedicatedCampsiteOption).toBeVisible({ timeout: 5000 });
 
-        // Re-query and verify
+        // Wait for assignment mutation response
+        await Promise.all([
+            page.waitForResponse(r =>
+                r.url().includes(`/api/admin/reservations/${testReservationId}/assign`) &&
+                r.request().method() === 'POST' &&
+                r.status() === 200
+            ),
+            dedicatedCampsiteOption.click(),
+        ]);
+
+        // Re-query and verify (Hardened with poll)
         reservationRow = page.getByTestId(`reservation-row-${testReservationId}`);
-        await expect(reservationRow.getByTestId('reservation-status')).toHaveText(/confirmed/i);
+        await expect.poll(async () => {
+            return await reservationRow.getByTestId('reservation-status').textContent();
+        }, {
+            message: 'UI status should update to confirmed after assignment',
+            timeout: 5000,
+        }).toMatch(/confirmed/i);
 
         // ==========================================
         // 2. CHECK IN
         // ==========================================
         reservationRow = page.getByTestId(`reservation-row-${testReservationId}`);
-        await reservationRow.getByRole('button', { name: 'Check In' }).click();
 
-        // Wait for refetch
-        await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200);
+        // Wait for check-in mutation response
+        await Promise.all([
+            page.waitForResponse(r =>
+                r.url().includes(`/api/admin/reservations/${testReservationId}`) &&
+                r.request().method() === 'PATCH' &&
+                r.status() === 200
+            ),
+            reservationRow.getByRole('button', { name: 'Check In' }).click(),
+        ]);
 
         reservationRow = page.getByTestId(`reservation-row-${testReservationId}`);
-        await expect(reservationRow.getByTestId('reservation-status')).toHaveText(/checked.in/i);
+        await expect.poll(async () => {
+            return await reservationRow.getByTestId('reservation-status').textContent();
+        }, {
+            message: 'UI status should update to checked-in',
+            timeout: 5000,
+        }).toMatch(/checked.in/i);
 
         // ==========================================
         // 3. CHECK OUT
         // ==========================================
-        await reservationRow.getByRole('button', { name: 'Check Out' }).click();
-
-        // Wait for refetch
-        await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200);
+        // Wait for mutation response (not list refetch)
+        await Promise.all([
+            page.waitForResponse(r =>
+                r.url().includes(`/api/admin/reservations/${testReservationId}`) &&
+                r.request().method() === 'PATCH' &&
+                r.status() === 200
+            ),
+            reservationRow.getByRole('button', { name: 'Check Out' }).click(),
+        ]);
 
         reservationRow = page.getByTestId(`reservation-row-${testReservationId}`);
-        await expect(reservationRow.getByTestId('reservation-status')).toHaveText(/checked.out/i);
+        await expect.poll(async () => {
+            return await reservationRow.getByTestId('reservation-status').textContent();
+        }, {
+            message: 'UI status should update to checked-out',
+            timeout: 5000,
+        }).toMatch(/checked.out/i);
 
         // ==========================================
         // VERIFY FINAL DATABASE STATE

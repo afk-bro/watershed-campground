@@ -1,5 +1,5 @@
 import { test, expect, Page } from '@playwright/test';
-import { supabaseAdmin } from '../helpers/test-supabase';
+import { supabaseAdmin, createTestCampsite, deleteTestCampsite } from '../helpers/test-supabase';
 import { format, addDays, differenceInMonths, startOfMonth } from 'date-fns';
 import { stabilizeForDrag, killBackdrops, killBackdropsUntilStable, logTopFixedOverlays, dismissDialogs, nukeAddBlackoutOverlay, dragToWithOverlayDefense } from '../helpers/calendarE2E';
 
@@ -45,19 +45,25 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
 
     // Setup: Create test data
     test.beforeAll(async () => {
-        // Get two campsites for testing moves
-        const { data: campsites } = await supabaseAdmin
-            .from('campsites')
-            .select('id, code')
-            .eq('is_active', true)
-            .limit(2);
+        // Create two dedicated campsites for testing moves (avoid 409 conflicts with seed data)
+        const campsite1 = await createTestCampsite({
+            name: 'Calendar Test Site 1',
+            code: `CAL${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+            is_active: true,
+            organization_id: organizationId
+        });
 
-        if (!campsites || campsites.length < 2) {
-            throw new Error('Need at least 2 active campsites for calendar tests');
-        }
+        const campsite2 = await createTestCampsite({
+            name: 'Calendar Test Site 2',
+            code: `ALT${Math.random().toString(36).slice(2, 6).toUpperCase()}`,
+            is_active: true,
+            organization_id: organizationId
+        });
 
-        testCampsiteId = campsites[0].id;
-        alternateCampsiteId = campsites[1].id;
+        testCampsiteId = campsite1.id;
+        alternateCampsiteId = campsite2.id;
+
+        console.log('Created calendar test campsites:', testCampsiteId, alternateCampsiteId);
 
         // Use fixed dates in August 2025 for stable testing
         const checkIn = new Date('2025-08-10');
@@ -121,6 +127,16 @@ test.describe.serial('Admin Calendar - Drag & Drop Interactions', () => {
                 .delete()
                 .eq('id', testReservationId);
         }
+
+        // Clean up dedicated test campsites
+        if (testCampsiteId) {
+            await deleteTestCampsite(testCampsiteId);
+        }
+        if (alternateCampsiteId) {
+            await deleteTestCampsite(alternateCampsiteId);
+        }
+
+        console.log('Cleaned up calendar test data:', { testReservationId, testCampsiteId, alternateCampsiteId });
     });
 
     test.skip('should drag reservation to different campsite', async ({ page }) => {

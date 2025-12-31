@@ -1,0 +1,1828 @@
+[dotenv@17.2.3] injecting env (14) from .env.test -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[1A[2K[2m[WebServer] [22m
+[2m[WebServer] [22m> watershed-campground@0.1.0 dev
+[2m[WebServer] [22m> next dev -H 0.0.0.0
+[2m[WebServer] [22m
+
+[1A[2K[2m[WebServer] [22m   [1m[38;2;173;127;168m▲ Next.js 16.0.10[39m[22m (Turbopack)
+
+[1A[2K[2m[WebServer] [22m   - Local:         http://localhost:3000
+
+[1A[2K[2m[WebServer] [22m   - Network:       http://0.0.0.0:3000
+[2m[WebServer] [22m   - Environments: .env.local, .env
+[2m[WebServer] [22m
+
+[1A[2K[2m[WebServer] [22m [32m[1m✓[22m[39m Starting...
+
+[1A[2K[2m[WebServer] [22m [32m[1m✓[22m[39m Ready in 1638ms
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 3.1s[2m (compile: 2.6s, proxy.ts: 217ms, render: 219ms)[22m
+
+🧹 Resetting E2E data for org: watershed-campground (00000000-0000-0000-0000-000000000001)
+✅ cleared: payment_transactions
+✅ cleared: audit_logs
+✅ cleared: blackout_dates
+❌ error clearing reservations: {
+  code: '23503',
+  details: 'Key (reservation_id)=(d4a7799b-23fa-474f-91d4-49ac6cb2bb1b) is not present in table "reservations".',
+  hint: null,
+  message: 'insert or update on table "audit_logs" violates foreign key constraint "audit_logs_reservation_id_fkey"'
+}
+📝 Re-seeding test reservations...
+✅ Re-seeded 3 test reservations
+🎉 E2E DB reset complete.
+⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)
+⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)
+
+Running 295 tests using 2 workers
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+[1A[2K[1/295] [setup] › tests/auth.setup.ts:7:6 › verify seed data exists
+[1A[2K[2/295] [setup] › tests/auth.setup.ts:45:6 › authenticate as admin
+[1A[2K[setup] › tests/auth.setup.ts:7:6 › verify seed data exists
+✓ Seed data verified:
+
+[1A[2K  - 7 campsites (S1-S5, C1-C2)
+
+[1A[2K  - 633 test reservations
+
+[1A[2K  - Admin auth will be verified in next setup step
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  enable debug logging with { debug: true }
+
+[1A[2K⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)
+
+[1A[2K[3/295] [guest] › tests/guest/booking-complete.spec.ts:12:9 › Guest Booking - Complete Happy Path › should complete full booking with Stripe payment
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 1257ms[2m (compile: 1098ms, proxy.ts: 8ms, render: 152ms)[22m
+
+[1A[2K[4/295] [guest] › tests/guest/booking-complete.spec.ts:361:9 › Guest Booking - Complete Happy Path › should handle validation errors correctly
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 877ms[2m (compile: 727ms, proxy.ts: 8ms, render: 142ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 1130ms[2m (compile: 935ms, proxy.ts: 156ms, render: 39ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 176ms[2m (compile: 5ms, proxy.ts: 128ms, render: 43ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Upstash Redis initialized successfully
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 868ms[2m (compile: 692ms, proxy.ts: 8ms, render: 168ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 1491ms[2m (compile: 772ms, proxy.ts: 7ms, render: 712ms)[22m
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)
+
+[1A[2K[5/295] [guest] › tests/guest/booking-complete.spec.ts:392:9 › Guest Booking - Complete Happy Path › should allow changing dates from personal info form
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 97ms[2m (compile: 7ms, proxy.ts: 8ms, render: 82ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 114ms[2m (compile: 11ms, proxy.ts: 8ms, render: 94ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 316ms[2m (compile: 5ms, proxy.ts: 7ms, render: 304ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 1149ms[2m (compile: 522ms, proxy.ts: 13ms, render: 614ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 1162ms[2m (compile: 534ms, proxy.ts: 10ms, render: 619ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 287ms[2m (compile: 7ms, proxy.ts: 7ms, render: 273ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 289ms[2m (compile: 10ms, proxy.ts: 8ms, render: 271ms)[22m
+
+[1A[2K[6/295] [guest] › tests/guest/booking-errors.spec.ts:69:13 › Guest Booking - Error Handling › Payment Errors › should handle declined payment card
+[1A[2K[7/295] [guest] › tests/guest/booking-errors.spec.ts:96:13 › Guest Booking - Error Handling › Payment Errors › should handle insufficient funds card
+[1A[2K[8/295] [guest] › tests/guest/booking-errors.spec.ts:115:13 › Guest Booking - Error Handling › Payment Errors › should handle expired card
+[1A[2K[9/295] [guest] › tests/guest/booking-errors.spec.ts:133:13 › Guest Booking - Error Handling › Payment Errors › should handle incorrect CVC
+[1A[2K[10/295] [guest] › tests/guest/booking-errors.spec.ts:151:13 › Guest Booking - Error Handling › Payment Errors › should handle processing error card
+[1A[2K⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)
+
+[1A[2K[11/295] [guest] › tests/guest/booking-errors.spec.ts:171:13 › Guest Booking - Error Handling › Form Validation › should validate required email field
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 89ms[2m (compile: 4ms, proxy.ts: 5ms, render: 80ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 82ms[2m (compile: 9ms, proxy.ts: 8ms, render: 66ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 363ms[2m (compile: 4ms, proxy.ts: 5ms, render: 355ms)[22m
+
+[1A[2K⏭️  Skipping Stripe payment tests (set STRIPE_TESTS_ENABLED=true to enable)
+
+[1A[2K[12/295] [guest] › tests/guest/booking-errors.spec.ts:213:13 › Guest Booking - Error Handling › Form Validation › should validate email format
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 468ms[2m (compile: 8ms, proxy.ts: 5ms, render: 456ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 115ms[2m (compile: 24ms, proxy.ts: 5ms, render: 86ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 113ms[2m (compile: 11ms, proxy.ts: 6ms, render: 95ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 492ms[2m (compile: 5ms, proxy.ts: 5ms, render: 482ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 312ms[2m (compile: 12ms, proxy.ts: 18ms, render: 281ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 323ms[2m (compile: 11ms, proxy.ts: 21ms, render: 290ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 305ms[2m (compile: 12ms, proxy.ts: 8ms, render: 285ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 317ms[2m (compile: 11ms, proxy.ts: 7ms, render: 300ms)[22m
+
+[1A[2K[13/295] [guest] › tests/guest/booking-errors.spec.ts:249:13 › Guest Booking - Error Handling › Form Validation › should validate phone number minimum length
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 87ms[2m (compile: 3ms, proxy.ts: 5ms, render: 79ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 74ms[2m (compile: 11ms, proxy.ts: 7ms, render: 56ms)[22m
+
+[1A[2K[14/295] [guest] › tests/guest/booking-errors.spec.ts:287:13 › Guest Booking - Error Handling › Availability Errors › should show no availability message when all sites are booked
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 306ms[2m (compile: 7ms, proxy.ts: 5ms, render: 293ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 86ms[2m (compile: 3ms, proxy.ts: 3ms, render: 80ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 82ms[2m (compile: 8ms, proxy.ts: 5ms, render: 69ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 333ms[2m (compile: 4ms, proxy.ts: 4ms, render: 325ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 298ms[2m (compile: 8ms, proxy.ts: 5ms, render: 286ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 409ms[2m (compile: 11ms, proxy.ts: 7ms, render: 392ms)[22m
+
+[1A[2K[15/295] [guest] › tests/guest/booking-errors.spec.ts:365:13 › Guest Booking - Error Handling › Date Selection Errors › should prevent selecting check-out before check-in
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 83ms[2m (compile: 20ms, proxy.ts: 5ms, render: 58ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 217ms[2m (compile: 13ms, proxy.ts: 12ms, render: 191ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 212ms[2m (compile: 15ms, proxy.ts: 15ms, render: 182ms)[22m
+
+[1A[2K[16/295] [guest] › tests/guest/booking-errors.spec.ts:394:13 › Guest Booking - Error Handling › Date Selection Errors › should prevent selecting past dates
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 144ms[2m (compile: 36ms, proxy.ts: 5ms, render: 104ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 96ms[2m (compile: 12ms, proxy.ts: 12ms, render: 72ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 351ms[2m (compile: 9ms, proxy.ts: 11ms, render: 331ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 83ms[2m (compile: 8ms, proxy.ts: 5ms, render: 69ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 390ms[2m (compile: 5ms, proxy.ts: 4ms, render: 381ms)[22m
+
+[1A[2K[17/295] [guest] › tests/guest/booking-errors.spec.ts:415:13 › Guest Booking - Error Handling › Network Errors › should handle API timeout gracefully
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 88ms[2m (compile: 26ms, proxy.ts: 4ms, render: 58ms)[22m
+
+[1A[2K[18/295] [guest] › tests/guest/booking-flow-smoke.spec.ts:27:9 › Booking Flow Smoke Test (No Payment) › should complete booking flow up to payment step
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 147ms[2m (compile: 17ms, proxy.ts: 15ms, render: 115ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 255ms[2m (compile: 21ms, proxy.ts: 5ms, render: 229ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 303ms[2m (compile: 12ms, proxy.ts: 10ms, render: 281ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 31ms[2m (compile: 5ms, proxy.ts: 6ms, render: 20ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 86ms[2m (compile: 8ms, proxy.ts: 6ms, render: 72ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 75ms[2m (compile: 6ms, proxy.ts: 7ms, render: 62ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 292ms[2m (compile: 5ms, proxy.ts: 5ms, render: 282ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2026-01&org=watershed-campground [32m200[39m in 314ms[2m (compile: 3ms, proxy.ts: 8ms, render: 303ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 351ms[2m (compile: 4ms, proxy.ts: 9ms, render: 339ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 170ms[2m (compile: 12ms, proxy.ts: 8ms, render: 150ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 172ms[2m (compile: 7ms, proxy.ts: 7ms, render: 158ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[19/295] [guest] › tests/guest/booking-flow-smoke.spec.ts:230:9 › Booking Flow Smoke Test (No Payment) › should handle calendar API with proper org resolution
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation?org=watershed-campground [32m200[39m in 113ms[2m (compile: 34ms, proxy.ts: 8ms, render: 71ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 459ms[2m (compile: 7ms, proxy.ts: 8ms, render: 444ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 467ms[2m (compile: 14ms, proxy.ts: 9ms, render: 444ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 71ms[2m (compile: 9ms, proxy.ts: 6ms, render: 56ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 299ms[2m (compile: 6ms, proxy.ts: 5ms, render: 289ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [Tenancy] Received x-test-org-slug: watershed-campground
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs rv, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs rv, Match: true, Score: 50
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent [32m200[39m in 1280ms[2m (compile: 537ms, proxy.ts: 4ms, render: 740ms)[22m
+
+[1A[2K[guest] › tests/guest/booking-flow-smoke.spec.ts:27:9 › Booking Flow Smoke Test (No Payment) › should complete booking flow up to payment step
+ℹ️  Proceed to Payment button not visible - may already be at payment step
+
+[1A[2K[20/295] [guest] › tests/guest/booking-flow.spec.ts:5:9 › Guest Booking Flow › should complete a reservation successfully
+[1A[2K[2m[WebServer] [22m GET /make-a-reservation [32m200[39m in 112ms[2m (compile: 27ms, proxy.ts: 4ms, render: 80ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/addons [32m200[39m in 87ms[2m (compile: 12ms, proxy.ts: 11ms, render: 63ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/availability/calendar?month=2025-12&org=watershed-campground [32m200[39m in 302ms[2m (compile: 10ms, proxy.ts: 7ms, render: 285ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 338ms[2m (compile: 10ms, proxy.ts: 7ms, render: 321ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 358ms[2m (compile: 8ms, proxy.ts: 6ms, render: 344ms)[22m
+
+[1A[2K[guest] › tests/guest/booking-flow.spec.ts:5:9 › Guest Booking Flow › should complete a reservation successfully
+Test reached Add-ons Step successfully
+
+[1A[2K[21/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone SE (375px) › Home has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 112ms[2m (compile: 28ms, proxy.ts: 4ms, render: 80ms)[22m
+
+[1A[2K[22/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone SE (375px) › Rates has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 583ms[2m (compile: 448ms, proxy.ts: 3ms, render: 132ms)[22m
+
+[1A[2K[23/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone SE (375px) › Gallery has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 477ms[2m (compile: 384ms, proxy.ts: 5ms, render: 88ms)[22m
+
+[1A[2K[24/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone SE (375px) › Contact has no horizontal overflow
+[1A[2K  1) [guest] › tests/guest/booking-flow-smoke.spec.ts:230:9 › Booking Flow Smoke Test (No Payment) › should handle calendar API with proper org resolution 
+
+    Error: [2mexpect([22m[31mlocator[39m[2m).[22mtoBeVisible[2m([22m[2m)[22m failed
+
+    Locator: locator('[data-testid="date-calendar"]').or(locator('.calendar')).first()
+    Expected: visible
+    Timeout: 10000ms
+    Error: element(s) not found
+
+    Call log:
+    [2m  - Expect "toBeVisible" with timeout 10000ms[22m
+    [2m  - waiting for locator('[data-testid="date-calendar"]').or(locator('.calendar')).first()[22m
+
+
+      236 |
+      237 |         // Wait for the calendar UI to be visible (this depends on the API)
+    > 238 |         await expect(page.locator('[data-testid="date-calendar"]').or(page.locator('.calendar')).first()).toBeVisible({ timeout: 10000 });
+          |                                                                                                           ^
+      239 |
+      240 |         // Verify the API was called successfully using page.request
+      241 |         const calendarResponse = await page.request.get('/api/availability/calendar?org=watershed-campground&month=' + new Date().toISOString().slice(0, 7));
+        at /home/x/dev/projects/watershed-campground/tests/guest/booking-flow-smoke.spec.ts:238:107
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/guest-booking-flow-smoke-B-9b790--with-proper-org-resolution-guest/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/guest-booking-flow-smoke-B-9b790--with-proper-org-resolution-guest/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/guest-booking-flow-smoke-B-9b790--with-proper-org-resolution-guest/error-context.md
+
+
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 499ms[2m (compile: 434ms, proxy.ts: 4ms, render: 61ms)[22m
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 📡 add observability to secrets: https://dotenvx.com/ops
+
+[1A[2K[25/295] [guest] › tests/guest/horizontal-overflow.spec.ts:142:11 › Horizontal Overflow - Public Pages › iPhone SE (375px) › Navigation does not cause overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 89ms[2m (compile: 3ms, proxy.ts: 4ms, render: 81ms)[22m
+
+[1A[2K[26/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone 12/13 (390px) › Home has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 107ms[2m (compile: 23ms, proxy.ts: 4ms, render: 79ms)[22m
+
+[1A[2K[27/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone 12/13 (390px) › Rates has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 118ms[2m (compile: 34ms, proxy.ts: 4ms, render: 80ms)[22m
+
+[1A[2K[28/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone 12/13 (390px) › Gallery has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 94ms[2m (compile: 26ms, proxy.ts: 4ms, render: 63ms)[22m
+
+[1A[2K[29/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPhone 12/13 (390px) › Contact has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 84ms[2m (compile: 29ms, proxy.ts: 4ms, render: 51ms)[22m
+
+[1A[2K[30/295] [guest] › tests/guest/horizontal-overflow.spec.ts:142:11 › Horizontal Overflow - Public Pages › iPhone 12/13 (390px) › Navigation does not cause overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 94ms[2m (compile: 19ms, proxy.ts: 4ms, render: 72ms)[22m
+
+[1A[2K[31/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPad Mini (768px) › Home has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 120ms[2m (compile: 19ms, proxy.ts: 6ms, render: 95ms)[22m
+
+[1A[2K[32/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPad Mini (768px) › Rates has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 98ms[2m (compile: 3ms, proxy.ts: 5ms, render: 91ms)[22m
+
+[1A[2K[33/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPad Mini (768px) › Gallery has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 74ms[2m (compile: 23ms, proxy.ts: 4ms, render: 47ms)[22m
+
+[1A[2K[34/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › iPad Mini (768px) › Contact has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 91ms[2m (compile: 28ms, proxy.ts: 5ms, render: 58ms)[22m
+
+[1A[2K[35/295] [guest] › tests/guest/horizontal-overflow.spec.ts:142:11 › Horizontal Overflow - Public Pages › iPad Mini (768px) › Navigation does not cause overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 112ms[2m (compile: 31ms, proxy.ts: 4ms, render: 77ms)[22m
+
+[1A[2K[36/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › Laptop (1280px) › Home has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 134ms[2m (compile: 32ms, proxy.ts: 4ms, render: 99ms)[22m
+
+[1A[2K[37/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › Laptop (1280px) › Rates has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 114ms[2m (compile: 34ms, proxy.ts: 4ms, render: 76ms)[22m
+
+[1A[2K[38/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › Laptop (1280px) › Gallery has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 68ms[2m (compile: 20ms, proxy.ts: 4ms, render: 44ms)[22m
+
+[1A[2K[39/295] [guest] › tests/guest/horizontal-overflow.spec.ts:37:13 › Horizontal Overflow - Public Pages › Laptop (1280px) › Contact has no horizontal overflow
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 91ms[2m (compile: 31ms, proxy.ts: 5ms, render: 55ms)[22m
+
+[1A[2K[40/295] [guest] › tests/guest/horizontal-overflow.spec.ts:142:11 › Horizontal Overflow - Public Pages › Laptop (1280px) › Navigation does not cause overflow
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 121ms[2m (compile: 32ms, proxy.ts: 5ms, render: 84ms)[22m
+
+[1A[2K[41/295] [guest] › tests/guest/horizontal-overflow.spec.ts:173:7 › Horizontal Overflow - Dynamic Content › Long text content wraps correctly on mobile
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 134ms[2m (compile: 31ms, proxy.ts: 4ms, render: 99ms)[22m
+
+[1A[2K[42/295] [guest] › tests/guest/horizontal-overflow.spec.ts:204:7 › Horizontal Overflow - Edge Cases › Images do not cause overflow on mobile
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 88ms[2m (compile: 23ms, proxy.ts: 5ms, render: 60ms)[22m
+
+[1A[2K[43/295] [guest] › tests/guest/horizontal-overflow.spec.ts:241:7 › Horizontal Overflow - Edge Cases › Buttons and CTAs fit within viewport on mobile
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 147ms[2m (compile: 26ms, proxy.ts: 4ms, render: 117ms)[22m
+
+[1A[2K[44/295] [guest] › tests/guest/horizontal-overflow.spec.ts:279:7 › Horizontal Overflow - Edge Cases › Forms fit within viewport on mobile
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 114ms[2m (compile: 36ms, proxy.ts: 4ms, render: 74ms)[22m
+
+[1A[2K[45/295] [guest] › tests/guest/manage-reservation.spec.ts:70:13 › Guest Manage Reservation › View Reservation › should display reservation details with valid token
+[1A[2K[46/295] [guest] › tests/guest/manage-reservation.spec.ts:95:13 › Guest Manage Reservation › View Reservation › should show error with invalid token
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=0e73f3bd-1de1-4e6b-859a-73c415e358f8&t=471d41ca08eacc95c30d044c45a7bef43876ffe4454c60b2b8b88881de54ca72 [32m200[39m in 432ms[2m (compile: 297ms, proxy.ts: 4ms, render: 131ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=cf75ab3d-271c-4a0d-a7a4-792e4c709feb&t=a8022d5255f167d758445a40a69b146dc33bc42ea04679db68084c5cfdd59386 [32m200[39m in 543ms[2m (compile: 423ms, proxy.ts: 4ms, render: 116ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 324ms[2m (compile: 165ms, proxy.ts: 5ms, render: 155ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [33m404[39m in 321ms[2m (compile: 163ms, proxy.ts: 5ms, render: 152ms)[22m
+
+[1A[2K[47/295] [guest] › tests/guest/manage-reservation.spec.ts:108:13 › Guest Manage Reservation › View Reservation › should show error with missing parameters
+[1A[2K[48/295] [guest] › tests/guest/manage-reservation.spec.ts:119:13 › Guest Manage Reservation › View Reservation › should show error with non-existent reservation ID
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=a84e5d85-03f5-4508-8c7e-7d3a2049910f [32m200[39m in 206ms[2m (compile: 3ms, proxy.ts: 3ms, render: 200ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=00000000-0000-0000-0000-000000000999&t=638a6f0cfbd7c2a411674daf364b84b08e4cb2e6b1138520ad56b89a8d327dc0 [32m200[39m in 175ms[2m (compile: 6ms, proxy.ts: 25ms, render: 144ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [33m404[39m in 85ms[2m (compile: 3ms, proxy.ts: 4ms, render: 79ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?t=21cdb6508485e0f6badc0a58fd16f62d1beb2cd2ccf445480750947c436f731e [32m200[39m in 61ms[2m (compile: 3ms, proxy.ts: 4ms, render: 54ms)[22m
+
+[1A[2K[49/295] [guest] › tests/guest/manage-reservation.spec.ts:176:13 › Guest Manage Reservation › Cancel Reservation › should cancel confirmed reservation successfully
+[1A[2K[50/295] [guest] › tests/guest/manage-reservation.spec.ts:221:13 › Guest Manage Reservation › Cancel Reservation › should cancel pending reservation successfully
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=734a7af2-1c14-4208-a29d-2e7c238f2eb1&t=f82c3a0d34a2fc79f0b7ca2b71a9c3929f4b94d90043949ef533a9dfb9cbb217 [32m200[39m in 56ms[2m (compile: 3ms, proxy.ts: 4ms, render: 50ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=137ddea7-d911-4638-8efe-4cdd800be419&t=4ffad761e8d5388f6749b86766da3ffb095d2d5296a7f9c5e85cf2209e3d43d5 [32m200[39m in 141ms[2m (compile: 74ms, proxy.ts: 5ms, render: 62ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 89ms[2m (compile: 4ms, proxy.ts: 6ms, render: 79ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 129ms[2m (compile: 3ms, proxy.ts: 4ms, render: 123ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation/cancel [32m200[39m in 310ms[2m (compile: 171ms, proxy.ts: 3ms, render: 136ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation/cancel [32m200[39m in 260ms[2m (compile: 55ms, proxy.ts: 4ms, render: 200ms)[22m
+
+[1A[2K[51/295] [guest] › tests/guest/manage-reservation.spec.ts:262:13 › Guest Manage Reservation › Cancel Reservation › should not show cancel button for checked-in reservation
+[1A[2K[52/295] [guest] › tests/guest/manage-reservation.spec.ts:276:13 › Guest Manage Reservation › Cancel Reservation › should not show cancel button for checked-out reservation
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=b1a31695-1207-4399-a8e0-cf55d9aef189&t=4f8b494fb32539319d76ed08133ce0f3aceed750370c21bbd02890d06b467d4b [32m200[39m in 54ms[2m (compile: 3ms, proxy.ts: 4ms, render: 47ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=13ce2c18-726b-4b00-b140-70dc7bfefe67&t=be72b3c10a9e7b2a0bb584030f6f40a61cd7251259962af7821fb26d0d955de4 [32m200[39m in 131ms[2m (compile: 78ms, proxy.ts: 7ms, render: 46ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 66ms[2m (compile: 3ms, proxy.ts: 4ms, render: 59ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 78ms[2m (compile: 3ms, proxy.ts: 4ms, render: 72ms)[22m
+
+[1A[2K[53/295] [guest] › tests/guest/manage-reservation.spec.ts:290:13 › Guest Manage Reservation › Cancel Reservation › should not show cancel button for already cancelled reservation
+[1A[2K[54/295] [guest] › tests/guest/manage-reservation.spec.ts:307:13 › Guest Manage Reservation › Cancel Reservation › should reject cancellation with invalid token
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=a055e437-b364-4d5b-9bad-2cb7196d9f09&t=3fbd67d73a6126c928d99efbc1bf4f866c4d887bc9b615fe83c3280c86016469 [32m200[39m in 54ms[2m (compile: 3ms, proxy.ts: 3ms, render: 48ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation/cancel [33m404[39m in 83ms[2m (compile: 4ms, proxy.ts: 4ms, render: 75ms)[22m
+
+[1A[2K[55/295] [guest] › tests/guest/manage-reservation.spec.ts:332:13 › Guest Manage Reservation › Cancel Reservation › should reject cancellation when user dismisses confirmation
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 78ms[2m (compile: 2ms, proxy.ts: 4ms, render: 72ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /manage-reservation?rid=ad6d851f-3713-4a6a-b5a0-53be004a77df&t=106959aec5495586eb82b0872d4ebb22d1b02eb22c4ecfa185913b5fbc18b3f9 [32m200[39m in 56ms[2m (compile: 4ms, proxy.ts: 4ms, render: 48ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [32m200[39m in 64ms[2m (compile: 1955µs, proxy.ts: 3ms, render: 59ms)[22m
+
+[1A[2K[56/295] [guest] › tests/guest/manage-reservation.spec.ts:361:13 › Guest Manage Reservation › API Validation › should reject request with missing parameters
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [33m400[39m in 11ms[2m (compile: 2ms, proxy.ts: 4ms, render: 5ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [33m400[39m in 9ms[2m (compile: 1961µs, proxy.ts: 3ms, render: 3ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation [33m400[39m in 8ms[2m (compile: 2ms, proxy.ts: 4ms, render: 2ms)[22m
+
+[1A[2K[57/295] [guest] › tests/guest/manage-reservation.spec.ts:385:13 › Guest Manage Reservation › API Validation › should reject cancel request for already cancelled reservation via API
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation/cancel [33m400[39m in 75ms[2m (compile: 2ms, proxy.ts: 4ms, render: 68ms)[22m
+
+[1A[2K[58/295] [guest] › tests/guest/manage-reservation.spec.ts:440:13 › Guest Manage Reservation › API Validation › should reject cancel request for checked-in reservation via API
+[1A[2K[2m[WebServer] [22m POST /api/public/manage-reservation/cancel [33m400[39m in 93ms[2m (compile: 2ms, proxy.ts: 15ms, render: 76ms)[22m
+
+[1A[2K[59/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone SE (375x667) › / loads and renders
+[1A[2K[60/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone SE (375x667) › /rates loads and renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 141ms[2m (compile: 35ms, proxy.ts: 4ms, render: 101ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 216ms[2m (compile: 24ms, proxy.ts: 9ms, render: 183ms)[22m
+
+[1A[2K[61/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone SE (375x667) › /gallery loads and renders
+[1A[2K[62/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone SE (375x667) › /contact loads and renders
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 91ms[2m (compile: 26ms, proxy.ts: 4ms, render: 60ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 114ms[2m (compile: 38ms, proxy.ts: 8ms, render: 68ms)[22m
+
+[1A[2K[63/295] [guest] › tests/guest/viewport-smoke.spec.ts:83:15 › Viewport Smoke Tests - Public Pages › mobile › iPhone SE (375x667) › homepage hero section renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 113ms[2m (compile: 26ms, proxy.ts: 3ms, render: 83ms)[22m
+
+[1A[2K[64/295] [guest] › tests/guest/viewport-smoke.spec.ts:95:15 › Viewport Smoke Tests - Public Pages › mobile › iPhone SE (375x667) › rates page shows pricing information
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 103ms[2m (compile: 27ms, proxy.ts: 4ms, render: 72ms)[22m
+
+[1A[2K[65/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone 12/13 (390x844) › / loads and renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 135ms[2m (compile: 36ms, proxy.ts: 4ms, render: 96ms)[22m
+
+[1A[2K[66/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone 12/13 (390x844) › /rates loads and renders
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 134ms[2m (compile: 34ms, proxy.ts: 5ms, render: 95ms)[22m
+
+[1A[2K[67/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone 12/13 (390x844) › /gallery loads and renders
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 79ms[2m (compile: 27ms, proxy.ts: 3ms, render: 48ms)[22m
+
+[1A[2K[68/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › mobile › iPhone 12/13 (390x844) › /contact loads and renders
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 105ms[2m (compile: 41ms, proxy.ts: 4ms, render: 60ms)[22m
+
+[1A[2K[69/295] [guest] › tests/guest/viewport-smoke.spec.ts:83:15 › Viewport Smoke Tests - Public Pages › mobile › iPhone 12/13 (390x844) › homepage hero section renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 148ms[2m (compile: 34ms, proxy.ts: 4ms, render: 110ms)[22m
+
+[1A[2K[70/295] [guest] › tests/guest/viewport-smoke.spec.ts:95:15 › Viewport Smoke Tests - Public Pages › mobile › iPhone 12/13 (390x844) › rates page shows pricing information
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 138ms[2m (compile: 41ms, proxy.ts: 5ms, render: 92ms)[22m
+
+[1A[2K[71/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Mini (768x1024) › / loads and renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 149ms[2m (compile: 28ms, proxy.ts: 3ms, render: 117ms)[22m
+
+[1A[2K[72/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Mini (768x1024) › /rates loads and renders
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 105ms[2m (compile: 27ms, proxy.ts: 5ms, render: 74ms)[22m
+
+[1A[2K[73/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Mini (768x1024) › /gallery loads and renders
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 117ms[2m (compile: 39ms, proxy.ts: 6ms, render: 72ms)[22m
+
+[1A[2K[74/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Mini (768x1024) › /contact loads and renders
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 89ms[2m (compile: 25ms, proxy.ts: 5ms, render: 59ms)[22m
+
+[1A[2K[75/295] [guest] › tests/guest/viewport-smoke.spec.ts:83:15 › Viewport Smoke Tests - Public Pages › tablet › iPad Mini (768x1024) › homepage hero section renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 158ms[2m (compile: 55ms, proxy.ts: 5ms, render: 97ms)[22m
+
+[1A[2K[76/295] [guest] › tests/guest/viewport-smoke.spec.ts:95:15 › Viewport Smoke Tests - Public Pages › tablet › iPad Mini (768x1024) › rates page shows pricing information
+[1A[2K[77/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Pro (1024x1366) › / loads and renders
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 293ms[2m (compile: 36ms, proxy.ts: 5ms, render: 252ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 229ms[2m (compile: 7ms, proxy.ts: 6ms, render: 216ms)[22m
+
+[1A[2K[78/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Pro (1024x1366) › /rates loads and renders
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 120ms[2m (compile: 36ms, proxy.ts: 4ms, render: 80ms)[22m
+
+[1A[2K[79/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Pro (1024x1366) › /gallery loads and renders
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 101ms[2m (compile: 31ms, proxy.ts: 4ms, render: 66ms)[22m
+
+[1A[2K[80/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › tablet › iPad Pro (1024x1366) › /contact loads and renders
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 105ms[2m (compile: 38ms, proxy.ts: 6ms, render: 61ms)[22m
+
+[1A[2K[81/295] [guest] › tests/guest/viewport-smoke.spec.ts:83:15 › Viewport Smoke Tests - Public Pages › tablet › iPad Pro (1024x1366) › homepage hero section renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 145ms[2m (compile: 25ms, proxy.ts: 5ms, render: 115ms)[22m
+
+[1A[2K[82/295] [guest] › tests/guest/viewport-smoke.spec.ts:95:15 › Viewport Smoke Tests - Public Pages › tablet › iPad Pro (1024x1366) › rates page shows pricing information
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 119ms[2m (compile: 28ms, proxy.ts: 4ms, render: 87ms)[22m
+
+[1A[2K[83/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Laptop (1280x720) › / loads and renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 166ms[2m (compile: 43ms, proxy.ts: 4ms, render: 119ms)[22m
+
+[1A[2K[84/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Laptop (1280x720) › /rates loads and renders
+[1A[2K[85/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Laptop (1280x720) › /gallery loads and renders
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 214ms[2m (compile: 62ms, proxy.ts: 4ms, render: 147ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 244ms[2m (compile: 27ms, proxy.ts: 4ms, render: 213ms)[22m
+
+[1A[2K[86/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Laptop (1280x720) › /contact loads and renders
+[1A[2K[87/295] [guest] › tests/guest/viewport-smoke.spec.ts:83:15 › Viewport Smoke Tests - Public Pages › desktop › Laptop (1280x720) › homepage hero section renders
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 102ms[2m (compile: 32ms, proxy.ts: 5ms, render: 65ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 183ms[2m (compile: 16ms, proxy.ts: 8ms, render: 160ms)[22m
+
+[1A[2K[88/295] [guest] › tests/guest/viewport-smoke.spec.ts:95:15 › Viewport Smoke Tests - Public Pages › desktop › Laptop (1280x720) › rates page shows pricing information
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 123ms[2m (compile: 33ms, proxy.ts: 6ms, render: 85ms)[22m
+
+[1A[2K[89/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Desktop HD (1920x1080) › / loads and renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 160ms[2m (compile: 35ms, proxy.ts: 4ms, render: 121ms)[22m
+
+[1A[2K[90/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Desktop HD (1920x1080) › /rates loads and renders
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 131ms[2m (compile: 31ms, proxy.ts: 4ms, render: 96ms)[22m
+
+[1A[2K[91/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Desktop HD (1920x1080) › /gallery loads and renders
+[1A[2K[2m[WebServer] [22m GET /gallery [32m200[39m in 93ms[2m (compile: 39ms, proxy.ts: 3ms, render: 50ms)[22m
+
+[1A[2K[92/295] [guest] › tests/guest/viewport-smoke.spec.ts:57:17 › Viewport Smoke Tests - Public Pages › desktop › Desktop HD (1920x1080) › /contact loads and renders
+[1A[2K[2m[WebServer] [22m GET /contact [32m200[39m in 104ms[2m (compile: 34ms, proxy.ts: 5ms, render: 64ms)[22m
+
+[1A[2K[93/295] [guest] › tests/guest/viewport-smoke.spec.ts:83:15 › Viewport Smoke Tests - Public Pages › desktop › Desktop HD (1920x1080) › homepage hero section renders
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 170ms[2m (compile: 32ms, proxy.ts: 7ms, render: 131ms)[22m
+
+[1A[2K[94/295] [guest] › tests/guest/viewport-smoke.spec.ts:95:15 › Viewport Smoke Tests - Public Pages › desktop › Desktop HD (1920x1080) › rates page shows pricing information
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 159ms[2m (compile: 35ms, proxy.ts: 5ms, render: 120ms)[22m
+
+[1A[2K[95/295] [guest] › tests/guest/viewport-smoke.spec.ts:116:7 › Responsive Navigation Tests - Public Site › mobile navigation is present on homepage
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 114ms[2m (compile: 25ms, proxy.ts: 5ms, render: 84ms)[22m
+
+[1A[2K[96/295] [guest] › tests/guest/viewport-smoke.spec.ts:128:7 › Responsive Navigation Tests - Public Site › desktop navigation is visible on homepage
+[1A[2K[97/295] [guest] › tests/guest/viewport-smoke.spec.ts:146:7 › Form Ergonomics Tests › mobile login form has appropriate tap targets
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 144ms[2m (compile: 46ms, proxy.ts: 3ms, render: 95ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 234ms[2m (compile: 42ms, proxy.ts: 5ms, render: 187ms)[22m
+
+[1A[2K[98/295] [guest] › tests/guest/viewport-smoke.spec.ts:169:7 › Form Ergonomics Tests › tablet and desktop maintain consistent form sizing
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 89ms[2m (compile: 27ms, proxy.ts: 5ms, render: 57ms)[22m
+
+[1A[2K[99/295] [guest] › tests/guest/viewport-smoke.spec.ts:191:7 › Text Readability Tests › homepage text is readable on mobile
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 70ms[2m (compile: 3ms, proxy.ts: 5ms, render: 62ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET / [32m200[39m in 167ms[2m (compile: 23ms, proxy.ts: 10ms, render: 134ms)[22m
+
+[1A[2K[100/295] [guest] › tests/guest/viewport-smoke.spec.ts:208:7 › Text Readability Tests › body text has sufficient size on mobile
+[1A[2K[2m[WebServer] [22m GET /rates [32m200[39m in 139ms[2m (compile: 36ms, proxy.ts: 4ms, render: 99ms)[22m
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🔐 prevent committing .env to code: https://dotenvx.com/precommit
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  suppress all logs with { quiet: true }
+
+[1A[2K[101/295] [admin] › tests/admin/api-search-guardrail.spec.ts:30:9 › Admin API Search Guardrail › should retrieve reservation by exact ID filter
+[1A[2K[102/295] [admin] › tests/admin/api-search-guardrail.spec.ts:78:9 › Admin API Search Guardrail › should NOT crash (500) when searching with non-UUID string
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?id=d2303323-0f14-4e1f-b19d-bdfc0613a643 [32m200[39m in 675ms[2m (compile: 3ms, proxy.ts: 346ms, render: 326ms)[22m
+
+[1A[2K[103/295] [admin] › tests/admin/api-search-guardrail.spec.ts:45:9 › Admin API Search Guardrail › should retrieve reservation by fuzzy email search
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=not-a-uuid-just-text [32m200[39m in 718ms[2m (compile: 3ms, proxy.ts: 275ms, render: 441ms)[22m
+
+[1A[2K[104/295] [admin] › tests/admin/api-search-guardrail.spec.ts:88:9 › Admin API Search Guardrail › should respect organization scoping even with OR filters
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=guardrail-1767160076875@example.com [32m200[39m in 310ms[2m (compile: 3ms, proxy.ts: 80ms, render: 228ms)[22m
+
+[1A[2K[105/295] [admin] › tests/admin/api-search-guardrail.spec.ts:98:9 › Admin API Search Guardrail › should respect organization scoping even with OR filters (LEAK CHECK)
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=guardrail-1767160076862@example.com [32m200[39m in 348ms[2m (compile: 3ms, proxy.ts: 91ms, render: 255ms)[22m
+
+[1A[2K[106/295] [admin] › tests/admin/api-search-guardrail.spec.ts:66:9 › Admin API Search Guardrail › should retrieve reservation by ID in general search (UUID check)
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=d2303323-0f14-4e1f-b19d-bdfc0613a643 [32m200[39m in 326ms[2m (compile: 2ms, proxy.ts: 54ms, render: 269ms)[22m
+
+[1A[2K[107/295] [admin] › tests/admin/auth.spec.ts:6:9 › Admin Authentication › successful login with correct credentials
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=guardrail-1767160076875@example.com [32m200[39m in 308ms[2m (compile: 2ms, proxy.ts: 58ms, render: 247ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 50ms[2m (compile: 3ms, proxy.ts: 4ms, render: 43ms)[22m
+
+[1A[2K[108/295] [admin] › tests/admin/auth.spec.ts:21:9 › Admin Authentication › failed login with wrong password shows error
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 58ms[2m (compile: 4ms, proxy.ts: 5ms, render: 50ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 114ms[2m (compile: 6ms, proxy.ts: 74ms, render: 34ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 126ms[2m (compile: 20ms, proxy.ts: 75ms, render: 31ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 441ms[2m (compile: 4ms, proxy.ts: 66ms, render: 371ms)[22m
+
+[1A[2K[109/295] [admin] › tests/admin/auth.spec.ts:36:9 › Admin Authentication › failed login with non-existent email shows error
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 131ms[2m (compile: 37ms, proxy.ts: 4ms, render: 90ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 535ms[2m (compile: 5ms, proxy.ts: 85ms, render: 446ms)[22m
+
+[1A[2K[110/295] [admin] › tests/admin/auth.spec.ts:51:9 › Admin Authentication › login button is disabled while submitting
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 110ms[2m (compile: 34ms, proxy.ts: 4ms, render: 71ms)[22m
+
+[1A[2K[111/295] [admin] › tests/admin/blackout-api.spec.ts:23:9 › Blackout API Operations › should move blackout validation via API
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/blackout-dates/224cb640-16d2-446d-910a-897c8b1ca804 [32m200[39m in 1561ms[2m (compile: 978ms, proxy.ts: 59ms, render: 524ms)[22m
+
+[1A[2K[112/295] [admin] › tests/admin/blackout-api.spec.ts:73:9 › Blackout API Operations › should resize blackout via API
+[1A[2K[113/295] [admin] › tests/admin/blackout-dates.spec.ts:43:13 › Admin Blackout Dates › Create Blackout Dates › should create campground-wide blackout period
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 549ms[2m (compile: 192ms, proxy.ts: 56ms, render: 300ms)[22m
+
+[1A[2K[114/295] [admin] › tests/admin/blackout-dates.spec.ts:79:13 › Admin Blackout Dates › Create Blackout Dates › should create site-specific blackout period
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/blackout-dates/9001cf74-a2ba-4139-b4b4-4bf7d7989d52 [32m200[39m in 576ms[2m (compile: 33ms, proxy.ts: 73ms, render: 471ms)[22m
+
+[1A[2K[115/295] [admin] › tests/admin/blackout-dates.spec.ts:114:13 › Admin Blackout Dates › Create Blackout Dates › should create single-day blackout
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 385ms[2m (compile: 3ms, proxy.ts: 73ms, render: 308ms)[22m
+
+[1A[2K[116/295] [admin] › tests/admin/blackout-dates.spec.ts:135:13 › Admin Blackout Dates › Create Blackout Dates › should create blackout with UNASSIGNED string for all sites
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 280ms[2m (compile: 3ms, proxy.ts: 57ms, render: 220ms)[22m
+
+[1A[2K[117/295] [admin] › tests/admin/blackout-dates.spec.ts:157:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout without start date
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 306ms[2m (compile: 3ms, proxy.ts: 57ms, render: 246ms)[22m
+
+[1A[2K[118/295] [admin] › tests/admin/blackout-dates.spec.ts:182:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout without end date
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 182ms[2m (compile: 2ms, proxy.ts: 59ms, render: 120ms)[22m
+
+[1A[2K[119/295] [admin] › tests/admin/blackout-dates.spec.ts:206:13 › Admin Blackout Dates › Create Blackout Dates › should reject blackout where end date is before start date
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 181ms[2m (compile: 2ms, proxy.ts: 63ms, render: 116ms)[22m
+
+[1A[2K[120/295] [admin] › tests/admin/blackout-dates.spec.ts:253:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should prevent availability during blackout period
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 236ms[2m (compile: 2ms, proxy.ts: 122ms, render: 112ms)[22m
+
+[1A[2K[121/295] [admin] › tests/admin/blackout-dates.spec.ts:289:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should allow availability before blackout period
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 427ms[2m (compile: 3ms, proxy.ts: 97ms, render: 327ms)[22m
+
+[1A[2K[122/295] [admin] › tests/admin/blackout-dates.spec.ts:322:13 › Admin Blackout Dates › Blackout Dates Impact on Availability › should allow availability after blackout period
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 411ms[2m (compile: 3ms, proxy.ts: 62ms, render: 347ms)[22m
+
+[1A[2K[123/295] [admin] › tests/admin/blackout-dates.spec.ts:401:13 › Admin Blackout Dates › Site-Specific Blackout Impact › should prevent booking specific site during its blackout
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 322ms[2m (compile: 2ms, proxy.ts: 55ms, render: 265ms)[22m
+
+[1A[2K[124/295] [admin] › tests/admin/blackout-dates.spec.ts:434:13 › Admin Blackout Dates › Site-Specific Blackout Impact › should allow booking other sites during site-specific blackout
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 351ms[2m (compile: 4ms, proxy.ts: 61ms, render: 286ms)[22m
+
+[1A[2K[125/295] [admin] › tests/admin/blackout-dates.spec.ts:526:13 › Admin Blackout Dates › List Blackout Dates › should fetch all blackout dates via database
+[1A[2K[126/295] [admin] › tests/admin/blackout-dates.spec.ts:545:13 › Admin Blackout Dates › List Blackout Dates › should filter blackout dates by date range
+[1A[2K[127/295] [admin] › tests/admin/blackout-dates.spec.ts:560:13 › Admin Blackout Dates › List Blackout Dates › should filter blackout dates by campsite
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 372ms[2m (compile: 3ms, proxy.ts: 65ms, render: 304ms)[22m
+
+[1A[2K[128/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:110:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:110:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+Created dedicated test campsites: 8123ce7f-81cc-42a6-bbcf-d77f99425506 b03a0e14-50b4-4d3d-bff4-49af452498a8
+
+[1A[2KCreated blackout test data: 8431f326-d8c8-4e17-b793-2a1f7d989e9d
+
+[1A[2K[129/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:547:13 › Admin Calendar - Blackout Drag & Resize › Conflict Validation › should prevent blackout from overlapping with existing reservation
+[1A[2K[130/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:674:13 › Admin Calendar - Blackout Drag & Resize › Conflict Validation › should prevent blackout from overlapping with another blackout
+[1A[2K[131/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:771:13 › Admin Calendar - Blackout Drag & Resize › Conflict Validation › should reject invalid date range (end before start)
+[1A[2K[132/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:845:14 › Admin Calendar - Blackout Drag & Resize › Optimistic Updates and Rollback › should show optimistic update and rollback on server error
+[1A[2K[133/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:912:13 › Admin Calendar - Blackout Drag & Resize › Optimistic Updates and Rollback › should maintain drawer state during optimistic update
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:912:13 › Admin Calendar - Blackout Drag & Resize › Optimistic Updates and Rollback › should maintain drawer state during optimistic update
+Created dedicated test campsites: 4ded5011-d41b-4e0b-9e34-994e0c752999 cec7e2b5-51fe-4873-94a5-2b5c22de083d
+
+[1A[2KCreated blackout test data: f0e9f397-23e1-4a58-8c4c-e4b26e5b3c93
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=1&year=2026 [32m200[39m in 721ms[2m (compile: 438ms, proxy.ts: 66ms, render: 216ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=1&year=2026 [32m200[39m in 1002ms[2m (compile: 739ms, proxy.ts: 64ms, render: 199ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 106ms[2m (compile: 5ms, proxy.ts: 68ms, render: 33ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 156ms[2m (compile: 69ms, proxy.ts: 59ms, render: 29ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 237ms[2m (compile: 33ms, proxy.ts: 150ms, render: 54ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=01&year=2026 [32m200[39m in 128ms[2m (compile: 5ms, proxy.ts: 105ms, render: 19ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2026-01 [32m200[39m in 783ms[2m (compile: 292ms, proxy.ts: 61ms, render: 429ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2026-01 [32m200[39m in 779ms[2m (compile: 266ms, proxy.ts: 64ms, render: 449ms)[22m
+
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:110:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+E2E removed overlays: [33m0[39m
+
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:912:13 › Admin Calendar - Blackout Drag & Resize › Optimistic Updates and Rollback › should maintain drawer state during optimistic update
+No drawer found - skipping drawer state test
+
+[1A[2K[admin] › tests/admin/blackout-drag-resize.spec.ts:110:13 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to different campsite
+E2E removed overlays: [33m0[39m
+
+[1A[2K[134/295] [admin] › tests/admin/blackout-validation.spec.ts:5:9 › Admin Blackout Date Validation › should return 400 for invalid date range (end before start)
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [33m400[39m in 206ms[2m (compile: 4ms, proxy.ts: 74ms, render: 128ms)[22m
+
+[1A[2K[135/295] [admin] › tests/admin/blackout-validation.spec.ts:27:9 › Admin Blackout Date Validation › should allow same-day blackout (start == end)
+[1A[2K[2m[WebServer] [22m POST /api/admin/blackout-dates [32m200[39m in 299ms[2m (compile: 3ms, proxy.ts: 60ms, render: 236ms)[22m
+
+[1A[2K[136/295] [admin] › tests/admin/calendar-interactions.spec.ts:126:10 › Admin Calendar - Drag & Drop Interactions › should drag reservation to different campsite
+[1A[2K[137/295] [admin] › tests/admin/calendar-interactions.spec.ts:268:9 › Admin Calendar - Drag & Drop Interactions › should move reservation via API (integration fallback)
+[1A[2K[admin] › tests/admin/calendar-interactions.spec.ts:268:9 › Admin Calendar - Drag & Drop Interactions › should move reservation via API (integration fallback)
+Created calendar test reservation: a977b8e5-2f36-4bb1-a810-a2637cbedfc4
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/reservations/a977b8e5-2f36-4bb1-a810-a2637cbedfc4/assign [33m409[39m in 1273ms[2m (compile: 804ms, proxy.ts: 63ms, render: 406ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/blackout-dates/8431f326-d8c8-4e17-b793-2a1f7d989e9d [32m200[39m in 739ms[2m (compile: 32ms, proxy.ts: 139ms, render: 568ms)[22m
+
+[1A[2K  2) [admin] › tests/admin/calendar-interactions.spec.ts:268:9 › Admin Calendar - Drag & Drop Interactions › should move reservation via API (integration fallback) 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeTruthy[2m()[22m
+
+    Received: [31mfalse[39m
+
+      288 |         });
+      289 |
+    > 290 |         expect(response.ok()).toBeTruthy();
+          |                               ^
+      291 |         const body = await response.json();
+      292 |         expect(body.success).toBe(true);
+      293 |         expect(body.campsiteId).toBe(alternateCampsiteId);
+        at /home/x/dev/projects/watershed-campground/tests/admin/calendar-interactions.spec.ts:290:31
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-calendar-interaction-507b9-a-API-integration-fallback--admin/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/admin-calendar-interaction-507b9-a-API-integration-fallback--admin/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[138/295] [admin] › tests/admin/calendar-interactions.spec.ts:305:10 › Admin Calendar - Drag & Drop Interactions › should show drag handles on hover
+[1A[2K[139/295] [admin] › tests/admin/calendar-interactions.spec.ts:344:10 › Admin Calendar - Drag & Drop Interactions › should extend reservation by dragging right edge
+[1A[2K[140/295] [admin] › tests/admin/calendar-interactions.spec.ts:411:10 › Admin Calendar - Drag & Drop Interactions › should shorten reservation by dragging left edge forward
+[1A[2K[141/295] [admin] › tests/admin/calendar-interactions.spec.ts:468:10 › Admin Calendar - Drag & Drop Interactions › should prevent conflicting reservation and snap back
+[1A[2K[142/295] [admin] › tests/admin/calendar-interactions.spec.ts:581:10 › Admin Calendar - Drag & Drop Interactions › should move reservation to different dates on same campsite
+[1A[2K[143/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:214:14 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should drag blackout to UNASSIGNED (global blackout)
+[1A[2K[144/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:257:14 › Admin Calendar - Blackout Drag & Resize › Blackout Drag Operations › should move blackout to different dates on same campsite
+[1A[2K[145/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:348:13 › Admin Calendar - Blackout Drag & Resize › Blackout Resize Operations › should extend blackout by dragging right edge
+[1A[2K[146/295] [admin] › tests/admin/blackout-drag-resize.spec.ts:447:13 › Admin Calendar - Blackout Drag & Resize › Blackout Resize Operations › should shorten blackout by dragging left edge forward
+[1A[2K[147/295] [admin] › tests/admin/campsite-crud.spec.ts:30:13 › Admin Campsite Management › List Campsites › should filter campsites by type
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 🛠️  run anywhere with `dotenvx run -- yourcommand`
+
+[1A[2K[148/295] [admin] › tests/admin/campsite-crud.spec.ts:17:13 › Admin Campsite Management › List Campsites › should display all active campsites
+[1A[2K[2m[WebServer] [22m GET /admin/campsites [32m200[39m in 244ms[2m (compile: 32ms, proxy.ts: 67ms, render: 145ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/campsites [32m200[39m in 816ms[2m (compile: 606ms, proxy.ts: 83ms, render: 127ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 410ms[2m (compile: 171ms, proxy.ts: 63ms, render: 176ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 442ms[2m (compile: 208ms, proxy.ts: 59ms, render: 175ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 257ms[2m (compile: 5ms, proxy.ts: 63ms, render: 189ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 284ms[2m (compile: 4ms, proxy.ts: 80ms, render: 200ms)[22m
+
+[1A[2K[149/295] [admin] › tests/admin/campsite-crud.spec.ts:47:13 › Admin Campsite Management › List Campsites › should toggle show inactive campsites
+[1A[2K[2m[WebServer] [22m GET /admin/campsites [32m200[39m in 104ms[2m (compile: 3ms, proxy.ts: 59ms, render: 42ms)[22m
+
+[1A[2K[150/295] [admin] › tests/admin/campsite-crud.spec.ts:76:13 › Admin Campsite Management › Create Campsite › should create a new RV campsite via API
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 333ms[2m (compile: 3ms, proxy.ts: 67ms, render: 263ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 294ms[2m (compile: 2ms, proxy.ts: 64ms, render: 228ms)[22m
+
+[1A[2K[151/295] [admin] › tests/admin/campsite-crud.spec.ts:114:13 › Admin Campsite Management › Create Campsite › should create a tent campsite
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 274ms[2m (compile: 3ms, proxy.ts: 69ms, render: 202ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 321ms[2m (compile: 3ms, proxy.ts: 67ms, render: 250ms)[22m
+
+[1A[2K[152/295] [admin] › tests/admin/campsite-crud.spec.ts:137:13 › Admin Campsite Management › Create Campsite › should create a cabin
+[1A[2K[153/295] [admin] › tests/admin/campsite-crud.spec.ts:162:13 › Admin Campsite Management › Create Campsite › should reject duplicate campsite code
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 338ms[2m (compile: 4ms, proxy.ts: 67ms, render: 268ms)[22m
+
+[1A[2K[154/295] [admin] › tests/admin/campsite-crud.spec.ts:202:13 › Admin Campsite Management › Create Campsite › should validate required fields
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 323ms[2m (compile: 5ms, proxy.ts: 65ms, render: 253ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [33m400[39m in 182ms[2m (compile: 3ms, proxy.ts: 59ms, render: 119ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [33m400[39m in 199ms[2m (compile: 5ms, proxy.ts: 64ms, render: 130ms)[22m
+
+[1A[2K[155/295] [admin] › tests/admin/campsite-crud.spec.ts:236:13 › Admin Campsite Management › Create Campsite › should validate guest capacity limits
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [33m409[39m in 258ms[2m (compile: 7ms, proxy.ts: 64ms, render: 187ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [33m400[39m in 189ms[2m (compile: 3ms, proxy.ts: 61ms, render: 125ms)[22m
+
+[1A[2K[156/295] [admin] › tests/admin/campsite-crud.spec.ts:270:13 › Admin Campsite Management › Create Campsite › should validate campsite type enum
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [33m400[39m in 242ms[2m (compile: 4ms, proxy.ts: 117ms, render: 120ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [33m400[39m in 299ms[2m (compile: 9ms, proxy.ts: 173ms, render: 118ms)[22m
+
+[1A[2K[157/295] [admin] › tests/admin/campsite-crud.spec.ts:312:13 › Admin Campsite Management › Read Campsite › should return 404 for non-existent campsite
+[1A[2K[158/295] [admin] › tests/admin/campsite-crud.spec.ts:289:13 › Admin Campsite Management › Read Campsite › should fetch single campsite by ID via API
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites/00000000-0000-0000-0000-000000000999 [33m404[39m in 1099ms[2m (compile: 827ms, proxy.ts: 56ms, render: 217ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites/a6e75312-d718-4d0e-b52c-d61840e2b945 [32m200[39m in 1043ms[2m (compile: 765ms, proxy.ts: 60ms, render: 218ms)[22m
+
+[1A[2K[159/295] [admin] › tests/admin/campsite-crud.spec.ts:349:13 › Admin Campsite Management › Update Campsite › should update campsite name
+[1A[2K[160/295] [admin] › tests/admin/campsite-crud.spec.ts:372:13 › Admin Campsite Management › Update Campsite › should update base rate
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/fe461beb-db20-48a7-8435-69066e7b11ca [32m200[39m in 396ms[2m (compile: 36ms, proxy.ts: 67ms, render: 294ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/f63abea9-072e-4247-aab8-8f3ec782642f [32m200[39m in 398ms[2m (compile: 40ms, proxy.ts: 61ms, render: 296ms)[22m
+
+[1A[2K[161/295] [admin] › tests/admin/campsite-crud.spec.ts:386:13 › Admin Campsite Management › Update Campsite › should update multiple fields at once
+[1A[2K[162/295] [admin] › tests/admin/campsite-crud.spec.ts:406:13 › Admin Campsite Management › Update Campsite › should deactivate campsite
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/e52f6703-3dcf-4e02-9c04-f254b388e8bc [32m200[39m in 375ms[2m (compile: 5ms, proxy.ts: 61ms, render: 309ms)[22m
+
+[1A[2K[163/295] [admin] › tests/admin/campsite-crud.spec.ts:429:13 › Admin Campsite Management › Update Campsite › should reactivate deactivated campsite
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/8b5970f9-3565-4f7c-b983-dbb12a6e6869 [32m200[39m in 389ms[2m (compile: 31ms, proxy.ts: 61ms, render: 296ms)[22m
+
+[1A[2K[164/295] [admin] › tests/admin/campsite-crud.spec.ts:446:13 › Admin Campsite Management › Update Campsite › should reject update to duplicate code
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/509af4df-51dd-4b0a-8892-7b4d26c3e3be [32m200[39m in 384ms[2m (compile: 5ms, proxy.ts: 61ms, render: 318ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/3b6fdb05-50d2-416b-a9a1-ff8c9cd66e02 [33m409[39m in 356ms[2m (compile: 36ms, proxy.ts: 73ms, render: 247ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/509af4df-51dd-4b0a-8892-7b4d26c3e3be [32m200[39m in 352ms[2m (compile: 7ms, proxy.ts: 63ms, render: 282ms)[22m
+
+[1A[2K[165/295] [admin] › tests/admin/campsite-crud.spec.ts:490:13 › Admin Campsite Management › Update Campsite › should return 404 when updating non-existent campsite
+[1A[2K[166/295] [admin] › tests/admin/campsite-crud.spec.ts:528:13 › Admin Campsite Management › Delete Campsite (Soft Delete) › should soft delete campsite (set is_active to false)
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/00000000-0000-0000-0000-000000000999 [33m404[39m in 258ms[2m (compile: 4ms, proxy.ts: 87ms, render: 167ms)[22m
+
+[1A[2K[167/295] [admin] › tests/admin/campsite-crud.spec.ts:548:13 › Admin Campsite Management › Delete Campsite (Soft Delete) › should return 404 when deleting non-existent campsite
+[1A[2K[2m[WebServer] [22m DELETE /api/admin/campsites/9c05d9df-c573-4a6c-a809-f6d02e3a2f5b [32m200[39m in 360ms[2m (compile: 4ms, proxy.ts: 67ms, render: 289ms)[22m
+
+[1A[2K[168/295] [admin] › tests/admin/campsite-crud.spec.ts:558:13 › Admin Campsite Management › UI Integration › should navigate to campsite list
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 149ms[2m (compile: 3ms, proxy.ts: 61ms, render: 85ms)[22m
+
+[1A[2K[2m[WebServer] [22m DELETE /api/admin/campsites/00000000-0000-0000-0000-000000000999 [33m404[39m in 303ms[2m (compile: 35ms, proxy.ts: 57ms, render: 211ms)[22m
+
+[1A[2K[169/295] [admin] › tests/admin/campsite-crud.spec.ts:569:13 › Admin Campsite Management › UI Integration › should show add campsite button
+[1A[2K[2m[WebServer] [22m GET /admin/campsites [32m200[39m in 113ms[2m (compile: 3ms, proxy.ts: 63ms, render: 47ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/campsites [32m200[39m in 82ms[2m (compile: 3ms, proxy.ts: 59ms, render: 20ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 400ms[2m (compile: 4ms, proxy.ts: 65ms, render: 332ms)[22m
+
+[1A[2K[170/295] [admin] › tests/admin/maintenance-blocks.spec.ts:11:9 › Maintenance Blocks › maintenance tab shows correct count
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 260ms[2m (compile: 4ms, proxy.ts: 59ms, render: 196ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 103ms[2m (compile: 3ms, proxy.ts: 61ms, render: 40ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 269ms[2m (compile: 4ms, proxy.ts: 65ms, render: 200ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 432ms[2m (compile: 7ms, proxy.ts: 64ms, render: 361ms)[22m
+
+[1A[2K[171/295] [admin] › tests/admin/maintenance-blocks.spec.ts:25:9 › Maintenance Blocks › maintenance rows render with correct styling
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 117ms[2m (compile: 3ms, proxy.ts: 65ms, render: 50ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 432ms[2m (compile: 3ms, proxy.ts: 87ms, render: 342ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 415ms[2m (compile: 4ms, proxy.ts: 76ms, render: 335ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 395ms[2m (compile: 4ms, proxy.ts: 65ms, render: 327ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 386ms[2m (compile: 3ms, proxy.ts: 73ms, render: 310ms)[22m
+
+[1A[2K[172/295] [admin] › tests/admin/maintenance-blocks.spec.ts:55:9 › Maintenance Blocks › maintenance row checkboxes are disabled
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 237ms[2m (compile: 4ms, proxy.ts: 176ms, render: 58ms)[22m
+
+[1A[2K[173/295] [admin] › tests/admin/maintenance-blocks.spec.ts:85:9 › Maintenance Blocks › select all only selects reservations, not maintenance
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 199ms[2m (compile: 3ms, proxy.ts: 134ms, render: 63ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 650ms[2m (compile: 3ms, proxy.ts: 58ms, render: 590ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 734ms[2m (compile: 5ms, proxy.ts: 74ms, render: 656ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 768ms[2m (compile: 3ms, proxy.ts: 424ms, render: 340ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 383ms[2m (compile: 5ms, proxy.ts: 64ms, render: 314ms)[22m
+
+[1A[2K[174/295] [admin] › tests/admin/reservation-management.spec.ts:140:9 › Admin Reservation Management - Happy Path › should assign campsite to pending reservation
+[1A[2K[admin] › tests/admin/reservation-management.spec.ts:140:9 › Admin Reservation Management - Happy Path › should assign campsite to pending reservation
+Created test reservation: 7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf ( e2e.admin.test.obgu@example.com )
+
+[1A[2KCreated test campsite: 3ce554d8-998d-4dfc-9fed-0f3693e8351a ( ASG4H3J )
+
+[1A[2K📊 DB row verification: {
+  id: [32m'7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf'[39m,
+  organization_id: [32m'00000000-0000-0000-0000-000000000001'[39m,
+  archived_at: [1mnull[22m,
+  status: [32m'pending'[39m,
+  expected_org: [32m'00000000-0000-0000-0000-000000000001'[39m
+}
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?id=7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf [32m200[39m in 426ms[2m (compile: 2ms, proxy.ts: 112ms, render: 312ms)[22m
+
+[1A[2K🌐 API verification (filtered by ID): {
+  meta_org: [32m'00000000-0000-0000-0000-000000000001'[39m,
+  filtered: [33mtrue[39m,
+  filter_id: [32m'7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf'[39m,
+  total_items: [33m2[39m,
+  reservation_count: [33m1[39m,
+  found_test_reservation: [33mtrue[39m
+}
+
+[1A[2K✅ Reservation verified: DB row correct AND API returns it (with ID filter)
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?id=7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf [32m200[39m in 537ms[2m (compile: 4ms, proxy.ts: 81ms, render: 452ms)[22m
+
+[1A[2KInitial API state: { status: [32m'pending'[39m, campsite_id: [1mnull[22m }
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/reservations/7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf/assign [32m200[39m in 603ms[2m (compile: 38ms, proxy.ts: 55ms, render: 510ms)[22m
+
+[1A[2KAssigned dedicated campsite: ASG4H3J
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?id=7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf [32m200[39m in 296ms[2m (compile: 2ms, proxy.ts: 58ms, render: 235ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?id=7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf [32m200[39m in 332ms[2m (compile: 2ms, proxy.ts: 53ms, render: 277ms)[22m
+
+[1A[2K[175/295] [admin] › tests/admin/reservation-management.spec.ts:215:9 › Admin Reservation Management - Happy Path › should check-in a confirmed reservation
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 115ms[2m (compile: 3ms, proxy.ts: 66ms, render: 46ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 423ms[2m (compile: 4ms, proxy.ts: 63ms, render: 356ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 673ms[2m (compile: 3ms, proxy.ts: 169ms, render: 501ms)[22m
+
+[1A[2K[176/295] [admin] › tests/admin/smoke.spec.ts:7:13 › Admin Smoke Tests › Unauthenticated › /admin/login loads
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 159ms[2m (compile: 34ms, proxy.ts: 4ms, render: 121ms)[22m
+
+[1A[2K[177/295] [admin] › tests/admin/smoke.spec.ts:14:13 › Admin Smoke Tests › Unauthenticated › unauth user redirected from /admin to /admin/login
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 116ms[2m (compile: 27ms, proxy.ts: 7ms, render: 82ms)[22m
+
+[1A[2K[178/295] [admin] › tests/admin/smoke.spec.ts:21:13 › Admin Smoke Tests › Unauthenticated › unauth user redirected from /admin/calendar to /admin/login
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 96ms[2m (compile: 44ms, proxy.ts: 3ms, render: 49ms)[22m
+
+[1A[2K[179/295] [admin] › tests/admin/smoke.spec.ts:32:13 › Admin Smoke Tests › Authenticated › /admin dashboard loads
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 122ms[2m (compile: 3ms, proxy.ts: 61ms, render: 58ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=e2e.admin.test.obgu%40example.com [32m200[39m in 426ms[2m (compile: 3ms, proxy.ts: 62ms, render: 360ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 420ms[2m (compile: 10ms, proxy.ts: 86ms, render: 323ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 432ms[2m (compile: 3ms, proxy.ts: 61ms, render: 368ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/reservations/7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf [32m200[39m in 1771ms[2m (compile: 1335ms, proxy.ts: 57ms, render: 379ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=e2e.admin.test.obgu%40example.com [32m200[39m in 361ms[2m (compile: 4ms, proxy.ts: 80ms, render: 277ms)[22m
+
+[1A[2K[180/295] [admin] › tests/admin/reservation-management.spec.ts:297:9 › Admin Reservation Management - Happy Path › should cancel a reservation
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 101ms[2m (compile: 3ms, proxy.ts: 55ms, render: 42ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 369ms[2m (compile: 2ms, proxy.ts: 64ms, render: 303ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 367ms[2m (compile: 3ms, proxy.ts: 64ms, render: 300ms)[22m
+
+[1A[2K[181/295] [admin] › tests/admin/smoke.spec.ts:38:13 › Admin Smoke Tests › Authenticated › /admin/calendar loads
+[1A[2K[2m[WebServer] [22m GET /admin/calendar [32m200[39m in 131ms[2m (compile: 3ms, proxy.ts: 60ms, render: 67ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=12&year=2025 [32m200[39m in 94ms[2m (compile: 4ms, proxy.ts: 61ms, render: 29ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=12&year=2025 [32m200[39m in 137ms[2m (compile: 54ms, proxy.ts: 59ms, render: 24ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2025-12 [32m200[39m in 365ms[2m (compile: 3ms, proxy.ts: 61ms, render: 301ms)[22m
+
+[1A[2K[182/295] [admin] › tests/admin/smoke.spec.ts:46:13 › Admin Smoke Tests › Authenticated › /admin/campsites loads
+[1A[2K[2m[WebServer] [22m GET /admin/campsites [32m200[39m in 152ms[2m (compile: 4ms, proxy.ts: 61ms, render: 87ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 263ms[2m (compile: 3ms, proxy.ts: 93ms, render: 167ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/campsites?showInactive=true [32m200[39m in 237ms[2m (compile: 2ms, proxy.ts: 62ms, render: 173ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=e2e.admin.test.obgu%40example.com [32m200[39m in 364ms[2m (compile: 3ms, proxy.ts: 111ms, render: 251ms)[22m
+
+[1A[2K[183/295] [admin] › tests/admin/stuck-saving-failsafe.spec.ts:41:7 › Stuck Saving Failsafe › should auto-revalidate when item stuck in saving state
+[1A[2K[2m[WebServer] [22m GET /admin/calendar [32m200[39m in 108ms[2m (compile: 4ms, proxy.ts: 59ms, render: 45ms)[22m
+
+[1A[2K[2m[WebServer] [22m[INFO] Sent reservation_cancellation email to e2e.admin.test.obgu@example.com for reservation 7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/reservations/7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf [32m200[39m in 891ms[2m (compile: 42ms, proxy.ts: 87ms, render: 762ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=e2e.admin.test.obgu%40example.com [32m200[39m in 305ms[2m (compile: 4ms, proxy.ts: 68ms, render: 234ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=12&year=2025 [32m200[39m in 86ms[2m (compile: 5ms, proxy.ts: 58ms, render: 23ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin/calendar?month=12&year=2025 [32m200[39m in 193ms[2m (compile: 39ms, proxy.ts: 135ms, render: 18ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2025-12 [32m200[39m in 357ms[2m (compile: 4ms, proxy.ts: 58ms, render: 294ms)[22m
+
+[1A[2K[admin] › tests/admin/stuck-saving-failsafe.spec.ts:41:7 › Stuck Saving Failsafe › should auto-revalidate when item stuck in saving state
+🔧 Injected _saving flag into reservation: 9ee22f4e-f90b-4b8c-a1c8-4f2a7670dd3b
+
+[1A[2K[184/295] [admin] › tests/admin/reservation-management.spec.ts:356:9 › Admin Reservation Management - Happy Path › should complete full lifecycle: assign → check-in → check-out
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 124ms[2m (compile: 3ms, proxy.ts: 68ms, render: 52ms)[22m
+
+[1A[2K✅ "Saving..." indicator appeared
+
+[1A[2K⏳ Waiting for failsafe to trigger (500ms timeout + 100ms margin)...
+
+[1A[2K✅ Warning toast appeared
+
+[1A[2K✅ Revalidation API calls: 1
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 399ms[2m (compile: 4ms, proxy.ts: 71ms, render: 324ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/calendar?month=2025-12 [32m200[39m in 370ms[2m (compile: 4ms, proxy.ts: 64ms, render: 303ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 368ms[2m (compile: 3ms, proxy.ts: 58ms, render: 306ms)[22m
+
+[1A[2K✅ Saving indicator cleared after revalidation
+
+[1A[2K[185/295] [admin] › tests/admin/stuck-saving-failsafe.spec.ts:115:8 › Stuck Saving Failsafe › should handle real mutation hang with recovery
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+[1A[2K[186/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:26:7 › Mobile Features - Reservation Cards › displays reservation cards instead of table
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 138ms[2m (compile: 3ms, proxy.ts: 66ms, render: 69ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 366ms[2m (compile: 2ms, proxy.ts: 59ms, render: 304ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 381ms[2m (compile: 4ms, proxy.ts: 55ms, render: 322ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations?q=e2e.admin.test.obgu%40example.com [32m200[39m in 286ms[2m (compile: 3ms, proxy.ts: 55ms, render: 228ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 425ms[2m (compile: 3ms, proxy.ts: 52ms, render: 370ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/admin/reservations/7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf/assign [33m409[39m in 447ms[2m (compile: 38ms, proxy.ts: 58ms, render: 351ms)[22m
+
+[1A[2K[187/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:37:7 › Mobile Features - Reservation Cards › reservation cards show all essential information
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 107ms[2m (compile: 4ms, proxy.ts: 58ms, render: 45ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 406ms[2m (compile: 3ms, proxy.ts: 54ms, render: 349ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 400ms[2m (compile: 3ms, proxy.ts: 65ms, render: 332ms)[22m
+
+[1A[2K[188/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:52:7 › Mobile Features - Reservation Cards › cards have appropriate spacing for touch targets
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 217ms[2m (compile: 4ms, proxy.ts: 157ms, render: 56ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 514ms[2m (compile: 3ms, proxy.ts: 62ms, render: 449ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 394ms[2m (compile: 2ms, proxy.ts: 67ms, render: 324ms)[22m
+
+[1A[2K[189/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:70:7 › Mobile Features - Reservation Cards › checkbox tap targets are large enough
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 191ms[2m (compile: 3ms, proxy.ts: 129ms, render: 59ms)[22m
+
+[1A[2K[admin] › tests/admin/reservation-management.spec.ts:356:9 › Admin Reservation Management - Happy Path › should complete full lifecycle: assign → check-in → check-out
+Cleaned up test data: {
+  testReservationId: [32m'7a0e0b3b-ebd8-440d-92c4-3acfb69aadcf'[39m,
+  testCampsiteId: [32m'3ce554d8-998d-4dfc-9fed-0f3693e8351a'[39m
+}
+
+[1A[2K  3) [admin] › tests/admin/reservation-management.spec.ts:356:9 › Admin Reservation Management - Happy Path › should complete full lifecycle: assign → check-in → check-out 
+
+    TimeoutError: page.waitForResponse: Timeout 15000ms exceeded while waiting for event "response"
+
+      388 |
+      389 |         // Wait for refetch
+    > 390 |         await page.waitForResponse(r => r.url().includes('/api/admin/reservations') && r.status() === 200);
+          |                    ^
+      391 |
+      392 |         // Re-query and verify (Hardened with poll)
+      393 |         reservationRow = page.getByTestId(`reservation-row-${testReservationId}`);
+        at /home/x/dev/projects/watershed-campground/tests/admin/reservation-management.spec.ts:390:20
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/admin-reservation-manageme-42a4a-sign-→-check-in-→-check-out-admin/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/admin-reservation-manageme-42a4a-sign-→-check-in-→-check-out-admin/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    Error Context: test-results/admin-reservation-manageme-42a4a-sign-→-check-in-→-check-out-admin/error-context.md
+
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 500ms[2m (compile: 3ms, proxy.ts: 73ms, render: 425ms)[22m
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  write to custom object with { processEnv: myObject }
+
+[1A[2K[190/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:85:7 › Mobile Features - Reservation Cards › cards are tappable to view details
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 384ms[2m (compile: 3ms, proxy.ts: 62ms, render: 318ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 124ms[2m (compile: 4ms, proxy.ts: 67ms, render: 53ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 433ms[2m (compile: 3ms, proxy.ts: 62ms, render: 369ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 410ms[2m (compile: 4ms, proxy.ts: 70ms, render: 336ms)[22m
+
+[1A[2K[191/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:109:7 › Mobile Features - Reservation Cards › select all card is present and functional
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 131ms[2m (compile: 3ms, proxy.ts: 60ms, render: 68ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 457ms[2m (compile: 3ms, proxy.ts: 63ms, render: 392ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 400ms[2m (compile: 4ms, proxy.ts: 61ms, render: 336ms)[22m
+
+[1A[2K[192/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:127:7 › Mobile Features - Reservation Cards › action menu is accessible on cards
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 113ms[2m (compile: 3ms, proxy.ts: 55ms, render: 55ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 414ms[2m (compile: 3ms, proxy.ts: 54ms, render: 357ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 483ms[2m (compile: 3ms, proxy.ts: 93ms, render: 387ms)[22m
+
+[1A[2K[193/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:145:7 › Mobile Features - Navigation › mobile shows bottom navigation
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 117ms[2m (compile: 4ms, proxy.ts: 61ms, render: 52ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 484ms[2m (compile: 3ms, proxy.ts: 63ms, render: 419ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 376ms[2m (compile: 4ms, proxy.ts: 59ms, render: 314ms)[22m
+
+[1A[2K[194/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:165:7 › Mobile Features - Navigation › desktop shows top navigation
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 222ms[2m (compile: 3ms, proxy.ts: 164ms, render: 55ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 367ms[2m (compile: 2ms, proxy.ts: 57ms, render: 308ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 352ms[2m (compile: 3ms, proxy.ts: 68ms, render: 281ms)[22m
+
+[1A[2K[195/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:180:7 › Mobile Features - Navigation › navigation switches between mobile and desktop layouts
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 129ms[2m (compile: 3ms, proxy.ts: 59ms, render: 67ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 401ms[2m (compile: 3ms, proxy.ts: 68ms, render: 329ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 384ms[2m (compile: 3ms, proxy.ts: 82ms, render: 299ms)[22m
+
+[1A[2K[196/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:208:7 › Mobile Features - Navigation › mobile navigation has icon labels
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 108ms[2m (compile: 4ms, proxy.ts: 56ms, render: 48ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 446ms[2m (compile: 5ms, proxy.ts: 95ms, render: 347ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 391ms[2m (compile: 4ms, proxy.ts: 65ms, render: 323ms)[22m
+
+[1A[2K[197/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:228:7 › Mobile Features - Navigation › navigation items are properly spaced for touch
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 128ms[2m (compile: 3ms, proxy.ts: 61ms, render: 65ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 371ms[2m (compile: 3ms, proxy.ts: 58ms, render: 310ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 377ms[2m (compile: 4ms, proxy.ts: 59ms, render: 315ms)[22m
+
+[1A[2K[198/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:257:7 › Mobile Features - Form Ergonomics › login form inputs are touch-friendly
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 115ms[2m (compile: 30ms, proxy.ts: 5ms, render: 80ms)[22m
+
+[1A[2K[199/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:282:7 › Mobile Features - Form Ergonomics › form labels are visible and readable
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 93ms[2m (compile: 31ms, proxy.ts: 4ms, render: 58ms)[22m
+
+[1A[2K[200/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:300:7 › Mobile Features - Form Ergonomics › form spacing prevents accidental taps
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 103ms[2m (compile: 33ms, proxy.ts: 4ms, render: 66ms)[22m
+
+[1A[2K[201/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:318:7 › Mobile Features - Form Ergonomics › error messages are visible on mobile
+[1A[2K[2m[WebServer] [22m GET /admin/login [32m200[39m in 114ms[2m (compile: 39ms, proxy.ts: 4ms, render: 71ms)[22m
+
+[1A[2K[202/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:342:7 › Mobile Features - Layout Breakpoint Transitions › transitions smoothly at 768px breakpoint
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 224ms[2m (compile: 4ms, proxy.ts: 142ms, render: 78ms)[22m
+
+[1A[2K[203/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:379:7 › Mobile Features - Layout Breakpoint Transitions › maintains functionality across viewport changes
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 133ms[2m (compile: 4ms, proxy.ts: 61ms, render: 68ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 589ms[2m (compile: 3ms, proxy.ts: 78ms, render: 508ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 462ms[2m (compile: 3ms, proxy.ts: 66ms, render: 393ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 391ms[2m (compile: 3ms, proxy.ts: 64ms, render: 324ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 373ms[2m (compile: 6ms, proxy.ts: 58ms, render: 310ms)[22m
+
+[1A[2K[204/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:412:7 › Mobile Features - Touch Interactions › elements respond to touch events
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 211ms[2m (compile: 3ms, proxy.ts: 164ms, render: 44ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 558ms[2m (compile: 4ms, proxy.ts: 65ms, render: 490ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 425ms[2m (compile: 5ms, proxy.ts: 73ms, render: 346ms)[22m
+
+[1A[2K[205/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:435:7 › Mobile Features - Touch Interactions › no hover-dependent functionality on mobile
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 114ms[2m (compile: 3ms, proxy.ts: 67ms, render: 45ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 435ms[2m (compile: 4ms, proxy.ts: 61ms, render: 370ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 386ms[2m (compile: 4ms, proxy.ts: 60ms, render: 322ms)[22m
+
+[1A[2K[206/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:463:7 › Mobile Features - Performance › mobile layout renders quickly
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 134ms[2m (compile: 3ms, proxy.ts: 86ms, render: 45ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 424ms[2m (compile: 3ms, proxy.ts: 62ms, render: 360ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 403ms[2m (compile: 3ms, proxy.ts: 63ms, render: 336ms)[22m
+
+[1A[2K[207/295] [mobile-chrome] › tests/admin/mobile-features.spec.ts:477:7 › Mobile Features - Performance › layout shift is minimal when switching views
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 134ms[2m (compile: 3ms, proxy.ts: 77ms, render: 53ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 403ms[2m (compile: 3ms, proxy.ts: 68ms, render: 333ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 390ms[2m (compile: 3ms, proxy.ts: 74ms, render: 313ms)[22m
+
+[1A[2K[208/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:10:7 › Admin Reservations - Responsive Layout › displays table view on desktop
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 148ms[2m (compile: 3ms, proxy.ts: 83ms, render: 62ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 393ms[2m (compile: 3ms, proxy.ts: 61ms, render: 329ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 454ms[2m (compile: 3ms, proxy.ts: 104ms, render: 347ms)[22m
+
+[1A[2K[209/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:27:7 › Admin Reservations - Responsive Layout › displays card view on mobile
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 200ms[2m (compile: 3ms, proxy.ts: 151ms, render: 46ms)[22m
+
+[1A[2K[210/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:49:7 › Admin Reservations - Responsive Layout › displays card view on tablet in portrait
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 468ms[2m (compile: 3ms, proxy.ts: 63ms, render: 402ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 184ms[2m (compile: 2ms, proxy.ts: 73ms, render: 109ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 424ms[2m (compile: 11ms, proxy.ts: 98ms, render: 315ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 390ms[2m (compile: 3ms, proxy.ts: 67ms, render: 321ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 456ms[2m (compile: 3ms, proxy.ts: 67ms, render: 386ms)[22m
+
+[1A[2K[211/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:67:7 › Admin Reservations - Responsive Layout › switches from table to cards when resizing to mobile
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 199ms[2m (compile: 3ms, proxy.ts: 136ms, render: 60ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 426ms[2m (compile: 3ms, proxy.ts: 59ms, render: 364ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 378ms[2m (compile: 3ms, proxy.ts: 55ms, render: 319ms)[22m
+
+[1A[2K[212/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:88:7 › Admin Reservations - Responsive Layout › mobile cards show essential reservation information
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 122ms[2m (compile: 4ms, proxy.ts: 54ms, render: 64ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 407ms[2m (compile: 4ms, proxy.ts: 56ms, render: 346ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 365ms[2m (compile: 4ms, proxy.ts: 57ms, render: 305ms)[22m
+
+[1A[2K[213/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:107:7 › Admin Reservations - Responsive Layout › mobile cards support checkbox selection
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 189ms[2m (compile: 3ms, proxy.ts: 126ms, render: 60ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 617ms[2m (compile: 8ms, proxy.ts: 70ms, render: 539ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 386ms[2m (compile: 4ms, proxy.ts: 62ms, render: 320ms)[22m
+
+[1A[2K[214/295] [mobile-chrome] › tests/admin/responsive-reservations.spec.ts:127:7 › Admin Reservations - Responsive Layout › mobile cards support tap to view details
+[1A[2K[2m[WebServer] [22m GET /admin [32m200[39m in 117ms[2m (compile: 3ms, proxy.ts: 57ms, render: 56ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 409ms[2m (compile: 2ms, proxy.ts: 59ms, render: 347ms)[22m
+
+[1A[2K[2m[WebServer] [22m GET /api/admin/reservations [32m200[39m in 411ms[2m (compile: 3ms, proxy.ts: 90ms, render: 318ms)[22m
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ✅ audit secrets and track compliance: https://dotenvx.com/ops
+
+[1A[2K[215/295] [shared] › tests/components/calendar-hit-test.spec.ts:5:9 › Calendar Hit Testing (Unit-ish) › getDateFromPointer should ignore overlays and find data-date
+[1A[2K[216/295] [shared] › tests/components/calendar-hit-test.spec.ts:58:9 › Calendar Hit Testing (Unit-ish) › getCampsiteFromPointer should find campsite row id
+[1A[2K[217/295] [shared] › tests/integration/reservation-db.spec.ts:46:9 › Reservation Integration (DB) › creates reservation and ledger entries
+[1A[2K[218/295] [shared] › tests/integration/stripe-webhooks.spec.ts:70:13 › Stripe Webhook Integration › Payment Intent Succeeded Workflow › should have pending reservation ready for webhook
+[1A[2K[219/295] [shared] › tests/integration/stripe-webhooks.spec.ts:84:13 › Stripe Webhook Integration › Payment Intent Succeeded Workflow › webhook endpoint should require stripe-signature header
+[1A[2K[2m[WebServer] [22m[ERROR] Missing stripe-signature or STRIPE_WEBHOOK_SECRET
+
+[1A[2K[2m[WebServer] [22m POST /api/webhooks/stripe [33m400[39m in 632ms[2m (compile: 488ms, proxy.ts: 137ms, render: 6ms)[22m
+
+[1A[2K[220/295] [shared] › tests/integration/stripe-webhooks.spec.ts:106:13 › Stripe Webhook Integration › Payment Intent Succeeded Workflow › webhook with invalid signature should be rejected
+[1A[2K[2m[WebServer] [22m[ERROR] Missing stripe-signature or STRIPE_WEBHOOK_SECRET
+
+[1A[2K[2m[WebServer] [22m POST /api/webhooks/stripe [33m400[39m in 76ms[2m (compile: 9ms, proxy.ts: 62ms, render: 5ms)[22m
+
+[1A[2K[221/295] [shared] › tests/integration/stripe-webhooks.spec.ts:129:13 › Stripe Webhook Integration › Webhook Idempotency › should track webhook events to prevent duplicate processing
+[1A[2K[222/295] [shared] › tests/integration/stripe-webhooks.spec.ts:160:13 › Stripe Webhook Integration › Email Notification After Payment › should track email_sent_at timestamp
+[1A[2K[223/295] [shared] › tests/integration/stripe-webhooks.spec.ts:228:13 › Stripe Webhook Integration › Reservation Status Transitions › should transition from pending to confirmed
+[1A[2K[224/295] [shared] › tests/security/rate-limiting.spec.ts:68:13 › Rate Limiting › Availability API Rate Limiting › should enforce rate limit on availability endpoint
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:68:13 › Rate Limiting › Availability API Rate Limiting › should enforce rate limit on availability endpoint
+[Test] Cleared 2 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 443ms[2m (compile: 3ms, proxy.ts: 4ms, render: 437ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: ⚙️  load multiple .env files with { path: ['.env.local', '.env'] }
+
+[1A[2K[225/295] [shared] › tests/security/rate-limiting.spec.ts:227:13 › Rate Limiting › Payment Intent API Rate Limiting › should use tighter limit for payment endpoint than availability
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 322ms[2m (compile: 2ms, proxy.ts: 4ms, render: 316ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:227:13 › Rate Limiting › Payment Intent API Rate Limiting › should use tighter limit for payment endpoint than availability
+[Test] Cleared 2 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160289073-768
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 289ms[2m (compile: 2ms, proxy.ts: 3ms, render: 283ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 325ms[2m (compile: 2ms, proxy.ts: 4ms, render: 318ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 316ms[2m (compile: 3ms, proxy.ts: 6ms, render: 307ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 823ms[2m (compile: 4ms, proxy.ts: 4ms, render: 815ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160289073-768
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 322ms[2m (compile: 2ms, proxy.ts: 3ms, render: 317ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 298ms[2m (compile: 3ms, proxy.ts: 4ms, render: 291ms)[22m
+
+[1A[2K[226/295] [shared] › tests/security/rate-limiting.spec.ts:269:13 › Rate Limiting › Rate Limit Recovery › should allow requests again after window resets
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:269:13 › Rate Limiting › Rate Limit Recovery › should allow requests again after window resets
+[Test] Cleared 4 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 300ms[2m (compile: 1987µs, proxy.ts: 3ms, render: 295ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 277ms[2m (compile: 3ms, proxy.ts: 4ms, render: 270ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 653ms[2m (compile: 3ms, proxy.ts: 5ms, render: 646ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 294ms[2m (compile: 2ms, proxy.ts: 3ms, render: 288ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 342ms[2m (compile: 3ms, proxy.ts: 6ms, render: 333ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 666ms[2m (compile: 3ms, proxy.ts: 4ms, render: 659ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 310ms[2m (compile: 1838µs, proxy.ts: 3ms, render: 305ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 340ms[2m (compile: 3ms, proxy.ts: 10ms, render: 327ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 666ms[2m (compile: 4ms, proxy.ts: 4ms, render: 658ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 308ms[2m (compile: 2ms, proxy.ts: 3ms, render: 302ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 278ms[2m (compile: 2ms, proxy.ts: 3ms, render: 273ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 300ms[2m (compile: 1985µs, proxy.ts: 4ms, render: 294ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 717ms[2m (compile: 3ms, proxy.ts: 3ms, render: 711ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 288ms[2m (compile: 2ms, proxy.ts: 3ms, render: 283ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 293ms[2m (compile: 2ms, proxy.ts: 3ms, render: 287ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 661ms[2m (compile: 4ms, proxy.ts: 3ms, render: 653ms)[22m
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 290ms[2m (compile: 2ms, proxy.ts: 3ms, render: 285ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [33m429[39m in 44ms[2m (compile: 3ms, proxy.ts: 4ms, render: 37ms)[22m
+
+[1A[2KRate limited. Reset time: 2025-12-31T05:52:00.000Z
+
+[1A[2KWaiting 28000ms for rate limit to reset...
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 304ms[2m (compile: 2ms, proxy.ts: 4ms, render: 298ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 318ms[2m (compile: 2ms, proxy.ts: 5ms, render: 311ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 287ms[2m (compile: 2ms, proxy.ts: 3ms, render: 281ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 294ms[2m (compile: 2ms, proxy.ts: 3ms, render: 289ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 284ms[2m (compile: 3ms, proxy.ts: 4ms, render: 278ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 276ms[2m (compile: 2ms, proxy.ts: 4ms, render: 270ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 312ms[2m (compile: 4ms, proxy.ts: 7ms, render: 302ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 334ms[2m (compile: 3ms, proxy.ts: 3ms, render: 328ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 321ms[2m (compile: 1823µs, proxy.ts: 3ms, render: 316ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 354ms[2m (compile: 1994µs, proxy.ts: 3ms, render: 349ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 296ms[2m (compile: 2ms, proxy.ts: 3ms, render: 291ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 381ms[2m (compile: 5ms, proxy.ts: 3ms, render: 373ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 305ms[2m (compile: 4ms, proxy.ts: 6ms, render: 295ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 332ms[2m (compile: 5ms, proxy.ts: 3ms, render: 324ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 335ms[2m (compile: 2ms, proxy.ts: 3ms, render: 329ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 321ms[2m (compile: 5ms, proxy.ts: 5ms, render: 311ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-10-1-1767160288044-764
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 332ms[2m (compile: 3ms, proxy.ts: 4ms, render: 325ms)[22m
+
+[1A[2K  4) [shared] › tests/security/rate-limiting.spec.ts:68:13 › Rate Limiting › Availability API Rate Limiting › should enforce rate limit on availability endpoint 
+
+    Error: Expected at least 1 rate-limited request out of 35
+
+    [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m0[39m
+    Received:   [31m0[39m
+
+      103 |             if (hasUpstash) {
+      104 |                 const rateLimitedRequests = responses.filter(status => status === 429);
+    > 105 |                 expect(rateLimitedRequests.length, `Expected at least 1 rate-limited request out of ${responses.length}`).toBeGreaterThan(0);
+          |                                                                                                                           ^
+      106 |             }
+      107 |
+      108 |             // All rate-limited responses should be 429
+        at /home/x/dev/projects/watershed-campground/tests/security/rate-limiting.spec.ts:105:123
+
+    attachment #1: screenshot (image/png) ──────────────────────────────────────────────────────────
+    test-results/security-rate-limiting-Rat-a588c-it-on-availability-endpoint-shared/test-failed-1.png
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+    attachment #2: video (video/webm) ──────────────────────────────────────────────────────────────
+    test-results/security-rate-limiting-Rat-a588c-it-on-availability-endpoint-shared/video.webm
+    ────────────────────────────────────────────────────────────────────────────────────────────────
+
+
+[1A[2K[dotenv@17.2.3] injecting env (0) from .env.test -- tip: 👥 sync secrets across teammates & machines: https://dotenvx.com/ops
+
+[1A[2K[227/295] [shared] › tests/security/rate-limiting.spec.ts:115:13 › Rate Limiting › Availability API Rate Limiting › should include rate limit headers in successful response
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:115:13 › Rate Limiting › Availability API Rate Limiting › should include rate limit headers in successful response
+[Test] Cleared 3 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160301705-721
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 292ms[2m (compile: 2ms, proxy.ts: 3ms, render: 286ms)[22m
+
+[1A[2K[228/295] [shared] › tests/security/rate-limiting.spec.ts:141:13 › Rate Limiting › Availability API Rate Limiting › should return 429 with appropriate message when rate limited
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:141:13 › Rate Limiting › Availability API Rate Limiting › should return 429 with appropriate message when rate limited
+[Test] Cleared 2 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 298ms[2m (compile: 2ms, proxy.ts: 3ms, render: 293ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 343ms[2m (compile: 2ms, proxy.ts: 3ms, render: 338ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 298ms[2m (compile: 4ms, proxy.ts: 4ms, render: 290ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 289ms[2m (compile: 2ms, proxy.ts: 3ms, render: 283ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 317ms[2m (compile: 3ms, proxy.ts: 4ms, render: 311ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 322ms[2m (compile: 6ms, proxy.ts: 5ms, render: 310ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 304ms[2m (compile: 2ms, proxy.ts: 3ms, render: 299ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 296ms[2m (compile: 3ms, proxy.ts: 4ms, render: 289ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 287ms[2m (compile: 1865µs, proxy.ts: 3ms, render: 282ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 317ms[2m (compile: 2ms, proxy.ts: 3ms, render: 312ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 295ms[2m (compile: 2ms, proxy.ts: 3ms, render: 289ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 324ms[2m (compile: 2ms, proxy.ts: 3ms, render: 319ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 302ms[2m (compile: 2ms, proxy.ts: 4ms, render: 296ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 296ms[2m (compile: 1996µs, proxy.ts: 3ms, render: 291ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 319ms[2m (compile: 2ms, proxy.ts: 4ms, render: 313ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 295ms[2m (compile: 4ms, proxy.ts: 4ms, render: 287ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 308ms[2m (compile: 2ms, proxy.ts: 3ms, render: 303ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 293ms[2m (compile: 2ms, proxy.ts: 3ms, render: 287ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 371ms[2m (compile: 2ms, proxy.ts: 4ms, render: 365ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 357ms[2m (compile: 2ms, proxy.ts: 3ms, render: 352ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 307ms[2m (compile: 1817µs, proxy.ts: 3ms, render: 302ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 428ms[2m (compile: 2ms, proxy.ts: 3ms, render: 423ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 306ms[2m (compile: 2ms, proxy.ts: 3ms, render: 300ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 284ms[2m (compile: 2ms, proxy.ts: 3ms, render: 279ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 298ms[2m (compile: 2ms, proxy.ts: 3ms, render: 293ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 299ms[2m (compile: 2ms, proxy.ts: 5ms, render: 292ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 290ms[2m (compile: 2ms, proxy.ts: 4ms, render: 284ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 295ms[2m (compile: 2ms, proxy.ts: 4ms, render: 289ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 332ms[2m (compile: 3ms, proxy.ts: 4ms, render: 326ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 292ms[2m (compile: 3ms, proxy.ts: 3ms, render: 287ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160302331-12
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [33m429[39m in 44ms[2m (compile: 3ms, proxy.ts: 3ms, render: 37ms)[22m
+
+[1A[2K[229/295] [shared] › tests/security/rate-limiting.spec.ts:186:13 › Rate Limiting › Payment Intent API Rate Limiting › should enforce stricter rate limit on payment endpoint
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:186:13 › Rate Limiting › Payment Intent API Rate Limiting › should enforce stricter rate limit on payment endpoint
+[Test] Cleared 2 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 615ms[2m (compile: 2ms, proxy.ts: 3ms, render: 610ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 707ms[2m (compile: 3ms, proxy.ts: 4ms, render: 701ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 641ms[2m (compile: 2ms, proxy.ts: 3ms, render: 635ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 594ms[2m (compile: 3ms, proxy.ts: 3ms, render: 588ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 605ms[2m (compile: 4ms, proxy.ts: 5ms, render: 596ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [33m429[39m in 41ms[2m (compile: 4ms, proxy.ts: 3ms, render: 34ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [33m429[39m in 12ms[2m (compile: 2ms, proxy.ts: 4ms, render: 6ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-12-1-1767160312246-526
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [33m429[39m in 12ms[2m (compile: 3ms, proxy.ts: 4ms, render: 5ms)[22m
+
+[1A[2K[230/295] [shared] › tests/security/tenant-injection.spec.ts:30:13 › Tenant Injection Prevention › POST /api/admin/campsites - Create with Injected Org ID › should ignore organizationId in body and use authenticated org
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 385ms[2m (compile: 2ms, proxy.ts: 89ms, render: 293ms)[22m
+
+[1A[2K[shared] › tests/security/tenant-injection.spec.ts:30:13 › Tenant Injection Prevention › POST /api/admin/campsites - Create with Injected Org ID › should ignore organizationId in body and use authenticated org
+✅ Tenant injection blocked: created resource belongs to auth org, not injected org
+
+[1A[2K[2m[WebServer] [22m DELETE /api/admin/campsites/c18d8037-154c-4513-87cf-9ada350324e9 [32m200[39m in 454ms[2m (compile: 39ms, proxy.ts: 81ms, render: 333ms)[22m
+
+[1A[2K[231/295] [shared] › tests/security/tenant-injection.spec.ts:90:13 › Tenant Injection Prevention › PATCH /api/admin/campsites/[id] - Update with Injected Org ID › should ignore organizationId in update body and prevent org hijacking
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 337ms[2m (compile: 3ms, proxy.ts: 66ms, render: 269ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/e25b627d-1a3b-413b-8d26-29de5bd4b699 [32m200[39m in 437ms[2m (compile: 36ms, proxy.ts: 65ms, render: 336ms)[22m
+
+[1A[2K[shared] › tests/security/tenant-injection.spec.ts:90:13 › Tenant Injection Prevention › PATCH /api/admin/campsites/[id] - Update with Injected Org ID › should ignore organizationId in update body and prevent org hijacking
+✅ Tenant hijacking blocked: org remained with auth org despite injected value
+
+[1A[2K[2m[WebServer] [22m DELETE /api/admin/campsites/e25b627d-1a3b-413b-8d26-29de5bd4b699 [32m200[39m in 411ms[2m (compile: 6ms, proxy.ts: 86ms, render: 319ms)[22m
+
+[1A[2K[232/295] [shared] › tests/security/tenant-injection.spec.ts:117:13 › Tenant Injection Prevention › Cross-Org Resource Access › should return 404 when trying to update resource from different org
+[1A[2K[2m[WebServer] [22m POST /api/admin/campsites [32m201[39m in 314ms[2m (compile: 3ms, proxy.ts: 64ms, render: 248ms)[22m
+
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/campsites/c600afd2-29cb-4609-82da-e89e5cbce84e [32m200[39m in 468ms[2m (compile: 34ms, proxy.ts: 91ms, render: 343ms)[22m
+
+[1A[2K[2m[WebServer] [22m DELETE /api/admin/campsites/c600afd2-29cb-4609-82da-e89e5cbce84e [32m200[39m in 398ms[2m (compile: 5ms, proxy.ts: 77ms, render: 316ms)[22m
+
+[1A[2K[shared] › tests/security/tenant-injection.spec.ts:117:13 › Tenant Injection Prevention › Cross-Org Resource Access › should return 404 when trying to update resource from different org
+✅ Cross-org access prevented: updates are scoped to auth org
+
+[1A[2K[233/295] [shared] › tests/unit/calendar/blackout-api.spec.ts:21:9 › Blackout API Routes › PATCH /api/admin/blackout-dates/[id] - validates input
+[1A[2K[2m[WebServer] [22m PATCH /api/admin/blackout-dates/mock-id [33m404[39m in 343ms[2m (compile: 34ms, proxy.ts: 65ms, render: 243ms)[22m
+
+[1A[2K[234/295] [shared] › tests/unit/calendar/blackout-manager.spec.ts:36:10 › useBlackoutManager › should manage drawer state
+[1A[2K[235/295] [shared] › tests/unit/calendar/drag-helpers.spec.ts:31:9 › Drag Helpers › computeDragDates calculates correct offset and maintains duration
+[1A[2K[236/295] [shared] › tests/unit/calendar/drag-helpers.spec.ts:47:9 › Drag Helpers › computeDragDates respects month boundaries
+[1A[2K[237/295] [shared] › tests/unit/calendar/drag-helpers.spec.ts:59:9 › Drag Helpers › computeResizeDates handles right resize
+[1A[2K[238/295] [shared] › tests/unit/calendar/drag-helpers.spec.ts:76:9 › Drag Helpers › computeResizeDates prevents invalid duration
+[1A[2K[239/295] [shared] › tests/unit/calendar/drag-helpers.spec.ts:99:9 › Drag Helpers › buildGhostState returns correct structure
+[1A[2K[240/295] [shared] › tests/unit/calendar/filtering.spec.ts:27:9 › Calendar Filtering Logic › filters campsites by type
+[1A[2K[241/295] [shared] › tests/unit/calendar/filtering.spec.ts:34:9 › Calendar Filtering Logic › filters reservations by search query (case insensitive)
+[1A[2K[242/295] [shared] › tests/unit/calendar/filtering.spec.ts:44:9 › Calendar Filtering Logic › filters by reservation ID
+[1A[2K[243/295] [shared] › tests/unit/calendar/filtering.spec.ts:53:9 › Calendar Filtering Logic › filters by combined email query
+[1A[2K[244/295] [shared] › tests/unit/calendar/filtering.spec.ts:62:9 › Calendar Filtering Logic › handles empty search query
+[1A[2K[245/295] [shared] › tests/unit/calendar/filtering.spec.ts:70:9 › Calendar Filtering Logic › hides blackouts when toggled
+[1A[2K[246/295] [shared] › tests/unit/date-overlap.spec.ts:25:7 › Date Overlap Logic (Exclusive Checkout) › no overlap: new booking starts on existing checkout day
+[1A[2K[247/295] [shared] › tests/unit/date-overlap.spec.ts:32:7 › Date Overlap Logic (Exclusive Checkout) › no overlap: new booking ends on existing checkin day
+[1A[2K[248/295] [shared] › tests/unit/date-overlap.spec.ts:39:7 › Date Overlap Logic (Exclusive Checkout) › overlap: new booking starts 1 day before existing checkout
+[1A[2K[249/295] [shared] › tests/unit/date-overlap.spec.ts:46:7 › Date Overlap Logic (Exclusive Checkout) › overlap: new booking completely contains existing booking
+[1A[2K[250/295] [shared] › tests/unit/date-overlap.spec.ts:53:7 › Date Overlap Logic (Exclusive Checkout) › overlap: existing booking completely contains new booking
+[1A[2K[251/295] [shared] › tests/unit/date-overlap.spec.ts:60:7 › Date Overlap Logic (Exclusive Checkout) › overlap: exact same dates
+[1A[2K[252/295] [shared] › tests/unit/date-overlap.spec.ts:66:7 › Date Overlap Logic (Exclusive Checkout) › no overlap: completely separate date ranges (before)
+[1A[2K[253/295] [shared] › tests/unit/date-overlap.spec.ts:73:7 › Date Overlap Logic (Exclusive Checkout) › no overlap: completely separate date ranges (after)
+[1A[2K[254/295] [shared] › tests/unit/date-overlap.spec.ts:80:7 › Date Overlap Logic (Exclusive Checkout) › overlap: new booking starts on same day as existing
+[1A[2K[255/295] [shared] › tests/unit/date-overlap.spec.ts:87:7 › Date Overlap Logic (Exclusive Checkout) › overlap: new booking ends on same day as existing
+[1A[2K[256/295] [shared] › tests/unit/date-overlap.spec.ts:94:7 › Date Overlap Logic (Exclusive Checkout) › edge case: one-night stays back-to-back
+[1A[2K[257/295] [shared] › tests/unit/date-overlap.spec.ts:101:7 › Date Overlap Logic (Exclusive Checkout) › edge case: one-night stay overlaps with multi-night
+[1A[2K[258/295] [shared] › tests/unit/payment-policy.spec.ts:13:13 › Payment Policy Type Guards › isPaymentPolicyType › returns true for valid "full" policy type
+[1A[2K[259/295] [shared] › tests/unit/payment-policy.spec.ts:17:13 › Payment Policy Type Guards › isPaymentPolicyType › returns true for valid "deposit" policy type
+[1A[2K[260/295] [shared] › tests/unit/payment-policy.spec.ts:21:13 › Payment Policy Type Guards › isPaymentPolicyType › returns false for invalid policy type
+[1A[2K[261/295] [shared] › tests/unit/payment-policy.spec.ts:30:13 › Payment Policy Type Guards › isDepositType › returns true for valid "percent" deposit type
+[1A[2K[262/295] [shared] › tests/unit/payment-policy.spec.ts:34:13 › Payment Policy Type Guards › isDepositType › returns true for valid "fixed" deposit type
+[1A[2K[263/295] [shared] › tests/unit/payment-policy.spec.ts:38:13 › Payment Policy Type Guards › isDepositType › returns false for invalid deposit type
+[1A[2K[264/295] [shared] › tests/unit/payment-policy.spec.ts:77:9 › toPaymentPolicy Conversion › converts valid full payment policy
+[1A[2K[265/295] [shared] › tests/unit/payment-policy.spec.ts:93:9 › toPaymentPolicy Conversion › converts valid deposit policy with percent type
+[1A[2K[266/295] [shared] › tests/unit/payment-policy.spec.ts:112:9 › toPaymentPolicy Conversion › converts valid deposit policy with fixed type
+[1A[2K[267/295] [shared] › tests/unit/payment-policy.spec.ts:131:9 › toPaymentPolicy Conversion › handles null deposit_type correctly
+[1A[2K[268/295] [shared] › tests/unit/payment-policy.spec.ts:143:9 › toPaymentPolicy Conversion › returns null for invalid policy_type
+[1A[2K[shared] › tests/unit/payment-policy.spec.ts:143:9 › toPaymentPolicy Conversion › returns null for invalid policy_type
+{"timestamp":"2025-12-31T05:52:03.692Z","level":"ERROR","message":"Invalid policy_type: invalid-type for payment policy id=invalid-1, name=Invalid Policy","error":{"row":{"id":"invalid-1","name":"Invalid Policy","policy_type":"invalid-type","deposit_type":null,"deposit_value":null,"due_days_before_checkin":null,"site_type":null,"campsite_id":null,"start_month":null,"end_month":null,"created_at":"2024-01-01T00:00:00Z","updated_at":"2024-01-01T00:00:00Z"}}}
+
+[1A[2K[269/295] [shared] › tests/unit/payment-policy.spec.ts:158:9 › toPaymentPolicy Conversion › returns null for invalid deposit_type
+[1A[2K[shared] › tests/unit/payment-policy.spec.ts:158:9 › toPaymentPolicy Conversion › returns null for invalid deposit_type
+{"timestamp":"2025-12-31T05:52:03.703Z","level":"ERROR","message":"Invalid deposit_type: invalid-deposit for payment policy id=invalid-2, name=Invalid Deposit Type","error":{"row":{"id":"invalid-2","name":"Invalid Deposit Type","policy_type":"deposit","deposit_type":"invalid-deposit","deposit_value":null,"due_days_before_checkin":null,"site_type":null,"campsite_id":null,"start_month":null,"end_month":null,"created_at":"2024-01-01T00:00:00Z","updated_at":"2024-01-01T00:00:00Z"}}}
+
+[1A[2K[270/295] [shared] › tests/unit/payment-policy.spec.ts:174:9 › toPaymentPolicy Conversion › converts policy with site_type
+[1A[2K[271/295] [shared] › tests/unit/payment-policy.spec.ts:188:9 › toPaymentPolicy Conversion › converts policy with campsite_id
+[1A[2K[272/295] [shared] › tests/unit/payment-policy.spec.ts:200:9 › toPaymentPolicy Conversion › converts policy with seasonal dates
+[1A[2K[273/295] [shared] › tests/unit/payment-policy.spec.ts:216:9 › toPaymentPolicy Conversion › omits created_at and updated_at from converted policy
+[1A[2K[274/295] [shared] › tests/unit/payment-status.spec.ts:13:9 › getPaymentStatus Utility › returns payment_due when no transactions exist
+[1A[2K[275/295] [shared] › tests/unit/payment-status.spec.ts:18:9 › getPaymentStatus Utility › returns overdue when no transactions exist and check-in is past
+[1A[2K[276/295] [shared] › tests/unit/payment-status.spec.ts:23:9 › getPaymentStatus Utility › returns payment_due for cancelled reservations even if past check-in
+[1A[2K[277/295] [shared] › tests/unit/payment-status.spec.ts:28:9 › getPaymentStatus Utility › returns paid when total paid equals total amount
+[1A[2K[278/295] [shared] › tests/unit/payment-status.spec.ts:38:9 › getPaymentStatus Utility › returns paid when total paid is within rounding tolerance (1 cent)
+[1A[2K[279/295] [shared] › tests/unit/payment-status.spec.ts:48:9 › getPaymentStatus Utility › returns deposit_paid when partial payment exists
+[1A[2K[280/295] [shared] › tests/unit/payment-status.spec.ts:58:9 › getPaymentStatus Utility › returns paid when overpaid
+[1A[2K[281/295] [shared] › tests/unit/payment-status.spec.ts:68:9 › getPaymentStatus Utility › returns refunded if any refund transaction exists
+[1A[2K[282/295] [shared] › tests/unit/payment-status.spec.ts:79:9 › getPaymentStatus Utility › returns failed if the most recent transaction failed
+[1A[2K[283/295] [shared] › tests/unit/payment-status.spec.ts:90:9 › getPaymentStatus Utility › ignores failed transactions that are not the most recent for simple status determination
+[1A[2K[284/295] [shared] › tests/unit/reservation-logic.spec.ts:26:9 › Reservation Validation › accepts valid payload
+[1A[2K[285/295] [shared] › tests/unit/reservation-logic.spec.ts:31:9 › Reservation Validation › rejects missing fields
+[1A[2K[286/295] [shared] › tests/unit/reservation-logic.spec.ts:40:9 › Reservation Validation › rejects invalid email
+[1A[2K[287/295] [shared] › tests/unit/reservation-logic.spec.ts:46:9 › Reservation Validation › rejects check-out before check-in
+[1A[2K[288/295] [shared] › tests/unit/reservation-logic.spec.ts:78:9 › Email Templates › guest email contains critical info
+[1A[2K[289/295] [shared] › tests/unit/reservation-logic.spec.ts:86:9 › Email Templates › admin email contains contact info
+[1A[2K[290/295] [shared] › tests/unit/reservation-logic.spec.ts:96:9 › Reservation Service › createReservationRecord inserts data correctly
+[1A[2K[291/295] [shared] › tests/unit/reservation-mapper.spec.ts:30:7 › Reservation Mapper Regression Tests › mapper outputs only allowed database column keys
+[1A[2K[292/295] [shared] › tests/unit/reservation-mapper.spec.ts:118:7 › Reservation Mapper Regression Tests › type coercions handle edge cases correctly
+[1A[2K[293/295] [shared] › tests/unit/reservation-mapper.spec.ts:216:7 › Reservation Mapper Regression Tests › payment context maps correctly to database fields
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: avail-11-0-1767160290525-76
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 693ms[2m (compile: 2ms, proxy.ts: 4ms, render: 686ms)[22m
+
+[1A[2K[294/295] [shared] › tests/security/rate-limiting.spec.ts:331:13 › Rate Limiting › Rate Limit Identifier Isolation › should isolate rate limits by endpoint
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:331:13 › Rate Limiting › Rate Limit Identifier Isolation › should isolate rate limits by endpoint
+[Test] Cleared 3 rate limit keys
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 617ms[2m (compile: 2ms, proxy.ts: 4ms, render: 610ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 642ms[2m (compile: 2ms, proxy.ts: 3ms, render: 636ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 620ms[2m (compile: 3ms, proxy.ts: 3ms, render: 614ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 633ms[2m (compile: 2ms, proxy.ts: 4ms, render: 627ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Seasonal 50% Deposit, SiteType: cabin vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m[DEBUG] Policy: Standard RV Full Payment, SiteType: rv vs tent, Match: false, Score: 0
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [32m200[39m in 663ms[2m (compile: 4ms, proxy.ts: 3ms, render: 656ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m POST /api/create-payment-intent?org=watershed-campground [33m429[39m in 42ms[2m (compile: 3ms, proxy.ts: 4ms, render: 35ms)[22m
+
+[1A[2K[2m[WebServer] [22m[DEBUG] [RATE LIMIT] Using test key: isolation-payment-11
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 287ms[2m (compile: 2ms, proxy.ts: 3ms, render: 281ms)[22m
+
+[1A[2K[295/295] [shared] › tests/security/rate-limiting.spec.ts:370:13 › Rate Limiting › Rate Limit Fail-Open Behavior › should allow requests if rate limiter is unavailable
+[1A[2K[shared] › tests/security/rate-limiting.spec.ts:370:13 › Rate Limiting › Rate Limit Fail-Open Behavior › should allow requests if rate limiter is unavailable
+[Test] Cleared 3 rate limit keys
+
+[1A[2K[2m[WebServer] [22m POST /api/availability/search?org=watershed-campground [32m200[39m in 286ms[2m (compile: 2ms, proxy.ts: 4ms, render: 280ms)[22m
+
+[1A[2K  4 failed
+    [admin] › tests/admin/calendar-interactions.spec.ts:268:9 › Admin Calendar - Drag & Drop Interactions › should move reservation via API (integration fallback) 
+    [admin] › tests/admin/reservation-management.spec.ts:356:9 › Admin Reservation Management - Happy Path › should complete full lifecycle: assign → check-in → check-out 
+    [guest] › tests/guest/booking-flow-smoke.spec.ts:230:9 › Booking Flow Smoke Test (No Payment) › should handle calendar API with proper org resolution 
+    [shared] › tests/security/rate-limiting.spec.ts:68:13 › Rate Limiting › Availability API Rate Limiting › should enforce rate limit on availability endpoint 
+  22 skipped
+  269 passed (5.3m)

@@ -89,6 +89,49 @@ export async function deleteTestCampsite(id: string) {
 }
 
 /**
+ * DEDICATED CAMPSITES (Avoid 409 conflicts)
+ *
+ * Creates a campsite guaranteed to be available for assignment during the test.
+ * Use this instead of `.first()` or selecting from seed data to prevent 409 conflicts.
+ *
+ * Pattern enforces:
+ * - Unique code per test (prevents collision with other workers)
+ * - Explicit cleanup requirement (returns cleanup function)
+ * - Descriptive naming for debugging
+ *
+ * @example
+ * const { id, code, cleanup } = await createDedicatedCampsite({ codePrefix: 'LIFECYCLE' });
+ * try {
+ *   // Use campsite.id in test
+ *   const campsiteOption = page.locator('[data-testid="campsite-option"]').filter({ hasText: code });
+ * } finally {
+ *   await cleanup();
+ * }
+ */
+export async function createDedicatedCampsite(options: {
+    codePrefix: string;
+    name?: string;
+    organization_id?: string;
+} = { codePrefix: 'TEST' }) {
+    const uniqueSuffix = Math.random().toString(36).slice(2, 6).toUpperCase();
+    const code = `${options.codePrefix}${uniqueSuffix}`;
+
+    const campsite = await createTestCampsite({
+        name: options.name || `${options.codePrefix} Test Site`,
+        code,
+        is_active: true,
+        organization_id: options.organization_id || DEFAULT_ORG_ID
+    });
+
+    return {
+        id: campsite.id,
+        code: campsite.code,
+        name: campsite.name,
+        cleanup: () => deleteTestCampsite(campsite.id)
+    };
+}
+
+/**
  * RESERVATIONS
  */
 export async function createTestReservation(overrides: Partial<{
@@ -199,4 +242,53 @@ export function dbQuery(table: 'campsites' | 'reservations' | 'blackout_dates') 
  */
 export function dbUpdate(table: 'campsites' | 'reservations' | 'blackout_dates') {
     return supabaseAdminInternal.from(table).update;
+}
+
+/**
+ * Cleanup helper - executes async function with automatic cleanup
+ *
+ * Reduces boilerplate for try/finally cleanup patterns.
+ * If both the callback and cleanup fail, logs cleanup error and throws original error.
+ *
+ * @example
+ * await withCleanup(
+ *   createDedicatedCampsite({ codePrefix: 'LIFECYCLE' }),
+ *   async ({ id, code }) => {
+ *     const option = page.locator('[data-testid="campsite-option"]')
+ *       .filter({ hasText: code });
+ *     await option.click();
+ *   }
+ * );
+ */
+export async function withCleanup<T extends { cleanup: () => Promise<any> }>(
+    resource: Promise<T>,
+    fn: (resource: Omit<T, 'cleanup'>) => Promise<void>
+): Promise<void> {
+    const res = await resource;
+    let testError: Error | undefined;
+
+    try {
+        await fn(res as Omit<T, 'cleanup'>);
+    } catch (err) {
+        testError = err as Error;
+    } finally {
+        try {
+            await res.cleanup();
+        } catch (cleanupErr) {
+            console.error('[withCleanup] Cleanup failed:', cleanupErr);
+
+            // If test also failed, throw test error (more important)
+            // If only cleanup failed, throw cleanup error
+            if (testError) {
+                console.error('[withCleanup] Test also failed (throwing test error):', testError);
+                throw testError;
+            }
+            throw cleanupErr;
+        }
+
+        // If test failed but cleanup succeeded, throw test error
+        if (testError) {
+            throw testError;
+        }
+    }
 }

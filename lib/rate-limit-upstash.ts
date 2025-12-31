@@ -24,6 +24,7 @@ try {
             url: process.env.UPSTASH_REDIS_REST_URL,
             token: process.env.UPSTASH_REDIS_REST_TOKEN,
         });
+        logger.debug('[RATE LIMIT] Upstash Redis initialized successfully');
     } else {
         logger.warn('Upstash Redis credentials not found. Rate limiting will be disabled.');
     }
@@ -156,6 +157,15 @@ export function getRateLimitHeaders(result: RateLimitResult): Record<string, str
  * Handles various proxy headers
  */
 export function getClientIp(request: Request): string {
+    // In test/dev: allow per-test unique identifiers via header
+    if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
+        const testKey = request.headers.get('x-test-rate-limit-key');
+        if (testKey) {
+            logger.debug(`[RATE LIMIT] Using test key: ${testKey}`);
+            return testKey;
+        }
+    }
+
     // Try various headers in order of preference
     const forwardedFor = request.headers.get('x-forwarded-for');
     if (forwardedFor) {

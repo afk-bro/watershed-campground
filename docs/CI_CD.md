@@ -4,6 +4,20 @@
 
 The Watershed Campground uses GitHub Actions for continuous integration and deployment. Every pull request and push to `main`/`dev` branches triggers automated checks to ensure code quality, functionality, and performance.
 
+## Quick Start: Run CI Checks Locally
+
+Before pushing, run the same quality gates that CI will check:
+
+```bash
+npm run quality:gates
+```
+
+This runs:
+- ✅ Skip detection (no undocumented test.skip() or #TBD placeholders)
+- ✅ Campsite selector check (no 409-causing .first() patterns)
+
+**Make it muscle memory:** Run before every commit to catch issues early.
+
 ## Pipeline Jobs
 
 ### 1. Lint & Type Check ✨
@@ -377,6 +391,74 @@ When adding new E2E tests:
    - Duration
    - Which jobs passed/failed
    - Logs for debugging
+
+### Track Test Skip Count
+
+**Why it matters:** Skipped tests can accumulate unnoticed and reduce test coverage.
+
+**Current acceptable skips:**
+- `blackout-drag-resize.spec.ts` - 1 test (TODO(E2E-DRAG) (#TBD) - awaiting UX decision)
+- Rate limiting tests - Skip when `UPSTASH_REDIS_REST_URL` not configured
+
+**How to monitor:**
+1. Check Playwright output summary at end of CI run:
+   ```
+   5 failed, 22 skipped, 268 passed
+   ```
+2. If skip count increases unexpectedly:
+   - Search codebase for `test.skip(` to find new skips
+   - Verify skips are documented with TODO comments
+   - Add skip reason to this list
+
+**Best practices:**
+- Document skip reason with searchable tag (e.g., `TODO(E2E-DRAG)`)
+- Link skip to GitHub issue for tracking (e.g., `#123`)
+- Review skipped tests quarterly
+- Never skip core booking flow or auth tests
+
+**Search for skips:**
+```bash
+# Find all test.skip() calls
+grep -r "test.skip" tests/
+
+# Find all TODO tags in test files
+grep -r "TODO" tests/ | grep -E "\.(spec|test)\."
+```
+
+### CI Quality Gates (Test Patterns)
+
+**Automated checks to prevent test anti-patterns:**
+
+**1. New Skip Detection** (`scripts/check-test-skips.sh`):
+```bash
+# Run in CI on every PR
+./scripts/check-test-skips.sh main
+
+# Fails if new test.skip() without TODO tag
+# Required format: test.skip(true, 'TODO(ISSUE-ID): Reason');
+```
+
+**2. Campsite .first() Detection** (`scripts/check-campsite-selectors.sh`):
+```bash
+# Prevents 409 conflicts from parallel test collision
+./scripts/check-campsite-selectors.sh
+
+# Fails if: page.locator('campsite...').first()
+# Requires: createDedicatedCampsite() + select by code
+```
+
+**Add to CI workflow** (`.github/workflows/ci.yml`):
+```yaml
+- name: Check Test Quality Gates
+  run: |
+    ./scripts/check-test-skips.sh ${{ github.base_ref || 'main' }}
+    ./scripts/check-campsite-selectors.sh
+```
+
+**Why these matter:**
+- Skip detection prevents accidental test disabling without documentation
+- Campsite .first() check prevents 409 conflicts that are hard to debug
+- Both checks run in <1s and fail fast before expensive E2E runs
 
 ### CI Status Badge
 

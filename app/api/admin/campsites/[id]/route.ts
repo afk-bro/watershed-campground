@@ -96,12 +96,17 @@ export const DELETE = withAdminAuth(async ({ user, organizationId, params }) => 
         return NextResponse.json({ error: "Campsite not found" }, { status: 404 });
     }
 
-    // Delete the campsite record (org-scoped)
-    const { error: deleteError } = await supabaseAdmin
+    // Soft-delete the campsite record (org-scoped)
+    const { data: updatedCampsite, error: deleteError } = await supabaseAdmin
         .from('campsites')
-        .delete()
+        .update({
+            is_active: false,
+            updated_at: new Date().toISOString()
+        })
         .eq('id', id)
-        .eq('organization_id', organizationId);
+        .eq('organization_id', organizationId)
+        .select()
+        .single();
 
     if (deleteError) {
         if (deleteError.code === '23503') {
@@ -122,5 +127,8 @@ export const DELETE = withAdminAuth(async ({ user, organizationId, params }) => 
         organizationId
     });
 
-    return NextResponse.json({ message: "Campsite deleted permanently" });
+    return NextResponse.json({
+        data: updatedCampsite,
+        message: "Campsite deactivated successfully"
+    });
 });

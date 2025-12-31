@@ -59,6 +59,15 @@ export async function resolvePublicOrganizationId(request: Request): Promise<str
         let orgSlug = url.searchParams.get('org');
         const endpoint = url.pathname;
 
+        // In test/dev: allow per-test explicit org slug via header
+        if (process.env.NODE_ENV === 'test' || process.env.NODE_ENV === 'development') {
+            const testOrgSlug = request.headers.get('x-test-org-slug');
+            if (testOrgSlug) {
+                logger.debug(`[Tenancy] Received x-test-org-slug: ${testOrgSlug}`);
+                orgSlug = testOrgSlug;
+            }
+        }
+
         // Extract IP for debugging breadcrumb (hashed, not PII)
         const clientIP = getClientIP(request);
         const ipHash = hashIP(clientIP);
