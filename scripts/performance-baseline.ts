@@ -29,7 +29,7 @@ const NUM_REQUESTS = parseInt(process.env.NUM_REQUESTS || '20'); // Per endpoint
 const RESULTS_DIR = 'performance-results';
 
 // Critical endpoints to test
-const ENDPOINTS = [
+const ENDPOINTS: EndpointConfig[] = [
   // Public endpoints
   {
     name: 'Home Page',
@@ -93,11 +93,20 @@ const ENDPOINTS = [
     category: 'admin-api',
     requiresAuth: true,
   },
-] as const;
+];
 
 // ============================================================================
 // Types
 // ============================================================================
+
+interface EndpointConfig {
+  name: string;
+  method: string;
+  path: string;
+  category: string;
+  requiresAuth?: boolean;
+  body?: Record<string, unknown>;
+}
 
 interface RequestResult {
   duration: number; // milliseconds
@@ -250,7 +259,7 @@ async function getAdminAuthToken(): Promise<string | null> {
  * Test a single endpoint
  */
 async function testEndpoint(
-  endpoint: typeof ENDPOINTS[number],
+  endpoint: EndpointConfig,
   authToken: string | null
 ): Promise<EndpointStats> {
   console.log(`\n🔍 Testing: ${endpoint.name} (${endpoint.method} ${endpoint.path})`);
