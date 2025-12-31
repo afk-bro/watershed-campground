@@ -38,6 +38,16 @@ export function useStuckSavingFailsafe({
   const { showToast } = useToast();
   const timeoutsRef = useRef<Map<string, NodeJS.Timeout>>(new Map());
 
+  // Stable refs for callbacks to prevent effect re-runs when identity changes
+  const onRevalidateRef = useRef(onRevalidate);
+  const showToastRef = useRef(showToast);
+  useEffect(() => {
+    onRevalidateRef.current = onRevalidate;
+    showToastRef.current = showToast;
+  }, [onRevalidate, showToast]);
+
+  // Main effect: manage timeouts for saving items
+  // Only depends on data arrays, not callbacks (read from refs)
   useEffect(() => {
     const timeouts = timeoutsRef.current;
 
@@ -51,11 +61,11 @@ export function useStuckSavingFailsafe({
       if (!timeouts.has(key)) {
         const timeout = setTimeout(() => {
           logger.error('[STUCK SAVING] Reservation stuck saving for 10s:', undefined, { reservationId: r.id });
-          showToast('Still saving... Syncing with server.', 'warning');
+          showToastRef.current('Still saving... Syncing with server.', 'warning');
 
           // Auto-revalidate to sync reality
-          if (onRevalidate) {
-            onRevalidate();
+          if (onRevalidateRef.current) {
+            onRevalidateRef.current();
           }
 
           timeouts.delete(key);
@@ -70,11 +80,11 @@ export function useStuckSavingFailsafe({
       if (!timeouts.has(key)) {
         const timeout = setTimeout(() => {
           logger.error('[STUCK SAVING] Blackout stuck saving for 10s:', undefined, { blackoutId: b.id });
-          showToast('Still saving... Syncing with server.', 'warning');
+          showToastRef.current('Still saving... Syncing with server.', 'warning');
 
           // Auto-revalidate to sync reality
-          if (onRevalidate) {
-            onRevalidate();
+          if (onRevalidateRef.current) {
+            onRevalidateRef.current();
           }
 
           timeouts.delete(key);
@@ -84,7 +94,7 @@ export function useStuckSavingFailsafe({
       }
     });
 
-    // Clear timers for items that finished saving
+    // Clear timers for items that finished saving (surgical cleanup)
     const currentSavingIds = new Set([
       ...savingReservations.map(r => `reservation-${r.id}`),
       ...savingBlackouts.map(b => `blackout-${b.id}`)
@@ -97,10 +107,17 @@ export function useStuckSavingFailsafe({
       }
     });
 
-    // Cleanup on unmount
+    // Note: NO cleanup return here - we only clear individual timeouts above
+    // Unmount cleanup is handled by a separate effect below
+  }, [reservations, blackoutDates]); // Removed callback deps - read from refs
+
+  // Separate unmount-only cleanup to prevent timeout churn
+  // This runs ONLY on unmount, not on every dependency change
+  useEffect(() => {
+    const timeouts = timeoutsRef.current;
     return () => {
       timeouts.forEach(timeout => clearTimeout(timeout));
       timeouts.clear();
     };
-  }, [reservations, blackoutDates, onRevalidate, showToast]);
+  }, []); // Empty deps = unmount only
 }

@@ -46,7 +46,8 @@ export default function CreationDialog({
 
   return (
     <>
-      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50" onClick={onClose} />
+      {/* Backdrop - disabled during active drag via .is-panning parent class */}
+      <div className="fixed inset-0 bg-black/30 backdrop-blur-sm z-50 [.is-panning_&]:pointer-events-none" onClick={onClose} />
       <div className="fixed top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-sm bg-[var(--color-surface-card)] rounded-xl shadow-2xl z-50 overflow-hidden border border-[var(--color-border-subtle)] animate-scale-in">
         
         {/* Header */}
