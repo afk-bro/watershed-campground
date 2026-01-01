@@ -3,6 +3,8 @@ import { useRef, useEffect, RefObject } from 'react';
 export function useSyncedScroll(masterRef: RefObject<HTMLElement | null>) {
     const slaveRef = useRef<HTMLDivElement>(null);
     const isScrolling = useRef<boolean>(false);
+    // Track RAF IDs to cancel on cleanup, preventing stale callback execution
+    const rafIdRef = useRef<number | null>(null);
 
     useEffect(() => {
         const master = masterRef.current;
@@ -14,8 +16,13 @@ export function useSyncedScroll(masterRef: RefObject<HTMLElement | null>) {
             if (isScrolling.current) return;
             isScrolling.current = true;
             slave.scrollLeft = master.scrollLeft;
-            window.requestAnimationFrame(() => {
+            // Cancel any pending RAF before scheduling new one
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current);
+            }
+            rafIdRef.current = window.requestAnimationFrame(() => {
                 isScrolling.current = false;
+                rafIdRef.current = null;
             });
         };
 
@@ -23,8 +30,13 @@ export function useSyncedScroll(masterRef: RefObject<HTMLElement | null>) {
             if (isScrolling.current) return;
             isScrolling.current = true;
             master.scrollLeft = slave.scrollLeft;
-            window.requestAnimationFrame(() => {
+            // Cancel any pending RAF before scheduling new one
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current);
+            }
+            rafIdRef.current = window.requestAnimationFrame(() => {
                 isScrolling.current = false;
+                rafIdRef.current = null;
             });
         };
 
@@ -34,6 +46,12 @@ export function useSyncedScroll(masterRef: RefObject<HTMLElement | null>) {
         return () => {
             master.removeEventListener('scroll', handleMasterScroll);
             slave.removeEventListener('scroll', handleSlaveScroll);
+            // Cancel pending RAF on cleanup to prevent stale callback
+            if (rafIdRef.current !== null) {
+                cancelAnimationFrame(rafIdRef.current);
+                rafIdRef.current = null;
+            }
+            isScrolling.current = false;
         };
     }, [masterRef]); // Re-run if ref object changes (unlikely)
 

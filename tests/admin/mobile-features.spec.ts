@@ -29,13 +29,13 @@ test.describe('Mobile Features - Reservation Cards', () => {
     await expect(table).not.toBeVisible();
 
     // Cards should be visible
-    const cards = page.locator('.space-y-3 > div');
+    const cards = page.locator('[data-testid^="reservation-card-"]');
     const cardCount = await cards.count();
     expect(cardCount).toBeGreaterThan(0);
   });
 
   test('reservation cards show all essential information', async ({ page }) => {
-    const firstCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const firstCard = page.locator('[data-testid^="reservation-card-"]').first();
     await expect(firstCard).toBeVisible();
 
     // Should show guest count
@@ -50,7 +50,7 @@ test.describe('Mobile Features - Reservation Cards', () => {
   });
 
   test('cards have appropriate spacing for touch targets', async ({ page }) => {
-    const cards = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ });
+    const cards = page.locator('[data-testid^="reservation-card-"]');
     const firstCard = cards.first();
     const secondCard = cards.nth(1);
 
@@ -68,7 +68,7 @@ test.describe('Mobile Features - Reservation Cards', () => {
   });
 
   test('checkbox tap targets are large enough', async ({ page }) => {
-    const firstCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const firstCard = page.locator('[data-testid^="reservation-card-"]').first();
     const checkbox = firstCard.locator('input[type="checkbox"]').first();
 
     await expect(checkbox).toBeVisible();
@@ -83,7 +83,7 @@ test.describe('Mobile Features - Reservation Cards', () => {
   });
 
   test('cards are tappable to view details', async ({ page }) => {
-    const firstCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const firstCard = page.locator('[data-testid^="reservation-card-"]').first();
 
     // Tap on the card content area
     // Prefer the clickable button that includes the dates text (more stable)
@@ -125,7 +125,7 @@ test.describe('Mobile Features - Reservation Cards', () => {
   });
 
   test('action menu is accessible on cards', async ({ page }) => {
-    const firstCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const firstCard = page.locator('[data-testid^="reservation-card-"]').first();
 
     // Look for action button (three dots, etc.)
     const actionButton = firstCard.locator('button').filter({ hasText: /\u22EE|⋮|menu|actions/i });
@@ -356,11 +356,11 @@ test.describe('Mobile Features - Layout Breakpoint Transitions', () => {
 
     // Either a table or stacked cards may appear at the breakpoint depending on CSS/SSR.
     const tableAt = page.locator('table');
-    const cardList = page.locator('.space-y-3 > div');
+    const cardList = page.getByTestId('reservation-cards-container');
     if (await tableAt.isVisible().catch(() => false)) {
       await expect(tableAt).toBeVisible();
     } else {
-      await expect(cardList.first()).toBeVisible();
+      await expect(cardList).toBeVisible();
     }
 
     // Test above breakpoint (desktop)
@@ -368,11 +368,11 @@ test.describe('Mobile Features - Layout Breakpoint Transitions', () => {
     await page.waitForLoadState('networkidle');
 
     const tableAfter = page.locator('table');
-    const cardListAfter = page.locator('.space-y-3 > div');
+    const cardListAfter = page.getByTestId('reservation-cards-container');
     if (await tableAfter.isVisible().catch(() => false)) {
       await expect(tableAfter).toBeVisible();
     } else {
-      await expect(cardListAfter.first()).toBeVisible();
+      await expect(cardListAfter).toBeVisible();
     }
   });
 
@@ -385,7 +385,7 @@ test.describe('Mobile Features - Layout Breakpoint Transitions', () => {
     await page.waitForLoadState('networkidle');
 
     // Select a reservation on mobile
-    const mobileCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const mobileCard = page.locator('[data-testid^="reservation-card-"]').first();
     const mobileCheckbox = mobileCard.locator('input[type="checkbox"]').first();
     await mobileCheckbox.scrollIntoViewIfNeeded();
     await mobileCheckbox.click({ force: true });
@@ -416,7 +416,7 @@ test.describe('Mobile Features - Touch Interactions', () => {
     await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible();
 
     // Test tapping a reservation card
-    const firstCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const firstCard = page.locator('[data-testid^="reservation-card-"]').first();
 
     // Use tap instead of click for mobile
     await firstCard.tap();
@@ -439,7 +439,7 @@ test.describe('Mobile Features - Touch Interactions', () => {
     await expect(page.getByRole('heading', { name: 'Reservations' })).toBeVisible();
 
     // Mobile devices don't have hover, so all functionality should be accessible via tap
-    const firstCard = page.locator('.space-y-3 > div').filter({ hasText: /Adults/ }).first();
+    const firstCard = page.locator('[data-testid^="reservation-card-"]').first();
     await expect(firstCard).toBeVisible();
 
     // All interactive elements within the card should be visible without hover

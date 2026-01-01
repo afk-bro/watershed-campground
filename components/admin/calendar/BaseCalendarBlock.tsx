@@ -71,7 +71,10 @@ export default function BaseCalendarBlock({
 
   return (
     <div
-      className={`absolute top-1 bottom-1 text-xs font-medium px-2 py-1 flex items-center gap-1 shadow-sm border truncate transition-all hover:brightness-110 hover:shadow-md z-10 group ${statusColorClass} ${
+      className={`absolute top-1 bottom-1 text-xs font-medium px-2 py-1 flex items-center gap-1 shadow-sm border truncate ${
+        // Disable transitions during drag/resize to prevent coordinate drift in hit testing
+        isDragging || isResizing || isGlobalDragging ? '' : 'transition-all'
+      } hover:brightness-110 hover:shadow-md z-10 group ${statusColorClass} ${
         isDragging ? 'opacity-40 pointer-events-none' : ''
       } ${isResizing ? 'opacity-60' : ''} ${
         isSaving ? 'opacity-70' : ''

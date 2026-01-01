@@ -38,16 +38,15 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
     };
 
     const updateBlackout = useCallback(async (id: string, reason: string, extraParams: Partial<{ start_date: string, end_date: string, campsite_id: string | null }> = {}) => {
-        // Fallback if no onDataMutate (Standard Fetch)
+        // Fallback if no onDataMutate (Standard Fetch without cache)
         if (!onDataMutate) {
-            logger.warn('[UPDATE BLACKOUT] No mutate function provided, falling back to reload');
+            logger.warn('[UPDATE BLACKOUT] No mutate function provided, UI may be stale until next navigation');
             try {
                 abortControllerRef.current?.abort();
                 abortControllerRef.current = new AbortController();
 
                 await calendarService.updateBlackoutDate(id, { reason, ...extraParams }, abortControllerRef.current.signal);
-                showToast('Blackout updated', 'success');
-                setTimeout(() => window.location.reload(), 500);
+                showToast('Blackout updated. Refresh page to see changes.', 'success');
             } catch (e: any) {
                 if (e.name === 'AbortError') return;
                 logger.error('[UPDATE BLACKOUT ERROR]', e);
@@ -93,9 +92,9 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
             [start, end] = [end, start];
         }
 
-        // Fallback if no mutate function provided
+        // Fallback if no mutate function provided (UI may be stale)
         if (!onDataMutate) {
-            logger.warn('[CREATE BLACKOUT] No mutate function provided, falling back to reload');
+            logger.warn('[CREATE BLACKOUT] No mutate function provided, UI may be stale until next navigation');
             try {
                 abortControllerRef.current?.abort();
                 abortControllerRef.current = new AbortController();
@@ -107,8 +106,7 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
                     reason
                 }, abortControllerRef.current.signal);
 
-                showToast('Blackout dates added', 'success');
-                setTimeout(() => window.location.reload(), 500);
+                showToast('Blackout dates added. Refresh page to see changes.', 'success');
             } catch (error: unknown) {
                 const adminError = handleAdminError(error, 'useBlackoutManager.createBlackout');
                 if (adminError.code === 'ABORT_ERROR') return;
@@ -178,17 +176,16 @@ export function useBlackoutManager({ onDataMutate }: UseBlackoutManagerProps) {
     }, [onDataMutate, showToast]);
 
     const deleteBlackout = useCallback(async (id: string) => {
-        // Fallback
+        // Fallback (UI may be stale)
         if (!onDataMutate) {
-            logger.warn('[DELETE BLACKOUT] No mutate function provided, falling back to reload');
+            logger.warn('[DELETE BLACKOUT] No mutate function provided, UI may be stale until next navigation');
             try {
                 abortControllerRef.current?.abort();
                 abortControllerRef.current = new AbortController();
 
                 await calendarService.deleteBlackoutDate(id, abortControllerRef.current.signal);
 
-                showToast('Blackout deleted', 'success');
-                setTimeout(() => window.location.reload(), 500);
+                showToast('Blackout deleted. Refresh page to see changes.', 'success');
             } catch (e: any) {
                 if (e.name === 'AbortError') return;
                 logger.error('[DELETE BLACKOUT ERROR]', e);

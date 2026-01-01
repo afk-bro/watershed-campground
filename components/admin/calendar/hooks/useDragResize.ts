@@ -52,6 +52,8 @@ export interface UseDragResizeReturn {
     dragPreview: DragPreview | null;
     validationError: string | null;
   };
+  /** Cancel any active drag or resize operation */
+  cancelOperation: () => void;
 }
 
 export interface UseDragResizeConfig {
@@ -101,6 +103,13 @@ export function useDragResize({
   const resizeStateRef = useRef<ResizeState | null>(null);
   const dragOffsetDaysRef = useRef<number>(0);
 
+  // Stable refs for throttled callbacks to avoid stale closure issues
+  // When dependencies change, these refs are updated, but throttled function remains stable
+  const configRef = useRef({ monthStart, monthEnd, campsites, reservations, blackoutDates });
+  useEffect(() => {
+    configRef.current = { monthStart, monthEnd, campsites, reservations, blackoutDates };
+  }, [monthStart, monthEnd, campsites, reservations, blackoutDates]);
+
   // Persistent Throttlers
   const throttledDragRef = useRef<ThrottledFn<[PointerEvent]> | null>(null);
   const throttledResizeRef = useRef<ThrottledFn<[PointerEvent]> | null>(null);
@@ -140,6 +149,7 @@ export function useDragResize({
   }, [stopAutoScroll, updateDraggedItem, updateDragPreview, updateResizeState, updateValidationError]);
 
   // Logic: Drag Preview Computation
+  // Uses configRef to avoid stale closures when throttled
   const computeAndSetDragPreview = useCallback((e: PointerEvent) => {
     const item = draggedItemRef.current;
     if (!item) return;
@@ -152,6 +162,9 @@ export function useDragResize({
       updateValidationError(null);
       return;
     }
+
+    // Read current config from ref to avoid stale closure
+    const { monthStart, monthEnd, campsites, reservations, blackoutDates } = configRef.current;
 
     const { startDate, endDate, isValid, error } = computeDragDates(
       item,
@@ -173,15 +186,19 @@ export function useDragResize({
     const validation = validateCandidate(item, campsiteId, startDate, endDate, campsites, reservations, blackoutDates);
     updateDragPreview(preview);
     updateValidationError(validation.valid ? null : validation.error);
-  }, [monthStart, monthEnd, campsites, reservations, blackoutDates, updateDragPreview, updateValidationError]);
+  }, [updateDragPreview, updateValidationError]); // Reduced dependencies - config comes from ref
 
   // Logic: Resize Preview Computation
+  // Uses configRef to avoid stale closures when throttled
   const computeAndSetResizePreview = useCallback((e: PointerEvent) => {
     const state = resizeStateRef.current;
     if (!state) return;
 
     const hoveredDate = getDateFromPointer(e.clientX, e.clientY);
     if (!hoveredDate) return;
+
+    // Read current config from ref to avoid stale closure
+    const { monthStart, monthEnd, campsites, reservations, blackoutDates } = configRef.current;
 
     const result = computeResizeDates(
       state.originalStartDate,
@@ -207,7 +224,7 @@ export function useDragResize({
     const campsiteId = 'campsite_id' in state.item ? (state.item.campsite_id || 'UNASSIGNED') : 'UNASSIGNED';
     const validation = validateCandidate(state.item, campsiteId, result.newStartDate, result.newEndDate, campsites, reservations, blackoutDates);
     updateValidationError(validation.valid ? null : validation.error);
-  }, [monthStart, monthEnd, campsites, reservations, blackoutDates, updateResizeState, updateValidationError]);
+  }, [updateResizeState, updateValidationError]); // Reduced dependencies - config comes from ref
 
   // Initialize Throttlers
   useEffect(() => {
@@ -221,6 +238,11 @@ export function useDragResize({
 
   // Handlers
   const handleDragPointerDown = useCallback((e: React.PointerEvent, item: DragResizeItem) => {
+    // Guard: Prevent starting a new drag if another operation is in progress
+    if (isDragging || resizeState) {
+      return;
+    }
+
     e.preventDefault();
     e.stopPropagation();
 
@@ -229,9 +251,14 @@ export function useDragResize({
 
     setIsDragging(true);
     updateDraggedItem(item);
-  }, [updateDraggedItem]);
+  }, [isDragging, resizeState, updateDraggedItem]);
 
   const handleResizeStart = useCallback((item: DragResizeItem, side: ResizeSide) => {
+    // Guard: Prevent starting resize if another operation is in progress
+    if (isDragging || resizeState) {
+      return;
+    }
+
     const startDate = getStartDate(item);
     const endDate = getEndDate(item);
     updateResizeState({
@@ -242,7 +269,7 @@ export function useDragResize({
       newStartDate: startDate,
       newEndDate: endDate,
     });
-  }, [updateResizeState]);
+  }, [isDragging, resizeState, updateResizeState]);
 
   // Global Listeners for active operations
   useEffect(() => {
@@ -295,17 +322,21 @@ export function useDragResize({
       }
     };
 
+    // Prevent context menu during drag/resize operations
+    const onContextMenu = (e: Event) => e.preventDefault();
+
     window.addEventListener('pointermove', onMove);
     window.addEventListener('pointerup', onEnd);
     window.addEventListener('pointercancel', onEnd);
     window.addEventListener('keydown', onKey, { capture: true });
-    window.addEventListener('contextmenu', (e) => e.preventDefault());
+    window.addEventListener('contextmenu', onContextMenu);
 
     return () => {
       window.removeEventListener('pointermove', onMove);
       window.removeEventListener('pointerup', onEnd);
       window.removeEventListener('pointercancel', onEnd);
       window.removeEventListener('keydown', onKey, { capture: true });
+      window.removeEventListener('contextmenu', onContextMenu);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isDragging, !!resizeState, updateScrollDirection, clearOperationState, onReservationMoveRequested, onBlackoutMoveRequested]);
@@ -334,5 +365,6 @@ export function useDragResize({
     handleResizeStart,
     getGhost,
     getDragState: () => ({ draggedItem: draggedItemRef.current, dragPreview: dragPreviewRef.current, validationError: validationErrorRef.current }),
+    cancelOperation: clearOperationState,
   };
 }

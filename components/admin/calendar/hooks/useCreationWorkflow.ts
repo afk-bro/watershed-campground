@@ -113,13 +113,22 @@ export function useCreationWorkflow({
     isCreatingRef.current = isCreating;
   }, [isCreating]);
 
+  // Stable refs for callback props to prevent listener thrashing
+  // When these props change identity, refs update but handler stays stable
+  const updateScrollDirectionRef = useRef(updateScrollDirection);
+  const stopAutoScrollRef = useRef(stopAutoScroll);
+  useEffect(() => {
+    updateScrollDirectionRef.current = updateScrollDirection;
+    stopAutoScrollRef.current = stopAutoScroll;
+  }, [updateScrollDirection, stopAutoScroll]);
+
   // Auto-scroll during creation drag - stabilized handler using refs
   // This function is created once and never recreates, preventing listener thrash
   const handleCreationPointerMove = useCallback((e: PointerEvent) => {
     // Read current state from ref to avoid stale closures
     if (!isCreatingRef.current) return;
-    updateScrollDirection(e.clientX, e.clientY);
-  }, [updateScrollDirection]); // Only depends on updateScrollDirection, not isCreating
+    updateScrollDirectionRef.current(e.clientX, e.clientY);
+  }, []); // No dependencies - reads from refs
 
   // Add/remove window pointer listeners for creation drag
   // Attaches ONCE when isCreating becomes true, removes when it becomes false
@@ -130,11 +139,11 @@ export function useCreationWorkflow({
       return () => {
         logger.debug('[CREATION] Removing pointermove listener');
         window.removeEventListener('pointermove', handleCreationPointerMove);
-        stopAutoScroll(); // Stop any active scrolling
+        stopAutoScrollRef.current(); // Stop any active scrolling via ref
       };
     }
     return undefined;
-  }, [isCreating, handleCreationPointerMove, stopAutoScroll]);
+  }, [isCreating, handleCreationPointerMove]); // Removed stopAutoScroll - read from ref
 
   // Handle blackout creation submission
   const handleCreateBlackout = useCallback(async (reason: string) => {

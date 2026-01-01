@@ -199,7 +199,7 @@ export default function AdminPage() {
                 {/* Mobile Card View */}
                 <ErrorBoundary fallback={<CompactErrorFallback message="Failed to load reservations list" />}>
                 {isPhone ? (
-                    <div className="space-y-3">
+                    <div className="space-y-3" data-testid="reservation-cards-container">
                         {sortedItems.length === 0 ? (
                             <div className="bg-[var(--color-surface-card)] rounded-lg border border-[var(--color-border-subtle)] p-8 text-center text-[var(--color-text-muted)]">
                                 No items found.
