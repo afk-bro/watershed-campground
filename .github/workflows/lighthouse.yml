@@ -2,8 +2,11 @@ name: Lighthouse (nightly/manual)
 
 on:
   workflow_dispatch: {}
-  schedule:
-    - cron: '0 4 * * *' # Daily at 04:00 UTC (nightly)
+  # Nightly cron disabled: wait-for-vercel-preview hits Vercel's protected
+  # *.vercel.app URL and times out with 401. Re-enable once we either point
+  # at the production custom domain or wire up a Protection Bypass token.
+  # schedule:
+  #   - cron: '0 4 * * *' # Daily at 04:00 UTC (nightly)
 
 permissions:
   contents: read

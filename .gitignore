@@ -50,3 +50,9 @@ supabase/.temp/
 supabase/docker/
 supabase/config.toml
 supabase/seed.local.sql
+
+# local-only planning docs and one-off migration runners
+docs/plans/
+docs/OMS_app_spec.txt
+scripts/apply-migration.mjs
+scripts/apply-migration-pg.mjs
